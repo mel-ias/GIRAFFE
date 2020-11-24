@@ -29,6 +29,7 @@
 const::std::string TAG = "Main:\t\t";
 LogFile* logFilePrinter;
 
+// added enums to select matching approach (VSFM or D2NET)
 enum Flags_Matching_Approach {
 	VSFM, D2NET
 };
