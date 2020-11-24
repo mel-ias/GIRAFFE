@@ -1,0 +1,1 @@
+%windir%\System32\cmd.exe /k ""C:\ProgramData\Anaconda3\Scripts\activate.bat" env_d2net & python --version & python.exe extract_features.py --image_list_file image_list_waterlines.txt & python.exe extract_keypoints.py"

@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\KDtree_fillImages">
+      <UniqueIdentifier>{8d296379-1f29-46e2-9445-96a56b59f13f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\spline_header">
+      <UniqueIdentifier>{cb838506-f3bb-45f3-a63a-de1d33b35263}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\spline_cpp">
+      <UniqueIdentifier>{4cd0d328-8237-4c1d-9404-2e16486dceb1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\unused_code">
+      <UniqueIdentifier>{4025ebd8-5fa8-4176-b548-d44eaed656f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\unused_code">
+      <UniqueIdentifier>{1bc91d2e-e2ba-46e6-9e5f-43ac240ab1b0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="LaserPoint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PerspectiveImage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ImCalculator.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BoundingBox.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CoordinateImage.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SpectralIndices.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vek.h">
+      <Filter>Header Files\KDtree_fillImages</Filter>
+    </ClInclude>
+    <ClInclude Include="aabb.h">
+      <Filter>Header Files\KDtree_fillImages</Filter>
+    </ClInclude>
+    <ClInclude Include="tree.h">
+      <Filter>Header Files\KDtree_fillImages</Filter>
+    </ClInclude>
+    <ClInclude Include="kdtree.h">
+      <Filter>Header Files\KDtree_fillImages</Filter>
+    </ClInclude>
+    <ClInclude Include="kdtreeknoten.h">
+      <Filter>Header Files\KDtree_fillImages</Filter>
+    </ClInclude>
+    <ClInclude Include="nachbardaten.h">
+      <Filter>Header Files\KDtree_fillImages</Filter>
+    </ClInclude>
+    <ClInclude Include="fillImages.hpp">
+      <Filter>Header Files\KDtree_fillImages</Filter>
+    </ClInclude>
+    <ClInclude Include="Matching.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="spline\Bezier.h">
+      <Filter>Header Files\spline_header</Filter>
+    </ClInclude>
+    <ClInclude Include="spline\BSpline.h">
+      <Filter>Header Files\spline_header</Filter>
+    </ClInclude>
+    <ClInclude Include="spline\CatmullRom.h">
+      <Filter>Header Files\spline_header</Filter>
+    </ClInclude>
+    <ClInclude Include="spline\Curve.h">
+      <Filter>Header Files\spline_header</Filter>
+    </ClInclude>
+    <ClInclude Include="spline.h">
+      <Filter>Header Files\spline_header</Filter>
+    </ClInclude>
+    <ClInclude Include="spline\Vector.h">
+      <Filter>Header Files\spline_header</Filter>
+    </ClInclude>
+    <ClInclude Include="Mathematics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="plyloader.h">
+      <Filter>Header Files\unused_code</Filter>
+    </ClInclude>
+    <ClInclude Include="DLT.hpp">
+      <Filter>Header Files\unused_code</Filter>
+    </ClInclude>
+    <ClInclude Include="AccurateMatcher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="opencv_includes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DataManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ASiftDetector.h">
+      <Filter>Header Files\unused_code</Filter>
+    </ClInclude>
+    <ClInclude Include="LogfilePrinter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Modell_OCV.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Modell.h">
+      <Filter>Header Files\unused_code</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VirtualImageGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LaserPoint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PerspectiveImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PointLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ImCalculator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BoundingBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CoordinateImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AccurateMatcher.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Matching.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="spline\Bezier.cpp">
+      <Filter>Source Files\spline_cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="spline\BSpline.cpp">
+      <Filter>Source Files\spline_cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="spline\CatmullRom.cpp">
+      <Filter>Source Files\spline_cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="spline\Curve.cpp">
+      <Filter>Source Files\spline_cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="spline\Vector.cpp">
+      <Filter>Source Files\spline_cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="plyloader.cpp">
+      <Filter>Source Files\unused_code</Filter>
+    </ClCompile>
+    <ClCompile Include="ASiftDetector.cpp">
+      <Filter>Source Files\unused_code</Filter>
+    </ClCompile>
+    <ClCompile Include="Modell_OCV.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Modell.cpp">
+      <Filter>Source Files\unused_code</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
