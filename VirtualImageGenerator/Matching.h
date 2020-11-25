@@ -56,8 +56,8 @@ public:
 		std::vector<cv::Point3d>& out_matched_object_points,
 		std::vector<cv::Point2d>& out_matched_image_points_real,
 		std::vector<cv::Point2d>& out_matched_image_points_synth,
-		bool halved_image_real,
-		bool halved_image_synth);
+		double d2Net_scalingFactor_trueImage,
+		double d2net_scalingFactor_synthImage);
 
 	
 	
@@ -161,7 +161,7 @@ private:
 
 	// constants
 	std::string TAG = "Matching:\t";
-	const double PI = 3.14159265359;
+	
 
 	// member
 	DataManager *mDataManager;
@@ -183,6 +183,9 @@ private:
 	double inliers_per_importance_cell_percent = 0.0;
 	double point_counter_importance = 0.0;
 	int no_inliers_4_stat = 0;
+
+	// allowed neighbouring distance for knn search  
+	float neighbourDistance_allowed = 0.25f; // 0.99f; <- previously used value but the smaller the better. Might only work with d2net.
 };
 
 

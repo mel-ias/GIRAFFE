@@ -39,7 +39,7 @@ void ImCalculator::init(DataManager* _dataManager) {
 
 	// Settings for camera
 	_ck = dataManager->getFocalLength();
-	_imageSize = dataManager->get_real_image_size();
+	_imageSize = dataManager->get_size_true_image();
 	_pixSize = dataManager->get_pixel_size();
 	logfile->append(TAG + "received camera parameters (ck, imageSize, pixSize)");
 	
@@ -49,10 +49,10 @@ void ImCalculator::init(DataManager* _dataManager) {
 	logfile->append(TAG + "received realImage, create copy (realImage_copy_orig)");
 
 
-	// create working directory
-	workingDirectory = (dataManager->getWorkingDirectory() + "\\ImCalculator\\");
-	CreateDirectoryA(LPCSTR(workingDirectory.c_str()), NULL);
-	logfile->append(TAG + "created working directory: " + workingDirectory);
+	// create ImCalculator directory
+	path_directory_ImCalculator = (dataManager->get_path_working_directory() + "\\ImCalculator\\");
+	CreateDirectoryA(LPCSTR(path_directory_ImCalculator.c_str()), NULL);
+	logfile->append(TAG + "created ImCalculator directory: " + path_directory_ImCalculator);
 
 	// get tolerance for point projection
 	//toleranceForPointProjection = dataManager->getDistanceNoise();
@@ -80,10 +80,11 @@ ImCalculator::~ImCalculator()
 }
 
 
-/*saves all generated Images*/
-void ImCalculator::saveImages(std::string o) {
 
-	logfile->append(TAG + "save images (" + o + ")...");
+/*saves all generated synthetic images in ImCalculator directory*/
+void ImCalculator::saveImages() {
+
+	logfile->append(TAG + "save images synthetic images...");
 
 	// deallocation of image header and data
 	_mask->release();
@@ -92,13 +93,13 @@ void ImCalculator::saveImages(std::string o) {
 	_mask = new cv::Mat(_image->rows, _image->cols, CV_8UC1);
 
 	// write dist images and dist pyramids
-	cv::imwrite(workingDirectory + "dist_image.png", *_distImage);
+	cv::imwrite(path_directory_ImCalculator + "dist_image.png", *_distImage);
 	if (next_dists.size() > 0) {
 		for (unsigned int i = 0; i < next_dists.size(); ++i) {
 			std::string name = "dist_image_p";
 			name += std::to_string(i) + ".png";
 
-			cv::imwrite(workingDirectory + name.c_str(), *next_dists[i]);
+			cv::imwrite(path_directory_ImCalculator + name.c_str(), *next_dists[i]);
 		}
 	}
 
@@ -120,7 +121,7 @@ void ImCalculator::saveImages(std::string o) {
 	// save _image if it's already a color image
 	if (_image->depth() == CV_8U) {
 
-		cv::imwrite(workingDirectory + o + ".im.png", *_image);
+		cv::imwrite(path_directory_ImCalculator + dataManager->get_filename_true_image() + "_synth.png", *_image);
 		logfile->append(TAG + "saved mask of virtual image rgb");
 		return; // we don't need to calc the gray values as in the next lines
 	}
@@ -142,7 +143,7 @@ void ImCalculator::saveImages(std::string o) {
 	//std::cout << TAG << "Image: " << _image->cols << "x" << _image->rows << std::endl;
 
 	// save image as *.im.png
-	cv::imwrite(workingDirectory + o + ".png", *_mask);
+	cv::imwrite(path_directory_ImCalculator + dataManager->get_filename_true_image() + ".png", *_mask);
 	logfile->append(TAG + "saved mask of virtual image intensity");
 
 
@@ -397,7 +398,7 @@ void ImCalculator::writeImages() {
 	calc_distImage(distMin, distMax, false);
 
 
-	cv::imwrite(workingDirectory + "dist_image_orig.png", *_distImage);
+	cv::imwrite(path_directory_ImCalculator + "dist_image_orig.png", *_distImage);
 	logfile->append(TAG + "calc new masks");
 
 
@@ -533,27 +534,18 @@ void ImCalculator::filter_image(float db) {
 
 					// Lösche, wenn kein Randpixel getroffen wurde
 					if (checkR && checkC) {
-
-
 						nextPyr->ptr<float>(r)[c] = -1.0f;
-
-						///TODO grade raus
-
 						if (pyr_index == 0) {
-
 							if (r > 0 && r < _image->rows && c > 0 && c < _image->cols) {
 								if (colorPoints) {
-
 									cv::Point3_ <uchar>* pixel = _image->ptr<cv::Point3_<uchar>>(r, c);
 									pixel->x = 255u;
 									pixel->y = 255u;
 									pixel->z = 255u;
 								}
-
-
-								else
+								else {
 									_image->ptr<float>(r)[c] = 1.0f;
-
+								}
 								dataManager->getCoordinateImage()->deletePixel(c, r);
 							}
 						}
@@ -699,7 +691,7 @@ void ImCalculator::fillImage(size_t k_for_knn) {
 				if (_image->ptr<ushort>(r, c)[0] != 0)
 					cv::circle(_maske_8UC1, cv::Point2d(c, r), 2, cv::Scalar(255), -1);
 			}
-		cv::imwrite(workingDirectory + "maskefill.png", _maske_8UC1);
+		cv::imwrite(path_directory_ImCalculator + "maskefill.png", _maske_8UC1);
 
 		// calc visualisation
 		berechneVisualisierung32SC1(_imageForImFill_inpaint_knn, _maske_8UC1, (*dataManager->get_synth_pts_2D()), (*dataManager->get_pts_farben()), k_for_knn);
@@ -785,7 +777,7 @@ void ImCalculator::fillImage(size_t k_for_knn) {
 			}
 
 		//berechne gefülltes Bild mit knn und radius basierter Version
-		cv::imwrite(workingDirectory + "maskefill.png", _maske_8UC1);
+		cv::imwrite(path_directory_ImCalculator + "maskefill.png", _maske_8UC1);
 		//float radius = 3;
 
 		berechneVisualisierung(_imageForImFill_knn, _maske_8UC1, (*dataManager->get_synth_pts_2D()), (*dataManager->get_pts_farben()), k_for_knn);
@@ -813,7 +805,7 @@ void ImCalculator::fillImage(size_t k_for_knn) {
 		}
 		//_imageForImFill_knn_Crop = _imageForImFill_knn_Crop(bounding_rect);
 
-		cv::imwrite(workingDirectory + "filledImage_knn.png", _imageForImFill_knn_Crop);
+		cv::imwrite(path_directory_ImCalculator + "filledImage_knn.png", _imageForImFill_knn_Crop);
 		//cv::imwrite("filledImage_radius.png", _imageForImFill_radius_Crop);
 
 		// Übetrage für leichten zugriff imfillknn in imfillinpaint
@@ -854,7 +846,7 @@ void ImCalculator::colormappingIntensity(const cv::Mat& mat, const cv::Mat& mask
 
 	// wenn Name übergeben wurde, schreibe Bild sonst nicht 
 	if (!fileName.empty()) {
-		cv::imwrite(workingDirectory + fileName + "_falseColor.png", falseColorsMap);
-		cv::imwrite(workingDirectory + fileName + "_grayscale.png", adjMap);
+		cv::imwrite(path_directory_ImCalculator + fileName + "_falseColor.png", falseColorsMap);
+		cv::imwrite(path_directory_ImCalculator + fileName + "_grayscale.png", adjMap);
 	}	
 }

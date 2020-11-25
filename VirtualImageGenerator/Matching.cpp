@@ -56,7 +56,7 @@ void Matching::init(DataManager* _dataManager) {
 	mDataManager = _dataManager;
 
 	// create working directory .../Matching
-	mWorkingDirectory = (mDataManager->getWorkingDirectory() + "\\Matching\\");
+	mWorkingDirectory = (mDataManager->get_path_working_directory() + "\\Matching\\");
 	CreateDirectoryA(LPCSTR(mWorkingDirectory.c_str()), NULL);
 
 
@@ -133,7 +133,7 @@ void Matching::calculate_nn_synth_key___pts_image_pts(
 
 
 	// run kd_tree to determine nearest neighbour of matched synth_keypoint by synth_image points
-	KdTree2d kdtree(in_synth_pts_float, 12, 500);
+	KdTree2d kdtree(in_synth_pts_float, 12, 500); // 12 = node depth, 500 = iteration, i.e. after 500 matches --> break
 	kdtree.init();
 
 	if (!kdtree.istInitialisiert()) {
@@ -204,8 +204,10 @@ void Matching::loadD2netMatches(std::string in_path_D2Net_Kpts,
 	std::vector<cv::Point3d>& out_matched_object_points,
 	std::vector<cv::Point2d>& out_matched_image_points_real,
 	std::vector<cv::Point2d>& out_matched_image_points_synth,
-	bool halved_image_real,
-	bool halved_image_synth) {
+	//bool halved_image_real,
+	//bool halved_image_synth,
+	double d2Net_scalingFactor_trueImage,
+	double d2net_scalingFactor_synthImage) {
 
 	mLogFile->append("");
 	mLogFile->append(TAG + "---- read results from D2Net ----");
@@ -233,7 +235,15 @@ void Matching::loadD2netMatches(std::string in_path_D2Net_Kpts,
 
 		//mLogFile->append("LINE: " + line);
 
-		if (halved_image_real) {
+		// rescale coordinates from matched images
+		// trueImage 
+		img1_x = img1_x * 1.0 / d2Net_scalingFactor_trueImage;
+		img1_y = img1_y * 1.0 / d2Net_scalingFactor_trueImage;
+		// synthImage 
+		img2_x = img2_x * 1.0 / d2net_scalingFactor_synthImage;
+		img2_y = img2_y * 1.0 / d2net_scalingFactor_synthImage;
+
+		/*if (halved_image_real) {
 			img1_x = img1_x * 2.0;
 			img1_y = img1_y * 2.0;
 		}
@@ -241,13 +251,13 @@ void Matching::loadD2netMatches(std::string in_path_D2Net_Kpts,
 		if (halved_image_real) {
 			img2_x = img2_x * 2.0;
 			img2_y = img2_y * 2.0;
-		}
+		}*/
 
 		// push back inlieres separately
 		real_matched_pts.push_back(cv::Point2d(img1_x, img1_y));
 		synth_matched_pts.push_back(cv::Point2d(img2_x, img2_y));
-		
-		
+
+
 		//mLogFile->append("POOOINT: " + std::to_string(img1_x) + "," + std::to_string(img1_y) + "," + std::to_string(img2_x) + "," + std::to_string(img2_y));
 
 		counter++;
@@ -277,8 +287,7 @@ void Matching::loadD2netMatches(std::string in_path_D2Net_Kpts,
 
 
 	// --- receive 3D coordinates for all image points 
-	// allowed neighbouring distance for knn search  
-	float neighbourDistance_allowed = 0.99f; // 2.5f; // 0.99f; //0.5f
+
 
 	// vectors for matching results in declaration
 	calculate_nn_synth_key___pts_image_pts(
@@ -848,7 +857,7 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 		cv::Point2d p2 = cv::Point2d(vx * 5 + x, vy * 5 + y); //end point for line equation
 
 		double theta = atan2((p2.y - p1.y), (p2.x - p1.x));
-
+		const double PI = 3.14159265358979323846;
 		log_statistics << "fit water line xz 2d: " << vx << "," << vy << "," << x << "," << y << ", size: " << optimized_water_points_xz.size() << std::endl;
 		log_statistics << "angle between line and x-axis: " << theta << ", (degrees: " << theta * 180 / PI << ")" << std::endl << std::endl;
 
@@ -946,11 +955,11 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 		mLogFile->append(TAG + "have written results to JSON");
 
 		std::ostringstream line_4_results;
-		line_4_results << mDataManager->getFileNameImage() << "; median;" << median_z << "; mean_z; " << mean_z << "; 3stdev_z; " << stdev_z*3.0 << "; mean_z_leveled; " << mean_z_leveled << "; 3stdev_z_leveled; " << stdev_z_leveled *3.0
+		line_4_results << mDataManager->get_filename_true_image() << "; median;" << median_z << "; mean_z; " << mean_z << "; 3stdev_z; " << stdev_z*3.0 << "; mean_z_leveled; " << mean_z_leveled << "; 3stdev_z_leveled; " << stdev_z_leveled *3.0
 			<< ";repro_error;" << mReproError4JSON << ";inl_dist_cl_wl_perc;" << std::to_string(inliers_per_importance_cell_percent) << ";inl_dist_cl_wl_no;" << std::to_string(point_counter_importance) << ";total_inliers;" << std::to_string(no_inliers_4_stat)
 			<< ";f;" << camera_matrix.at<double>(0, 0) << ";cx;" << camera_matrix.at<double>(0, 2) << ";cy;" << camera_matrix.at<double>(1, 2) << ";a;" << dist_coeffs.at<double>(0, 0) << ";" << dist_coeffs.at<double>(1, 0) << ";" << dist_coeffs.at<double>(2, 0)
 			<< ";b;" << dist_coeffs.at<double>(3, 0) << ";" << dist_coeffs.at<double>(4, 0) << ";c;" << dist_coeffs.at<double>(5, 0) << ";" << dist_coeffs.at<double>(6, 0);
-		appendLineToFile(mDataManager->getResultDirectory() + "\\result.txt", line_4_results.str());
+		appendLineToFile(mDataManager->get_path_directory_result() + "\\result.txt", line_4_results.str());
 
 
 		// ----------------------------------------------------------------------------------------
@@ -982,8 +991,8 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 	else {
 		mLogFile->append(TAG + "no waterline detectable");
 		std::ostringstream line_4_results;
-		line_4_results << mDataManager->getFileNameImage() + ";_;no waterline";
-		appendLineToFile(mDataManager->getResultDirectory() + "\\result.txt", line_4_results.str());
+		line_4_results << mDataManager->get_filename_true_image() + ";_;no waterline";
+		appendLineToFile(mDataManager->get_path_directory_result() + "\\result.txt", line_4_results.str());
 	}
 
 	// print point cloud

@@ -118,13 +118,13 @@ int main(int argc, char** argv)
 	std::string workingDirectory = (GetCurrentWorkingDir() + "\\" + "Result" + "\\");
 	CreateDirectoryA(LPCSTR(workingDirectory.c_str()), NULL); // erstelle Verzeichnis
 
-	dataManager->setPathToResults(workingDirectory);
+	dataManager->set_path_directory_result(workingDirectory);
 
 	workingDirectory = workingDirectory + localTime + "\\";
 	CreateDirectoryA(LPCSTR(workingDirectory.c_str()), NULL); // erstelle Verzeichnis
 
 	// set working directory in dataManager and logFilePrinter
-	dataManager->setWorkingDirectory(workingDirectory);
+	dataManager->set_path_working_directory(workingDirectory);
 
 	// set directory of executable (necessary for VSFM)
 	logFilePrinter->append(TAG + "directory of executable : " + std::string(argv[0]));
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
 
 			logFilePrinter->append(TAG + "path point cloud: " + input);
 
-			dataManager->setInputPointCloud(input); // set path point cloud (input)
+			dataManager->set_path_file_pointcloud(input); // set path point cloud (input)
 
 			i += 1;
 			break;
@@ -376,8 +376,9 @@ int main(int argc, char** argv)
 						matched_object_points,
 						matched_image_points_real,
 						matched_image_points_synth,
-						dataManager->get_halved_image_real(),
-						dataManager->get_halved_image_synth());
+						dataManager->get_d2Net_scalingFactor_trueImage(),
+						dataManager->get_d2Net_scalingFactor_synthImage()					
+					);
 
 					// perform spatial resection using these points for camera and exterior orientation determination, check if values for camera are valid and available
 					cv::Mat canvas_real_image = cv::Mat();
@@ -498,9 +499,9 @@ int main(int argc, char** argv)
 			//std::filesystem::remove_all(dataManager->getWorkingDirectory() + "\\Matching\\");
 			//std::filesystem::remove_all(dataManager->getWorkingDirectory() + "\\VegetationMask\\");
 
-			boost::filesystem::remove_all(dataManager->getWorkingDirectory() + "\\myData\\");
-			boost::filesystem::remove_all(dataManager->getWorkingDirectory() + "\\Matching\\");
-			boost::filesystem::remove_all(dataManager->getWorkingDirectory() + "\\VegetationMask\\");
+			boost::filesystem::remove_all(dataManager->get_path_working_directory() + "\\myData\\");
+			boost::filesystem::remove_all(dataManager->get_path_working_directory() + "\\Matching\\");
+			boost::filesystem::remove_all(dataManager->get_path_working_directory() + "\\VegetationMask\\");
 
 
 			

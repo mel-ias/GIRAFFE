@@ -17,11 +17,9 @@ PerspectiveImage::PerspectiveImage(DataManager* _dataManager) {
 	dataManager = _dataManager;
 	calculator.init(_dataManager);
 
-	_pointloader = new PointLoader(_dataManager->getPathInputPointCloud(), _dataManager); //new PointLoader(path);    
+	_pointloader = new PointLoader(_dataManager->get_path_file_pointcloud(), _dataManager); //new PointLoader(path);    
 
-	// Übergebe Outputpfad
-	setOutputPath(_dataManager->getPathOutputImage());
-
+	
 }
 
 // D'tor
@@ -33,19 +31,10 @@ PerspectiveImage::~PerspectiveImage() {
 
 
 
-// checks whether all necessary variables are set
-void
-PerspectiveImage::checkVariables(){
-    if(_outputPath.empty()){
-		logfile->append(TAG + "output path undefined. return.");
-        exit(0);
-    }
-}
-
 // generates image
 void
 PerspectiveImage::generateImage(){
-    checkVariables();
+    //checkVariables();
 	
 	// NUR MATCHING TESTEN!
 	_pointloader->set_imc(&calculator); //startet init von imcalculator
@@ -58,7 +47,7 @@ PerspectiveImage::generateImage(){
 	_pointloader->read_binary_file();
 	
 	calculator.writeImages();
-	calculator.saveImages(_outputPath);
+	calculator.saveImages();
 	calculator.fillVektorsForImFill();
 
 	size_t k_for_knn = 3;

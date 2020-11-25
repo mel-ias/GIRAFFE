@@ -62,7 +62,7 @@ public:
 		boundingBox = new BoundingBox(logFile);
 
 		// init variables with default values
-		input = "something.bin"; // causes a "not a pw" error
+		path_file_point_cloud = "something.bin"; // causes a "not a pw" error
 		output = "out_img";
 		pixSize = 0.00089f;
 
@@ -142,14 +142,12 @@ public:
 
 
 	// ---------------INITIALISATION DATA: READ JSON FILE ------------------ //
-	void readJSONFile(std::string pathToJsonFile) {
+	void readJSONFile(std::string path_file_json) {
 
 		// read a JSON file
-		std::ifstream i(pathToJsonFile);
+		std::ifstream i(path_file_json);
 		json j;
 		i >> j;
-		
-		
 		log_readJson << "Read JSON file. Define parameters: " << endl;
 
 
@@ -170,10 +168,10 @@ public:
 		if (j["file_name"] != nullptr) {
 			 
 			// define paths to image and output
-			std::string pathMasterImage = pathToJsonFile.substr(0, pathToJsonFile.find_last_of("\\/")) + "\\" + j.at("file_name").get<std::string>();
+			std::string pathMasterImage = path_file_json.substr(0, path_file_json.find_last_of("\\/")) + "\\" + j.at("file_name").get<std::string>();
 			std::string pathOutput = j.at("file_name").get<std::string>() + "_out";
 			
-			file_name_image = j.at("file_name").get<std::string>();
+			file_name_true_image = j.at("file_name").get<std::string>();
 
 			// set input image, image size
 			realImage = cv::imread(pathMasterImage.c_str());
@@ -192,7 +190,7 @@ public:
 		// set water line
 		if (j["waterline_file_name"] != nullptr) {
 			 
-			std::string pathWaterLine = (pathToJsonFile.substr(0, pathToJsonFile.find_last_of("\\/")) + "\\" + j.at("waterline_file_name").get<std::string>()).c_str();
+			std::string pathWaterLine = (path_file_json.substr(0, path_file_json.find_last_of("\\/")) + "\\" + j.at("waterline_file_name").get<std::string>()).c_str();
 
 			if (pathWaterLine == "waterline.txt") {
 				std::cerr << "no waterline available" << std::endl;
@@ -567,12 +565,7 @@ public:
 
 
 
-	// -------------- point cloud file.pw ----------------
-	void setInputPointCloud(std::string path) {
-		input = path;
-		log_readJson << "Set input point cloud " << path << endl;
-	}
-	// --------------------------------------------- //
+	
 
 
 	// ----------------- IMAGE MANAGEMENT ---------------- //
@@ -643,99 +636,105 @@ public:
 	// management of bounding box
 	BoundingBox* getBoundingBox() { return boundingBox; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 	// --------------------------------------------- //
 
-	bool get_halved_image_real() { return halved_realImage; }
-	bool get_halved_image_synth() { return halved_synthImage; }
 
-	bool generate_Batch_D2Net(const cv::Mat& _realImage, const cv::Mat& _synthImage) {
-		//Dateipfad
-		std::string wd_batch = (this->getWorkingDirectory() + "\\myData\\");
-		CreateDirectoryA(LPCSTR(wd_batch.c_str()), NULL);
-
-		// erzeuge hier imageList.txt und Batchfile für weiterarbeit mit VSFM
-		std::string pathImageList = (wd_batch + "image_file_list.txt").c_str();
-		std::string pathRealImage = (wd_batch + "1.jpg").c_str();
-		std::string pathSynthImage = (wd_batch + "2.jpg").c_str();
-		pathOutputFile_D2Net = (wd_batch + "kpts.txt").c_str();
-
-		log_generateBatchFile << "path image_file_list.txt: " << pathImageList << endl;
-
-		if (_realImage.empty() || _synthImage.empty()) {
+	bool generate_Batch_D2Net(const cv::Mat& trueImage, const cv::Mat& synthImage) {
+		
+		// check true and synth image to match
+		if (trueImage.empty() || synthImage.empty()) {
 			log_generateBatchFile << "cannot generate batch file: missing images" << std::endl;
 			return false;
-		}
-		else {
+		} else {
 			log_generateBatchFile << "generate batch file to run VisualSFM" << std::endl;
 		}
+	
+		// set local parameters max_edge and max_sum_edges
+		// caution! definition from d2net, do better not change (otherwise it will require a lot of VRAM on GPU or the calculation will take a lot of time!)
+		const uint max_edge = 1600;
+		const uint max_sum_edges = 2800;
+		
+		//define paths for in- and output 
+		std::string path_directory_myData = (this->get_path_working_directory() + "\\myData\\");	
+		CreateDirectoryA(LPCSTR(path_directory_myData.c_str()), NULL); //generate myData directory
+		std::string path_file_imagelist_to_match = (path_directory_myData + "image_file_list.txt").c_str(); // generate imageList.txt & bat-file for d2Net
+		std::string path_file_trueImage_to_match = (path_directory_myData + "1.jpg").c_str();
+		std::string path_file_synthImage_to_match = (path_directory_myData + "2.jpg").c_str();
+		path_file_output_D2Net_matches = (path_directory_myData + "kpts.txt").c_str();
 
-		uint max_edge = 1600;
-		uint max_sum_edges = 2800;
+		log_generateBatchFile << "path image_file_list.txt: " << path_file_imagelist_to_match << endl;
+	
+		// check if max_edge and max_sum_edges of trueImage and synthImage fit the requirements from d2net
+		// otherwise, reduce image size (half sized currently)
 
-		// reduce image size to fit requirements from d2net
-		uint real_largest_edge = _realImage.size().width > _realImage.size().height ? _realImage.size().width : _realImage.size().height;
-		uint synth_largest_edge = _synthImage.size().width > _synthImage.size().height ? _synthImage.size().width : _synthImage.size().height;
+		// calculate scaling factor
+		d2Net_scalingFactor_trueImage = static_cast<double>(max_sum_edges) / (trueImage.size().width + trueImage.size().height); //0.5; 
+		d2Net_scalingFactor_synthImage = static_cast<double>(max_sum_edges) / (synthImage.size().width + synthImage.size().height); //0.5
+		std::cout << "d2net: scaling factors, true image: " << d2Net_scalingFactor_trueImage << ", synth image: " << d2Net_scalingFactor_synthImage << endl;
+		log_generateBatchFile << "d2net: scaling factors, true image: " << d2Net_scalingFactor_trueImage << ", synth image: " << d2Net_scalingFactor_synthImage << endl;
 
-		if (real_largest_edge > max_edge) {
-			cv::Mat realImage_half;
-			cv::resize(_realImage, realImage_half, cv::Size(), 0.5, 0.5);
-			cv::imwrite(pathRealImage, realImage_half);
-			halved_realImage = true;
-		}
-		else {
-			// speichere Real/SynthBild im WD ab
-			cv::imwrite(pathRealImage, _realImage);
-			halved_realImage = false;
-		}
+		// apply scaling factor
+		cv::Mat trueImage_scaled, synthImage_scaled;
+		cv::resize(trueImage, trueImage_scaled, cv::Size(), d2Net_scalingFactor_trueImage, d2Net_scalingFactor_trueImage);
+		cv::resize(synthImage, synthImage_scaled, cv::Size(), d2Net_scalingFactor_synthImage, d2Net_scalingFactor_synthImage);
+		cv::imwrite(path_file_trueImage_to_match, trueImage_scaled);
+		cv::imwrite(path_file_synthImage_to_match, synthImage_scaled);
 
-		if (synth_largest_edge > max_edge) {
-			cv::Mat synthImage_half;
-			cv::resize(_synthImage, synthImage_half, cv::Size(), 0.5, 0.5);
-			cv::imwrite(pathSynthImage, synthImage_half);
-			halved_synthImage = true;
-		}
-		else {
-			// speichere Real/SynthBild im WD ab
-			cv::imwrite(pathSynthImage, _synthImage);
-			halved_synthImage = false;
-		}
+		
 
 		//prüfe ob bilder bereits gespeichert wurden und pfad somit aktiv
-		while (calculateFileSize(pathRealImage) == NULL || calculateFileSize(pathSynthImage) == NULL || calculateFileSize(pathRealImage) < 1 || calculateFileSize(pathSynthImage) < 1) {
+		while (calculateFileSize(path_file_trueImage_to_match) == NULL || calculateFileSize(path_file_synthImage_to_match) == NULL || calculateFileSize(path_file_trueImage_to_match) < 1 || calculateFileSize(path_file_synthImage_to_match) < 1) {
 			// mache nix solang kein Bild da ist!
 		}
 
-		log_generateBatchFile << "file size real image: " << calculateFileSize(pathRealImage) << ", file size virtual image: " << calculateFileSize(pathSynthImage) << endl;
+		log_generateBatchFile << "file size real image: " << calculateFileSize(path_file_trueImage_to_match) << ", file size virtual image: " << calculateFileSize(path_file_synthImage_to_match) << endl;
 
 		// lege Filestream für image_list_file und BatchFile an
 		std::ofstream myFileImageList;
-		myFileImageList.open(pathImageList); // Ablage im WD
-		myFileImageList << pathRealImage << endl;
-		myFileImageList << pathSynthImage << endl;
+		myFileImageList.open(path_file_imagelist_to_match); // Ablage im WD
+		myFileImageList << path_file_trueImage_to_match << endl;
+		myFileImageList << path_file_synthImage_to_match << endl;
 
 		myFileImageList.close();
 
-		while (calculateFileSize(pathImageList) == NULL) {
+		while (calculateFileSize(path_file_imagelist_to_match) == NULL) {
 		}
 
 		// erzeuge BatchFile
-		std::string tempPath = exeDirectory_Vsfm;
-		path_d2net_batch = (tempPath.substr(0, tempPath.find_last_of("\\/")) + "\\d2net\\myBatchD2Net-1.bat").c_str();
-		std::string path_d2net = (tempPath.substr(0, tempPath.find_last_of("\\/")) + "\\d2net").c_str();
+		path_file_batch_call_pyD2Net = (path_directory_feature_matching_tool.substr(0, path_directory_feature_matching_tool.find_last_of("\\/")) + "\\d2net\\myBatchD2Net-1.bat").c_str();
+		std::string path_d2net = (path_directory_feature_matching_tool.substr(0, path_directory_feature_matching_tool.find_last_of("\\/")) + "\\d2net").c_str();
 
 		std::ofstream myD2NetBatchFile;
-		myD2NetBatchFile.open(path_d2net_batch); // Ablage im WD
+		myD2NetBatchFile.open(path_file_batch_call_pyD2Net); // Ablage im WD
 		myD2NetBatchFile 
-			<< "cd " << path_d2net 
-			<< "& " 
-			<< "%windir%\\System32\\cmd.exe /k " 
-			<< "\"\"C:\\ProgramData\\Anaconda3\\Scripts\\activate.bat\" env_d2net & python --version & python.exe D:\\PROMOTION\\vs_workspace\\VI_for_AndroidRotation\\x64\\VIG_Release_CV_410_x64\\d2net\\extract_features.py --image_list_file "
-			//<< "\"\ python --version & python.exe D:\\PROMOTION\\vs_workspace\\VI_for_AndroidRotation\\x64\\VIG_Release_CV_410_x64\\d2net\\extract_features.py --image_list_file "
-			<< pathImageList << " & exit() & cd" << wd_batch << "\"" << endl;
+			<< "cd " << path_d2net
+			<< " &" 
+			<< " %windir%\\System32\\cmd.exe /k" 
+		 	<< " \"\"C:\\ProgramData\\Anaconda3\\Scripts\\activate.bat\" env_d2net & python --version & python.exe " << path_d2net << "\\extract_features.py" 
+			<< " --image_list_file " << path_file_imagelist_to_match 
+			<< " --max_edge " << max_edge 
+			<< " --max_sum_edges " << max_sum_edges
+			<< " & exit() & cd " << path_directory_myData << "\"" << endl;
 		myD2NetBatchFile.close(); // Ablage im WD
 	
 		return true;
 	}
+
+
+
 
 
 	// ---------- GENERATE BATCH FILE 4 VISUAL SFM --------- //
@@ -745,7 +744,7 @@ public:
 	bool generate_Batch_VisualSfM(const cv::Mat& _realImage, const cv::Mat& _synthImage) {
 		
 		//Dateipfad
-		std::string wd_batch = (this->getWorkingDirectory() + "\\myData\\");
+		std::string wd_batch = (this->get_path_working_directory() + "\\myData\\");
 		CreateDirectoryA(LPCSTR(wd_batch.c_str()), NULL);
 
 		// erzeuge hier imageList.txt und Batchfile für weiterarbeit mit VSFM
@@ -789,26 +788,26 @@ public:
 		}
 
 		// erzeuge BatchFile
-		pathBatch_Vsfm = (wd_batch + "myBatchSfM.bat").c_str();
-		pathOutputFile_Vsfm = (wd_batch + "outputSfmMatches.txt").c_str();
+		path_file_batch_call_exeVSfM = (wd_batch + "myBatchSfM.bat").c_str();
+		path_file_output_VSfM_matches = (wd_batch + "outputSfmMatches.txt").c_str();
 
 		// Vsfm --> hole Pfad neu aus Verzeichnis!
 		//char buff[FILENAME_MAX];
 		//GetCurrentDir(buff, FILENAME_MAX);
 		
-		std::string tempPath = exeDirectory_Vsfm;
+		std::string tempPath = path_directory_feature_matching_tool;
 		log_generateBatchFile << tempPath.substr(0, tempPath.find_last_of("\\/")) << endl;
 		
 		std::string pathVsfm = (tempPath.substr(0, tempPath.find_last_of("\\/")) + "\\VisualSFM\\VisualSFM.exe").c_str();
 
 
 		std::ofstream myVsfmBatchFile;
-		myVsfmBatchFile.open(pathBatch_Vsfm); // Ablage im WD
+		myVsfmBatchFile.open(path_file_batch_call_exeVSfM); // Ablage im WD
 
 
 		myVsfmBatchFile << "@echo off" << endl;
-		myVsfmBatchFile << pathVsfm << " sfm " << pathImageList << " " << pathOutputFile_Vsfm << endl;
-		myVsfmBatchFile << pathVsfm << " sfm[pairs+exportf] " << pathImageList << " " << pathOutputFile_Vsfm << endl;
+		myVsfmBatchFile << pathVsfm << " sfm " << pathImageList << " " << path_file_output_VSfM_matches << endl;
+		myVsfmBatchFile << pathVsfm << " sfm[pairs+exportf] " << pathImageList << " " << path_file_output_VSfM_matches << endl;
 
 		myVsfmBatchFile.close(); // Ablage im WD
 
@@ -824,36 +823,21 @@ public:
 
 
 
-	std::string getPathOutputFile_Vsfm() { return pathOutputFile_Vsfm; }
-	std::string getPathOutputFile_D2Net() { return pathOutputFile_D2Net; }
-	std::string getPathBatchFile_VSfM() { return pathBatch_Vsfm; }
-	std::string getPathBatchFile_D2Net() { return path_d2net_batch; }
-	std::string getExeDirectory() { return exeDirectory_Vsfm; }
-	void setDirectoryExecutable(std::string value) { exeDirectory_Vsfm = value; }
-	std::string getPathBatchFile_EllipsoidJar() { return path_to_ellipsoid_jar_batch; }
-	void setPath_to_ellipsoid_jar_batch(std::string _path) { path_to_ellipsoid_jar_batch = _path; }
+	std::string getPathOutputFile_Vsfm() { return path_file_output_VSfM_matches; }
+	std::string getPathOutputFile_D2Net() { return path_file_output_D2Net_matches; }
+	std::string getPathBatchFile_VSfM() { return path_file_batch_call_exeVSfM; }
+	std::string getPathBatchFile_D2Net() { return path_file_batch_call_pyD2Net; }
+	std::string getExeDirectory() { return path_directory_feature_matching_tool; }
+	void setDirectoryExecutable(std::string value) { path_directory_feature_matching_tool = value; }
+	std::string getPathBatchFile_EllipsoidJar() { return path_file_batch_call_jarEllipsoid; }
+	void setPath_to_ellipsoid_jar_batch(std::string _path) { path_file_batch_call_jarEllipsoid = _path; }
 
 
 	// --------------------------------------------- //
 
 
 
-	// -----------------SET/ GET WORKING DIRECTORY--------------------- //
-	// vermeiden von spontanen Änderungen am Arbeitsverzeichnis --> arbeite nur hiermit!
-	void setWorkingDirectory(std::string wd) {
-		currentWorkingDirectory = wd;
-		logFilePrinter->append(TAG + "set working directory : " + currentWorkingDirectory);
-	}
-	std::string getWorkingDirectory() { return currentWorkingDirectory; }
 
-
-	void setPathToResults(std::string wd) {
-		resultDirectory = wd;
-		logFilePrinter->append(TAG + "set result directory : " + resultDirectory);
-	}
-	std::string getResultDirectory() { return resultDirectory; }
-
-	std::string  getFileNameImage() { return file_name_image; }
 
 	
 	
@@ -870,33 +854,18 @@ public:
 	}
 
 	
-	
-
-	// defined in Matching.cpp
-	// in case of failed matching, give error message to main and exit program safely (call destructors, ...)
-	void setFailedMatching(bool value) { failedMatching = value; }
-	bool getFailedMatching() { return failedMatching; }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	// ------------------ write information about data initialisation in log window
-	
-	LogFile* getLogFilePrinter() {
-		return logFilePrinter;
+	// calculate BoundingBox
+	void calculateBoundingBox() {
+		boundingBox->calcBoundingBox();
 	}
-	
 
+
+
+
+
+
+
+	// ------ printers ------
 	void printLogfile_log_readJson() {
 		std::string line, lineErr;
 		
@@ -924,18 +893,45 @@ public:
 		}	
 	}
 
+
+
+	// ----------- getters / setters ---------------------
+
+	// PATHS
+	// get/set path to working directory
+	void set_path_working_directory(std::string path_dir) {
+		path_working_directory = path_dir;
+		logFilePrinter->append(TAG + "set working directory : " + path_working_directory);
+	}
+	std::string get_path_working_directory() { return path_working_directory; }
+
+	// get/set path to result directory
+	void set_path_directory_result(std::string path_dir) {
+		path_directory_result = path_dir;
+		logFilePrinter->append(TAG + "set result directory : " + path_directory_result);
+	}
+	std::string get_path_directory_result() { return path_directory_result; }
+	
+	// get/set path of point cloud used for synthetic image rendering (pointcloud.pw file)
+	void set_path_file_pointcloud(std::string path) {
+		path_file_point_cloud = path;
+		log_readJson << "Set input point cloud " << path << endl;
+	}
+	std::string get_path_file_pointcloud() { return path_file_point_cloud; }
+
 	
 
+	// get file name of true (master) image (set during read out of JSON meta data file)
+	std::string  get_filename_true_image() { return file_name_true_image; }
+	
+	// get image size of true image
+	cv::Size get_size_true_image() { return imageSize; }
+	
 	
 
 
-
-
-	// ----------- getters -------------------------------
-	// ----------- INITIALISATION JSON FILE --------------
-	std::string getPathInputPointCloud() { return input; }
-	cv::Size get_real_image_size() { return imageSize; }
-	std::string getPathOutputImage() { return output; }
+	// get logfile
+	LogFile* getLogFilePrinter() { return logFilePrinter; }
 
 	// get information about water line
 	std::vector<cv::Point2d>* get_water_line_image_points_2D_ptr() { return waterlinePoints; }
@@ -948,8 +944,8 @@ public:
 	float& getFocalLength() { return ck; }
 	
 	// in case of available camera information from android
-	bool get_have_camera_calibration_android_cm() { return have_calibration_values_android_cm; }
-	bool get_have_camera_calibration_android_dc() { return have_calibration_values_android_dc; }
+	bool get_have_camera_calibration_android_cm() { return have_calibration_values_android_cm; } // cam matrix
+	bool get_have_camera_calibration_android_dc() { return have_calibration_values_android_dc; } // distortion coefficients
 	
 	cv::Mat get_camera_calibration_android_cm() { 
 		std::stringstream cam_mat_string; cam_mat_string << camera_matrix_android;
@@ -962,6 +958,34 @@ public:
 		return distortion_coefficents_android; }
 	
 	double get_camera_calibration_android_rmse() { return rmse_calibration_android; }
+
+	
+
+	
+
+	// ----- MetaData 	 ------
+	std::string& get_uuid() { return uuid; } 	// get uuid
+	
+	// get information about projection settings
+	float& getDistance() { return d; }
+	float& getDistanceNoise() { return dh; }
+	float& getWidenessNoise() { return r; }
+	float& getThresholdForPointProjection() { return thresh_for_point_projection; }
+	
+
+	// TRANSLATION / ROTATION PARAMETERS
+	bool get_have_exterior_information() { return have_exterior_information; }	// for extrinsic information being available
+
+	cv::Mat get_tvecs_prior() {
+		std::stringstream tvec_string; tvec_string << tvecs_prev;
+		logFilePrinter->append(TAG + "Deliver tvecs prior: " + tvec_string.str());
+		return tvecs_prev;
+	}
+	cv::Mat get_rvecs_prior() {
+		std::stringstream rvec_string; rvec_string << rvecs_prev;
+		logFilePrinter->append(TAG + "Deliver rvecs prior: " + rvec_string.str());
+		return rvecs_prev;
+	}
 
 	// get projection center
 	double& getX0() { return x0; }
@@ -980,6 +1004,7 @@ public:
 	}
 
 	// set projection center and define shifters new!
+	// shifters are necessary to work with large coordinates (e.g. UTM coordinates) --> needed to reduce the lengths of coordinates to work with
 	void setProjectCenter_applyShifter(double _x0, double _y0, double _z0) {
 		// define shifter for point cloud shifting!
 		shifter_x = _x0;
@@ -989,25 +1014,18 @@ public:
 		y0 = _y0 - shifter_y;
 		z0 = _z0;
 
-		
-
 		boundingBox->set_X0_Cam_World(x0, y0, z0);
 	}
 
-	// calculate BoundingBox
-	void calculateBoundingBox() {
-		boundingBox->calcBoundingBox();
-	}
-
-	// get orientation
-	// get angles
+	// get orientation angles
 	float& getAzimuth() { return azimuth; }
 	float& getRoll() { return roll; }
 	float& getPitch() { return pitch; }
 
-	// get rotation matrix/ information
-	float* getRotationMatrix() { return Rxyz; }
+	// get rotation matrix
+	float* getRotationMatrix() { return Rxyz; } 
 
+	// set rotation matrix
 	void setRotationMatrix_cvMat(cv::Mat _rotM) {
 		
 		Rxyz[0] = _rotM.at<double>(0,0);
@@ -1036,76 +1054,50 @@ public:
 
 		boundingBox->set_Rz(Rz);
 	}
- 	// get uuid
-	std::string& get_uuid() { return uuid; }
-	
-	/*std::vector<float>& getAndroidRotationMatrix() { return R_android; }	// returns androids calculated rotation vector column major! 
-	bool getHaveAndroidRotationMatrix() {
-		if (R_android.empty())
-			return false;
-		else
-			return true;
-	}*/
-
-	// get information about projection settings
-	float& getDistance() { return d; }
-	float& getDistanceNoise() { return dh; }
-	float& getWidenessNoise() { return r; }
-	float& getThresholdForPointProjection() { return thresh_for_point_projection; }
 
 
-	// for extrinsic information being available
-	bool get_have_exterior_information() { return have_exterior_information; }
-	
-	cv::Mat get_rvecs_prior() {
-		std::stringstream rvec_string; rvec_string << rvecs_prev;
-		logFilePrinter->append(TAG + "Deliver rvecs prior: " + rvec_string.str());
-		return rvecs_prev;
-	}
 
-	cv::Mat get_tvecs_prior() {
-		std::stringstream tvec_string; tvec_string << tvecs_prev;
-		logFilePrinter->append(TAG + "Deliver tvecs prior: " + tvec_string.str());
-		return tvecs_prev;
-	}
+	// ----- Matching 	 ------
+	// in case of failed matching, give error message to main and exit program safely (call destructors, ...)
+	void setFailedMatching(bool value) { failedMatching = value; } // defined in Matching.cpp
+	bool getFailedMatching() { return failedMatching; }
 
-	// getters setters for object point distribution & IO refinement (if or if not!)
+	// get d2Net scaling factor for true and synthetic image to match max_edge_sum and max_edge
+	double get_d2Net_scalingFactor_trueImage() { return d2Net_scalingFactor_trueImage; }
+	double get_d2Net_scalingFactor_synthImage() { return d2Net_scalingFactor_synthImage; }
+
+	// get/set infos about object point distribution & IO refinement (if or if not!)
 	void set_well_distributed_object_points_3D_space(bool val) { well_distributed_object_points_3D_space = val; }
 	bool get_well_distributed_object_points_3D_space() { return well_distributed_object_points_3D_space; }
 	void set_well_distributed_object_points_image_space(bool val) { well_distributed_object_points_image_space = val; }
 	bool get_well_distributed_object_points_image_space() { return well_distributed_object_points_image_space; }
 
-	// set results after solve pnp --> nur für init file für nadines rrws ... ggf raus
-	/*void set_projCenter_Corr(cv::Point3d value) { projCenter_Corr = value; }
-	void set_eulerAngles_Corr(cv::Vec3f value) { eulerAngles_Corr = value; }
-	void set_focal_length_Corr(double value) { focal_length_Corr = value; }
-	void set_principle_point_Corr(cv::Point2d value) { principle_point_Corr = value; }
-	*/
-	// set results after solve pnp --> nur für init file für nadines rrws ... ggf raus
-
-
-	// get results after solve pnp --> nur für init file für nadines rrws ... ggf raus
-	/*cv::Point3d get_projCenter_Corr() { return projCenter_Corr; }
-	cv::Vec3f get_eulerAngles_Corr() { return eulerAngles_Corr; }
-	double get_focal_length_Corr() { return focal_length_Corr; }
-	cv::Point2d get_principle_point_Corr() { return principle_point_Corr; }*/
-	// get results after solve pnp --> nur für init file für nadines rrws ... ggf raus
 
 
 
 
-
-	
 private:
 
 	const std::string TAG = "DataManager:\t";
+
+
+	// paths to directories or files
+	std::string path_working_directory = "noDir";
+	std::string path_directory_feature_matching_tool = "noDir";
+	std::string path_directory_result = "noDir";
+	std::string path_file_output_VSfM_matches = "noDir";
+	std::string path_file_output_D2Net_matches = "noDir";
+	std::string path_file_batch_call_jarEllipsoid = "noDir";
+	std::string path_file_batch_call_exeVSfM = "noDir";
+	std::string path_file_batch_call_pyD2Net = "noDir";
+	std::string file_name_true_image = "noFn";
 
 	// logoutput (gesammelt plotten)
 	std::stringstream log_readJson, log_readJsonErr; 
 	std::stringstream log_generateBatchFile;
 	
 	// init variables with default values
-	std::string input, output;
+	std::string path_file_point_cloud, output;
 	double x0, y0, z0;
 	cv::Size imageSize; 
 	cv::Mat realImage; std::string pathToMasterImage;
@@ -1137,12 +1129,7 @@ private:
 	cv::Mat maskTGI_Vegetation_real, maskTGI_Vegetation_synth;
 	bool haveVegetationMask = false;
 
-	std::string currentWorkingDirectory = "noDir";
-	std::string exeDirectory_Vsfm = "noDir";
-	std::string resultDirectory = "noDir";
-	std::string file_name_image = "noFn"; 
-	std::string path_to_ellipsoid_jar_batch = "noDir";
-	std::string pathOutputFile_Vsfm, pathOutputFile_D2Net, pathBatch_Vsfm, path_d2net_batch;
+
 
 	double shifter_x = 0.0, shifter_y = 0.0; // erlaube Shifting von großen Punktwolken für höhere Genauigkeit und leichters Handling beim matching!
 	
@@ -1181,8 +1168,8 @@ private:
 	bool well_distributed_object_points_image_space = false;  // well distributed means: in each quadric of image are matched image points
 	// well distributed means: in each quadric of image are matched image points
 	// ellipsoid arround matched object points has appropriate Eigenvalues [not NAN --> then, Ellipsoid has only two or less dimensions --> not good for IO refinement!]
-	bool halved_realImage = false; //gives information if image had to be resized to 50% resolution to apply d2net feature matching. in this case, the resultant keypoint positions has to be shifted by a factor 2
-	bool halved_synthImage = false;
+	double d2Net_scalingFactor_trueImage = 1.0;
+	double d2Net_scalingFactor_synthImage = 1.0;
 };
 
 

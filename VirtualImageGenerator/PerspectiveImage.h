@@ -46,15 +46,6 @@ public:
 		const cv::Mat& imageToBeFiltered,
 		PerspectiveImage::FILTER_APPS filterToBeApplied);
 
-	// sets output path
-	void setOutputPath(std::string path) {
-		// if there is an extension, remove it
-		if ((path.size() - path.find_last_of('.')) < 5) {
-			path = path.substr(0, path.find_last_of('.'));
-		}
-		_outputPath = path;
-		logfile->append(TAG + "saving output files to " + _outputPath);
-	}
 
 
 private:
@@ -77,9 +68,6 @@ private:
 
 	// an Calculator that generates our images
 	ImCalculator calculator;
-
-	// string containing output bath
-	std::string _outputPath;
 
 	// if true then intensity value is used as gray value otherwise range value
 	bool _writeIntensity;

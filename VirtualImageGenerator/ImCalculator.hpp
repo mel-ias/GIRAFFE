@@ -65,7 +65,7 @@ public:
 	void writeImages();
 
 	/*saves all generated Images*/
-	void saveImages(std::string o);
+	void saveImages();
 
 	
 	bool haveProject(){ return haveProjectSomething; }
@@ -210,6 +210,6 @@ private:
 
 	DataManager* dataManager;
 
-	std::string workingDirectory;
+	std::string path_directory_ImCalculator;
 	
 };
