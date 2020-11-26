@@ -116,7 +116,7 @@ void ImCalculator::saveImages() {
 	h.z0 = bb->get_X0_Cam_World()[2] - bb->get_Correction_backward()* rot_xyz[8];
 
 	// rotation matrix: ie = around x, je = around y, ke = around z
-	h.r = CoordinateImage::RotM(rot_xyz);
+	h.r = RotM(rot_xyz);
 
 	// save _image if it's already a color image
 	if (_image->depth() == CV_8U) {
@@ -383,7 +383,7 @@ void ImCalculator::init_images(int column, int row) {
 
 	}
 
-	dataManager->setCoordinateImage(column, row);
+	dataManager->set_coordinate_image(column, row);
 
 }
 

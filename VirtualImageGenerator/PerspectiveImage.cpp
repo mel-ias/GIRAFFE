@@ -34,8 +34,7 @@ PerspectiveImage::~PerspectiveImage() {
 // generates image
 void
 PerspectiveImage::generateImage(){
-    //checkVariables();
-	
+   	
 	// NUR MATCHING TESTEN!
 	_pointloader->set_imc(&calculator); //startet init von imcalculator
 	_pointloader->check_color();
@@ -54,7 +53,7 @@ PerspectiveImage::generateImage(){
 	calculator.fillImage(k_for_knn); 
 
 	cv::Mat synthImage = calculator.get_FilledImage_Knn();
-	dataManager->setSynthImage(synthImage);
+	dataManager->set_synth_image(synthImage);
 }
 
 

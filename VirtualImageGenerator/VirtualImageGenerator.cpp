@@ -110,26 +110,26 @@ int main(int argc, char** argv)
 
 
 
-	// 3. create working directory
-	// structure: wd\subdir_localtime (no UTC), for UTC conversion use: tm *gmtm = gmtime(&now); dt = asctime(gmtm);
+	// 3a. create results and working directory
+	// create results directory (used for all results of all requests)
+	std::string path_directory_results = (GetCurrentWorkingDir() + "\\" + "Result" + "\\");
+	CreateDirectoryA(LPCSTR(path_directory_results.c_str()), NULL); // erstelle Verzeichnis
+	dataManager->set_path_directory_result(path_directory_results);
+	logFilePrinter->append(TAG + "directory of results: " + path_directory_results);
+
+	//create working directory depending on processing date/time --> dir structure: results\wd_localtime (no UTC! if UTC is desired use 'tm *gmtm = gmtime(&now); dt = asctime(gmtm);'
 	char localTime[20];
 	time_t now = time(0);
 	strftime(localTime, 20, "%Y-%m-%d_%H-%M-%S", localtime(&now)); // current date/time based on current system
-	std::string workingDirectory = (GetCurrentWorkingDir() + "\\" + "Result" + "\\");
-	CreateDirectoryA(LPCSTR(workingDirectory.c_str()), NULL); // erstelle Verzeichnis
-
-	dataManager->set_path_directory_result(workingDirectory);
-
-	workingDirectory = workingDirectory + localTime + "\\";
-	CreateDirectoryA(LPCSTR(workingDirectory.c_str()), NULL); // erstelle Verzeichnis
-
-	// set working directory in dataManager and logFilePrinter
-	dataManager->set_path_working_directory(workingDirectory);
-
-	// set directory of executable (necessary for VSFM)
-	logFilePrinter->append(TAG + "directory of executable : " + std::string(argv[0]));
+	
+	std::string path_working_directory = path_directory_results + localTime + "\\";
+	CreateDirectoryA(LPCSTR(path_working_directory.c_str()), NULL); // generate directory for current processing
+	dataManager->set_path_working_directory(path_working_directory); // set working directory in dataManager
+	logFilePrinter->append(TAG + "working directory: " + path_working_directory);
+	
+	// 3b. set directory of executable (necessary for VSFM/D2Net)
 	dataManager->setDirectoryExecutable(argv[0]);
-
+	logFilePrinter->append(TAG + "directory of feature matching script: " + std::string(argv[0]));
 
 
 
@@ -151,9 +151,9 @@ int main(int argc, char** argv)
 				input = input.substr(na + 1, nb - na - 1);
 			}
 
+			dataManager->set_path_file_pointcloud(input); // set path point cloud (input)
 			logFilePrinter->append(TAG + "path point cloud: " + input);
 
-			dataManager->set_path_file_pointcloud(input); // set path point cloud (input)
 
 			i += 1;
 			break;
@@ -175,7 +175,7 @@ int main(int argc, char** argv)
 
 
 	// 5. set and read json. using dataManager for reading and storage 
-	dataManager->readJSONFile(jsonTxt);
+	dataManager->read_json_file(jsonTxt);
 
 
 
@@ -213,10 +213,10 @@ int main(int argc, char** argv)
 		// 6.b) image filtering, currently implemented: Wallis, Gaussian, FastNlMeans_Color, Bilateral_Color
 		// !!! only for first iteration regarding real image! otherwise, the pre-processing would be performed ever and ever again!
 		if (iteration == 0) {
-			dataManager->setRealImage(pim->applyFilterAlgorithms(dataManager->get_real_image(), PerspectiveImage::APPLY_GAUSSIAN)); // slight smoothing because of unsharpness of rendered virtual image
+			dataManager->set_true_image(pim->applyFilterAlgorithms(dataManager->get_real_image(), PerspectiveImage::APPLY_GAUSSIAN)); // slight smoothing because of unsharpness of rendered virtual image
 		    //dataManager->setRealImage(pim->applyFilterAlgorithms(dataManager->get_real_image(), PerspectiveImage::APPLY_WALLIS)); // slight smoothing because of unsharpness of rendered virtual image																													
 		}
-		dataManager->setSynthImage(pim->applyFilterAlgorithms(dataManager->get_synth_image(), PerspectiveImage::APPLY_GAUSSIAN)); // slight smoothing because of point pattern due to rendered virtual image
+		dataManager->set_synth_image(pim->applyFilterAlgorithms(dataManager->get_synth_image(), PerspectiveImage::APPLY_GAUSSIAN)); // slight smoothing because of point pattern due to rendered virtual image
 		//dataManager->setSynthImage(pim->applyFilterAlgorithms(dataManager->get_synth_image(), PerspectiveImage::APPLY_WALLIS)); // slight smoothing because of point pattern due to rendered virtual image
 
 		
@@ -530,7 +530,7 @@ int main(int argc, char** argv)
 	matching->waterlineProjection(*dataManager->get_water_line_image_points_2D_ptr(), *dataManager->get_synth_pts_3D(), dataManager->get_real_image(), camera_matrix, dist_coeffs, rvec, tvec, shifter_x, shifter_y, print_pcl);
 
 
-	logFilePrinter->print_content_disk(workingDirectory + "logfile.txt");
+	logFilePrinter->print_content_disk(path_working_directory + "logfile.txt");
 
 
 	// final call destructors

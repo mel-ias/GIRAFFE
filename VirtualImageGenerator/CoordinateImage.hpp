@@ -5,44 +5,17 @@
 #include"opencv2\opencv.hpp"
 #include"LaserPoint.h"
 #include "kdtree.h"
+#include "Mathematics.h"
 
-/*This is class, which is used to map the coordinates of each laserpoint to his projected pixel in the virtual image.
-
-In this project it only needs to read and write data (!)
-*/
+/**
+* This is class, which is used to map the coordinates of each point from the point cloud to his projected pixel in the virtual image.
+* In this project it only needs to read and write data (!)
+**/
 class CoordinateImage
 {
 public:
 
-	struct RotM{
-
-		RotM(){ for(int i = 0; i < 9; ++i) r[i] = 0.0f; }
-
-		/*Copy rIn to r !! rIn must be a float[9] !!*/
-		RotM(float* rIn){ for (int i = 0; i < 9; ++i)r[i] = rIn[i]; }
-
-		/*Calc r with the base vector in the camera system , the result will be r = [[x],[y],[z]]
-		ensure, that x,y and z are float[3] !!*/
-		RotM(float* x, float* y, float* z){
-			for (int i = 0; i < 3; ++i){
-				r[i] = x[i];
-				r[i + 3] = y[i];
-				r[i + 6] = z[i];
-			}
-		}
-
-		RotM(RotM &src){ for (int i = 0; i < 9; ++i) r[i] = src.r[i]; }
-
-		RotM& operator=(RotM &lhs){
-			if (this == &lhs) return *this;
-			for (int i = 0; i < 9; ++i) r[i] = lhs.r[i]; 
-			return *this;
-		}
-
-		/*The elements from the 3x3 Rot Matrix with R = [[0,1,2],[3,4,5],[6,7,8]]*/
-		float r[9];
-
-	};
+	
 
 #pragma pack(push,1)
 	struct CimHeader
@@ -72,9 +45,8 @@ public:
 			color[0] = 0;
 			color[1] = 0;
 			color[2] = 0;
-			intensity = -1;
+			intensity = -1.0f;
 			xi = yi = 0;
-			
 		}
 
 		Coordinate(double xc, double yc, double zc, cv::Point3_ <uchar>* colorc, float xic, float yic){
@@ -83,20 +55,20 @@ public:
 			color[0] = colorc->x; // [0];
 			color[1] = colorc->y; // [1];
 			color[2] = colorc->z; // [2];
+			intensity = -1.0f; //not defined
 			xi = xic;
 			yi = yic;
 		}
 
 		Coordinate(double xc, double yc, double zc, float intensityc, float xic, float yic) {
 			x = xc; y = yc; z = zc;
-			
+			color[0] = 0; //no color
+			color[1] = 0; //no color
+			color[2] = 0; //no color
 			intensity = intensityc;
-	
 			xi = xic;
 			yi = yic;
-		}
-	
-	
+		}	
 	};
 
 	CoordinateImage() = delete;

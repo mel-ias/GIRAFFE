@@ -14,6 +14,44 @@
 #endif
 
 
+// a 3x3 rotation matrix with R = [[0,1,2],[3,4,5],[6,7,8]]
+struct RotM {
+
+	float r[9];
+
+	RotM() {
+		for (int i = 0; i < 9; ++i)
+			r[i] = 0.0f;
+	}
+
+	//Copy rIn to r !! rIn must be a float[9] !!
+	RotM(float* rIn) {
+		for (int i = 0; i < 9; ++i)
+			r[i] = rIn[i];
+	}
+
+	/*Calc r with the base vector in the camera system , the result will be r = [[x],[y],[z]]
+	ensure, that x,y and z are float[3] !!*/
+	RotM(float* x, float* y, float* z) {
+		for (int i = 0; i < 3; ++i) {
+			r[i] = x[i];
+			r[i + 3] = y[i];
+			r[i + 6] = z[i];
+		}
+	}
+
+	RotM(RotM& src) { for (int i = 0; i < 9; ++i) r[i] = src.r[i]; }
+
+	RotM& operator=(RotM& lhs) {
+		if (this == &lhs) return *this;
+		for (int i = 0; i < 9; ++i) r[i] = lhs.r[i];
+		return *this;
+	}
+
+
+
+};
+
 struct Quaternion {
 	double a, b, c, d;
 
