@@ -230,7 +230,8 @@ void Matching::loadMatches(
 	std::vector<cv::Point2d>& out_matched_image_points_synth,
 	double d2Net_scalingFactor_trueImage,
 	double d2net_scalingFactor_synthImage,
-	int flag_matching_type) {
+	int flag_matching_type,
+	float neighbour_distance_allowed_pointcloud) {
 
 	mLogFile->append("");
 	mLogFile->append(TAG + "read matching results");
@@ -304,7 +305,7 @@ void Matching::loadMatches(
 		in_synth_pts_2D, in_synth_pts_3D, synth_matched_pts_Vek2d, real_matched_pts_Vek2d,
 		in_real_image, in_synth_image,
 		out_matched_image_points_real, out_matched_image_points_synth, out_matched_object_points,
-		neighbourDistance_allowed);
+		neighbour_distance_allowed_pointcloud);
 
 
 	// check sizes of matched point vectors (2D synth, real, 3D synth_object), must be equal otherwise return

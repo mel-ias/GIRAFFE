@@ -47,30 +47,6 @@ public:
 	
 	// logic
 	void waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_vector_x, double shift_vector_y, bool print_pcl);
-	
-	void Matching::loadD2netMatches(
-		std::string in_path_D2Net_Kpts,
-		cv::Mat& in_real_image,
-		cv::Mat& in_synth_image,
-		std::vector<cv::Point2d>& in_wl_pts_2D,
-		std::vector<Vek2d>& in_synth_pts_2D,
-		std::vector<Vek3d>& in_synth_pts_3D,
-		std::vector<cv::Point3d>& out_matched_object_points,
-		std::vector<cv::Point2d>& out_matched_image_points_real,
-		std::vector<cv::Point2d>& out_matched_image_points_synth,
-		double d2Net_scalingFactor_trueImage,
-		double d2net_scalingFactor_synthImage);
-
-	void Matching::ladeVisualSFMDaten(
-		std::string in_path_VSfM_FMatrixOutput, 
-		cv::Mat& in_real_image, 
-		cv::Mat& in_synth_image, 
-		std::vector<cv::Point2d>& in_wl_pts_2D, 
-		std::vector<Vek2d>& in_synth_pts_2D, 
-		std::vector<Vek3d>& in_synth_pts_3D, 
-		std::vector<cv::Point3d>& out_matched_object_points, 
-		std::vector<cv::Point2d>& out_matched_image_points_real, 
-		std::vector<cv::Point2d>& out_matched_image_points_synth);
 
 	void Matching::loadMatches(
 		std::string in_path_matching_output,
@@ -84,7 +60,8 @@ public:
 		std::vector<cv::Point2d>& out_matched_image_points_synth,
 		double d2Net_scalingFactor_trueImage,
 		double d2net_scalingFactor_synthImage,
-		int flag_matching_type);
+		int flag_matching_type,
+		float neighbour_distance_allowed_pointcloud);
 	
 	
 	
@@ -208,8 +185,7 @@ private:
 	double point_counter_importance = 0.0;
 	int no_inliers_4_stat = 0;
 
-	// allowed neighbouring distance for knn search  
-	float neighbourDistance_allowed = 0.99f; // 0.25f; // 0.99f; <- previously used value but the smaller the better. Might only work with d2net.
+	
 };
 
 

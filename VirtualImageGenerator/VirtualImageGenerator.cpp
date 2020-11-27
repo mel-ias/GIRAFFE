@@ -68,6 +68,9 @@ int main(int argc, char** argv)
 	// FLAGS
 	// -----
 	int approach = DataManager::D2NET; //Flags_Matching_Approach::VSFM;
+	  
+	float neighbourDistance_allowed_d2net = 0.25f; // allowed neighbouring distance for knn search
+	float neighbourDistance_allowed_vsfm = 0.99f; // <- previously used value but the smaller the better. Might only work with d2net. 
 
 
 	// ----
@@ -313,7 +316,8 @@ int main(int argc, char** argv)
 						matched_image_points_synth,
 						1.0,
 						1.0,
-						DataManager::VSFM);
+						DataManager::VSFM,
+						neighbourDistance_allowed_vsfm);
 
 					// perform spatial resection using these points for camera and exterior orientation determination, check if values for camera are valid and available
 					cv::Mat canvas_real_image = cv::Mat();
@@ -363,7 +367,8 @@ int main(int argc, char** argv)
 						matched_image_points_synth,
 						dataManager->get_d2Net_scalingFactor_trueImage(),
 						dataManager->get_d2Net_scalingFactor_synthImage(),
-						DataManager::D2NET
+						DataManager::D2NET,
+						neighbourDistance_allowed_d2net
 					);
 
 
