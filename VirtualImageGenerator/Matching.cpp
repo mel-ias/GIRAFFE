@@ -195,134 +195,11 @@ void Matching::calculate_nn_synth_key___pts_image_pts(
 
 
 
-void Matching::loadD2netMatches(std::string in_path_D2Net_Kpts,
-	cv::Mat& in_real_image,
-	cv::Mat& in_synth_image,
-	std::vector<cv::Point2d>& in_wl_pts_2D,
-	std::vector<Vek2d>& in_synth_pts_2D,
-	std::vector<Vek3d>& in_synth_pts_3D,
-	std::vector<cv::Point3d>& out_matched_object_points,
-	std::vector<cv::Point2d>& out_matched_image_points_real,
-	std::vector<cv::Point2d>& out_matched_image_points_synth,
-	//bool halved_image_real,
-	//bool halved_image_synth,
-	double d2Net_scalingFactor_trueImage,
-	double d2net_scalingFactor_synthImage) {
-
-	mLogFile->append("");
-	mLogFile->append(TAG + "---- read results from D2Net ----");
-	mLogFile->append(TAG + "real_image: " + std::to_string(in_real_image.size().width) + "x" + std::to_string(in_real_image.size().height) + "," + std::to_string(in_real_image.type()));
-	mLogFile->append(TAG + "synth_image: " + std::to_string(in_synth_image.size().width) + "x" + std::to_string(in_synth_image.size().height) + "," + std::to_string(in_synth_image.type()));
-
-	// initialisation
-	// read f-inlier file
-	uint counter = 0;
-	std::ifstream file(in_path_D2Net_Kpts);
-	std::string line;
-	std::vector<cv::Point2d> real_matched_pts, synth_matched_pts;
-
-
-	mLogFile->append("D2Net Keypoint Path: " + in_path_D2Net_Kpts);
-	// read line-by-line
-	while (std::getline(file, line)) {
-
-		// create an input string stream
-		std::istringstream stm(line);
-		int id;
-		double img1_x, img1_y, img2_x, img2_y; //coordinates of feature point inliers; img1 = real image; img2 = synth image
-
-		stm >> id >> img1_x >> img1_y >> img2_x >> img2_y;
-
-		//mLogFile->append("LINE: " + line);
-
-		// rescale coordinates from matched images
-		// trueImage 
-		img1_x = img1_x * 1.0 / d2Net_scalingFactor_trueImage;
-		img1_y = img1_y * 1.0 / d2Net_scalingFactor_trueImage;
-		// synthImage 
-		img2_x = img2_x * 1.0 / d2net_scalingFactor_synthImage;
-		img2_y = img2_y * 1.0 / d2net_scalingFactor_synthImage;
-
-		/*if (halved_image_real) {
-			img1_x = img1_x * 2.0;
-			img1_y = img1_y * 2.0;
-		}
-
-		if (halved_image_real) {
-			img2_x = img2_x * 2.0;
-			img2_y = img2_y * 2.0;
-		}*/
-
-		// push back inlieres separately
-		real_matched_pts.push_back(cv::Point2d(img1_x, img1_y));
-		synth_matched_pts.push_back(cv::Point2d(img2_x, img2_y));
-
-
-		//mLogFile->append("POOOINT: " + std::to_string(img1_x) + "," + std::to_string(img1_y) + "," + std::to_string(img2_x) + "," + std::to_string(img2_y));
-
-		counter++;
-	}
-
-
-	// create fundamental test with ransac
-	// run ransacTest_reimpl
-	//ransacTest_reimpl(real_matched_pts, synth_matched_pts, true);
-
-
-	// append log_file
-	mLogFile->append(TAG + "count fundamental inlier matches (real_matched_pts/synth_matched_pts):" + std::to_string(real_matched_pts.size()) + "/" + std::to_string(synth_matched_pts.size()));
-
-	// data conversion for image matching
-	std::vector<Vek2d> real_matched_pts_Vek2d, synth_matched_pts_Vek2d;
-	for (cv::Point p : real_matched_pts)
-		real_matched_pts_Vek2d.push_back(Vek2d(p.x, p.y));
-
-	for (cv::Point p : synth_matched_pts)
-		synth_matched_pts_Vek2d.push_back(Vek2d(p.x, p.y));
-
-
-
-
-
-
-
-	// --- receive 3D coordinates for all image points 
-
-
-	// vectors for matching results in declaration
-	calculate_nn_synth_key___pts_image_pts(
-		in_synth_pts_2D, in_synth_pts_3D, synth_matched_pts_Vek2d, real_matched_pts_Vek2d,
-		in_real_image, in_synth_image,
-		out_matched_image_points_real, out_matched_image_points_synth, out_matched_object_points,
-		neighbourDistance_allowed);
-
-
-	// check sizes of matched point vectors (2D synth, real, 3D synth_object), must be equal otherwise return
-	if (out_matched_object_points.size() == 0 || out_matched_image_points_real.size() == 0 || out_matched_image_points_real.size() != out_matched_object_points.size()) {
-		mLogFile->append("Problem with determination of corresponding points between matched synthetic and matched real image and 3D point cloud data.");
-		return;
-	}
-
-	// visualisation of inlier matches distribution for rectification of real image
-	int raster_size = 2;
-	draw_inliers_distribution(in_real_image, out_matched_image_points_real, in_wl_pts_2D, raster_size, "matching_distribution");
-
-	// output to ascii point cloud file (matched_object_points, matched_image_points_real, matched_imagePoints_synth)
-	writer_matches_txt_ellipsoid_bat(out_matched_object_points, out_matched_image_points_real, out_matched_image_points_synth);
-
-	// draw matches
-	draw_matches_reimpl_MK(in_real_image, in_synth_image, real_matched_pts_Vek2d, synth_matched_pts_Vek2d, "vsfm_matches_inliers");
-
-}
-
-
-
-
 
 
 
 /**
- * @fn	void Matching::ladeVisualSFMDaten( std::string in_path_VSfM_FMatrixOutput, cv::Mat&amp; in_real_image, cv::Mat&amp; in_synth_image, std::vector&lt;cv::Point2d&gt;&amp; in_wl_pts_2D, std::vector&lt;Vek2d&gt;&amp; in_synth_pts_2D, std::vector&lt;Vek3d&gt;&amp; in_synth_pts_3D, std::vector&lt;cv::Point3d&gt;&amp; out_matched_object_points, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_real, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_synth)
+ * @fn	void Matching::loadMatches( std::string in_path_VSfM_FMatrixOutput, cv::Mat&amp; in_real_image, cv::Mat&amp; in_synth_image, std::vector&lt;cv::Point2d&gt;&amp; in_wl_pts_2D, std::vector&lt;Vek2d&gt;&amp; in_synth_pts_2D, std::vector&lt;Vek3d&gt;&amp; in_synth_pts_3D, std::vector&lt;cv::Point3d&gt;&amp; out_matched_object_points, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_real, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_synth)
  *
  * @summary	public function read f-inlier matches from SiftGPU (included in Visual SFM console
  * 			application)
@@ -341,9 +218,8 @@ void Matching::loadD2netMatches(std::string in_path_D2Net_Kpts,
  * @param [out]	out_matched_image_points_real 	image points from the rendered image having corresponding keypoints inside the real image with valid 3D correspondence
  * @param [out]	out_matched_image_points_synth	object points that have corresponding points within the real and the rendered image.
  */
-
-void Matching::ladeVisualSFMDaten(
-	std::string in_path_VSfM_FMatrixOutput,
+void Matching::loadMatches(
+	std::string in_path_matching_output,
 	cv::Mat& in_real_image,
 	cv::Mat& in_synth_image,
 	std::vector<cv::Point2d>& in_wl_pts_2D,
@@ -351,49 +227,67 @@ void Matching::ladeVisualSFMDaten(
 	std::vector<Vek3d>& in_synth_pts_3D,
 	std::vector<cv::Point3d>& out_matched_object_points,
 	std::vector<cv::Point2d>& out_matched_image_points_real,
-	std::vector<cv::Point2d>& out_matched_image_points_synth) {
-
-
+	std::vector<cv::Point2d>& out_matched_image_points_synth,
+	double d2Net_scalingFactor_trueImage,
+	double d2net_scalingFactor_synthImage,
+	int flag_matching_type) {
 
 	mLogFile->append("");
-	mLogFile->append(TAG + "---- read results from Visual SFM ----");
-	mLogFile->append(TAG + "real_image: " + std::to_string(in_real_image.size().width) + "x" + std::to_string(in_real_image.size().width) + "," + std::to_string(in_real_image.type()));
-	mLogFile->append(TAG + "synth_image: " + std::to_string(in_synth_image.size().width) + "x" + std::to_string(in_synth_image.size().width) + "," + std::to_string(in_synth_image.type()));
+	mLogFile->append(TAG + "read matching results");
+	mLogFile->append(TAG + "real_image: " + std::to_string(in_real_image.size().width) + "x" + std::to_string(in_real_image.size().height) + "," + std::to_string(in_real_image.type()));
+	mLogFile->append(TAG + "synth_image: " + std::to_string(in_synth_image.size().width) + "x" + std::to_string(in_synth_image.size().height) + "," + std::to_string(in_synth_image.type()));
 
 	// initialisation
-	// read f-inlier file
 	uint counter = 0;
-	std::ifstream file(in_path_VSfM_FMatrixOutput);
+	std::ifstream file(in_path_matching_output);
 	std::string line;
 	std::vector<cv::Point2d> real_matched_pts, synth_matched_pts;
+
 
 	// read line-by-line
 	while (std::getline(file, line)) {
 
-		// skip first 12 lines
-		if (counter > 11) {
+			if (flag_matching_type == DataManager::VSFM) {
+				// skip first 12 lines
+				if (counter > 11) {
+					// create an input string stream
+					std::istringstream stm(line);
+					int id1, id2;
+					double img1_x, img1_y, img2_x, img2_y; //coordinates of feature point inliers
+					stm >> id1 >> img1_x >> img1_y >> id2 >> img2_x >> img2_y;
+					// push back inlieres separately
+					real_matched_pts.push_back(cv::Point2d(img1_x, img1_y));
+					synth_matched_pts.push_back(cv::Point2d(img2_x, img2_y));
+				}
+				counter++;
+			}
 
-			// create an input string stream
-			std::istringstream stm(line);
-			int id1, id2;
-			double img1_x, img1_y, img2_x, img2_y; //coordinates of feature point inliers
+			if (flag_matching_type == DataManager::D2NET) {
 
-			stm >> id1 >> img1_x >> img1_y >> id2 >> img2_x >> img2_y;
+				// create an input string stream
+				std::istringstream stm(line);
+				int id;
+				double img1_x, img1_y, img2_x, img2_y; //coordinates of feature point inliers; img1 = real image; img2 = synth image
+				stm >> id >> img1_x >> img1_y >> img2_x >> img2_y;
 
-			// push back inlieres separately
-			real_matched_pts.push_back(cv::Point2d(img1_x, img1_y));
-			synth_matched_pts.push_back(cv::Point2d(img2_x, img2_y));
-		}
-		counter++;
+				// rescale coordinates from matched images
+				// trueImage 
+				img1_x = img1_x * 1.0 / d2Net_scalingFactor_trueImage;
+				img1_y = img1_y * 1.0 / d2Net_scalingFactor_trueImage;
+				// synthImage 
+				img2_x = img2_x * 1.0 / d2net_scalingFactor_synthImage;
+				img2_y = img2_y * 1.0 / d2net_scalingFactor_synthImage;
+
+				// push back inlieres separately
+				real_matched_pts.push_back(cv::Point2d(img1_x, img1_y));
+				synth_matched_pts.push_back(cv::Point2d(img2_x, img2_y));
+
+				counter++;
+			}
+		
+
 	}
 
-
-	// create fundamental test with ransac
-	// run ransacTest_reimpl
-	//ransacTest_reimpl(real_matched_pts, synth_matched_pts, true);
-
-
-	// append log_file
 	mLogFile->append(TAG + "count fundamental inlier matches (real_matched_pts/synth_matched_pts):" + std::to_string(real_matched_pts.size()) + "/" + std::to_string(synth_matched_pts.size()));
 
 	// data conversion for image matching
@@ -404,16 +298,7 @@ void Matching::ladeVisualSFMDaten(
 	for (cv::Point p : synth_matched_pts)
 		synth_matched_pts_Vek2d.push_back(Vek2d(p.x, p.y));
 
-
-
-
-
-
-
 	// --- receive 3D coordinates for all image points 
-	// allowed neighbouring distance for knn search  
-	float neighbourDistance_allowed = 0.99f; // 2.5f; // 0.99f; //0.5f
-
 	// vectors for matching results in declaration
 	calculate_nn_synth_key___pts_image_pts(
 		in_synth_pts_2D, in_synth_pts_3D, synth_matched_pts_Vek2d, real_matched_pts_Vek2d,
@@ -438,10 +323,11 @@ void Matching::ladeVisualSFMDaten(
 	// draw matches
 	draw_matches_reimpl_MK(in_real_image, in_synth_image, real_matched_pts_Vek2d, synth_matched_pts_Vek2d, "vsfm_matches_inliers");
 
-
-
-
 }
+
+
+
+
 
 /**
  * @fn	void Matching::enhanced_spatial_resection(std::vector&lt;cv::Point3d&gt; &amp;in_matched_object_points, std::vector&lt;cv::Point2d&gt;&amp; in_matched_image_points_real, cv::Mat&amp; real_canvas, double in_pix_size, cv::Mat&amp; camera_matrix, cv::Mat&amp; dist_coeffs, cv::Mat&amp; rvec, cv::Mat&amp; tvec, Flags_resec in_flag)

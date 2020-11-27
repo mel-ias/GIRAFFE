@@ -25,13 +25,6 @@ class PerspectiveImage{
 
 public:
 
-	enum FILTER_APPS {
-		APPLY_WALLIS,
-		APPLY_GAUSSIAN,
-		APPLY_FASTNLMEANS_COLOR,
-		APPLY_BILATERAL_COLOR
-	};
-
     // C'tor
     PerspectiveImage(DataManager* dataManager);
 
@@ -44,7 +37,7 @@ public:
 	// public Funktion zum Filtern von Bilddaten wenn gewünscht!
 	cv::Mat PerspectiveImage::applyFilterAlgorithms(
 		const cv::Mat& imageToBeFiltered,
-		PerspectiveImage::FILTER_APPS filterToBeApplied);
+		DataManager::FILTER_APPS filterToBeApplied);
 
 
 

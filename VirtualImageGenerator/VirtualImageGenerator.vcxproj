@@ -347,6 +347,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="tree.h" />
+    <ClInclude Include="Utils.h" />
     <ClInclude Include="vek.h" />
   </ItemGroup>
   <ItemGroup>

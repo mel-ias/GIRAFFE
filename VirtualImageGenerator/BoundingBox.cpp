@@ -63,9 +63,14 @@ This sets the camera position (X0) and calc the new bounding box, if recalcBB is
 The new bounding box will be translate by x0, y0 and z0.
 */
 void BoundingBox::set_X0_Cam_World(double x0, double y0, double z0){
+
+	logFilePrinter->append("I´m in"); // return one line
 	X0_Cam_World[0] = x0;
+	logFilePrinter->append("x0 set: " + std::to_string(X0_Cam_World[0]));
 	X0_Cam_World[1] = y0;
+	logFilePrinter->append("y0 set: " + std::to_string(X0_Cam_World[1]));
 	X0_Cam_World[2] = z0;
+	logFilePrinter->append("z0 set: " + std::to_string(X0_Cam_World[2]));
 	// we have translate the bounding Box
 }
 

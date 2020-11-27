@@ -135,6 +135,9 @@
     <ClInclude Include="Modell.h">
       <Filter>Header Files\unused_code</Filter>
     </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

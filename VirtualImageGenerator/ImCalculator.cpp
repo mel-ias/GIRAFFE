@@ -44,7 +44,7 @@ void ImCalculator::init(DataManager* _dataManager) {
 	logfile->append(TAG + "received camera parameters (ck, imageSize, pixSize)");
 	
 	//reference & copy real image
-	_realImage = dataManager->get_real_image();
+	_realImage = dataManager->get_true_image();
 	_realImage.copyTo(_realImage_copy_orig); 
 	logfile->append(TAG + "received realImage, create copy (realImage_copy_orig)");
 
@@ -226,13 +226,13 @@ void ImCalculator::projectPoint(LaserPoint* lp) {
 				pixel->y = lp->color[1];
 				pixel->z = lp->color[0];
 				
-				dataManager->getCoordinateImage()->setPixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], pixel, column_float, row_float));
+				dataManager->get_coordinate_image()->setPixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], pixel, column_float, row_float));
 
 			}
 			else {
 				_image->ptr<float>(row)[column] = lp->_intensity;
 
-				dataManager->getCoordinateImage()->setPixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], lp->_intensity, column_float, row_float));
+				dataManager->get_coordinate_image()->setPixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], lp->_intensity, column_float, row_float));
 			}
 		
 		}
@@ -249,12 +249,12 @@ void ImCalculator::projectPoint(LaserPoint* lp) {
 			pixel->z = lp->color[0];
 		
 
-			dataManager->getCoordinateImage()->setPixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], pixel, column_float, row_float));
+			dataManager->get_coordinate_image()->setPixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], pixel, column_float, row_float));
 
 		}
 		else {
 			_image->ptr<float>(row)[column] = lp->_intensity;
-			dataManager->getCoordinateImage()->setPixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], lp->_intensity, column_float, row_float));
+			dataManager->get_coordinate_image()->setPixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], lp->_intensity, column_float, row_float));
 
 		}
 	
@@ -546,7 +546,7 @@ void ImCalculator::filter_image(float db) {
 								else {
 									_image->ptr<float>(r)[c] = 1.0f;
 								}
-								dataManager->getCoordinateImage()->deletePixel(c, r);
+								dataManager->get_coordinate_image()->deletePixel(c, r);
 							}
 						}
 					}
@@ -591,9 +591,9 @@ void ImCalculator::fillVektorsForImFill() {
 
 	//double shifter_x = 0.0, shifter_y = 0.0; // Reicht lokal aus!
 
-	std::vector<Vek2d>* punkte = dataManager->get_synth_pts_2D();
-	std::vector<Vek3i>* farbenPunkte = dataManager->get_pts_farben();
-	std::vector<Vek3d>* punkte3D = dataManager->get_synth_pts_3D();
+	std::vector<Vek2d>* punkte = dataManager->get_pts_synth_2D_double();
+	std::vector<Vek3i>* farbenPunkte = dataManager->get_pts_color_RGB_int();
+	std::vector<Vek3d>* punkte3D = dataManager->get_pts_synth_3D_double();
 
 	// prüfe ob vektoren angelegt worden sind, sonst springe aus funktion
 	if (punkte == nullptr || farbenPunkte == nullptr || punkte3D == nullptr) {
@@ -608,7 +608,7 @@ void ImCalculator::fillVektorsForImFill() {
 
 	//hole pixel raus
 	//std::vector<CoordinateImage::Coordinate*> pixels = coord_img->getPixels();
-	std::vector<CoordinateImage::Coordinate*> pixels = dataManager->getCoordinateImage()->getPixels();
+	std::vector<CoordinateImage::Coordinate*> pixels = dataManager->get_coordinate_image()->getPixels();
 	auto end = pixels.cend();
 
 
@@ -694,7 +694,7 @@ void ImCalculator::fillImage(size_t k_for_knn) {
 		cv::imwrite(path_directory_ImCalculator + "maskefill.png", _maske_8UC1);
 
 		// calc visualisation
-		berechneVisualisierung32SC1(_imageForImFill_inpaint_knn, _maske_8UC1, (*dataManager->get_synth_pts_2D()), (*dataManager->get_pts_farben()), k_for_knn);
+		berechneVisualisierung32SC1(_imageForImFill_inpaint_knn, _maske_8UC1, (*dataManager->get_pts_synth_2D_double()), (*dataManager->get_pts_color_RGB_int()), k_for_knn);
 
 		// Konvertierung der Intensitäten 
 		double _min, _max;
@@ -780,7 +780,7 @@ void ImCalculator::fillImage(size_t k_for_knn) {
 		cv::imwrite(path_directory_ImCalculator + "maskefill.png", _maske_8UC1);
 		//float radius = 3;
 
-		berechneVisualisierung(_imageForImFill_knn, _maske_8UC1, (*dataManager->get_synth_pts_2D()), (*dataManager->get_pts_farben()), k_for_knn);
+		berechneVisualisierung(_imageForImFill_knn, _maske_8UC1, (*dataManager->get_pts_synth_2D_double()), (*dataManager->get_pts_color_RGB_int()), k_for_knn);
 		//berechneVisualisierung(_imageForImFill_radius, _maske, punkte, farbenPunkte, radius);
 
 		//Crop image -> nutze Maske dafür und suche nach größtem zusammengehörigen Bereich --> verwerfe kleinscheiß..

@@ -62,32 +62,32 @@ PerspectiveImage::generateImage(){
 // FilterAlgorithmen für Bildvorberarbeitung. aktuell implementiert: WallisFilter, GaussFilter
 cv::Mat PerspectiveImage::applyFilterAlgorithms(
 	const cv::Mat& imageToBeFiltered,
-	PerspectiveImage::FILTER_APPS filterToBeApplied) {
+	DataManager::FILTER_APPS filterToBeApplied) {
 
 	cv::Mat imageFiltered;
 	
 	// Apply slight Gaussian blurring
-	if (filterToBeApplied == APPLY_GAUSSIAN) {
+	if (filterToBeApplied == DataManager::APPLY_GAUSSIAN) {
 		logfile->append(TAG + "start Image pre-processing, gaussian blur");
 		cv::GaussianBlur(imageToBeFiltered, imageFiltered, cv::Size(5, 5), 8, 8); // Size 5,5, Sigma 8x8 gute kombi
 	}
 
 	// Apply Wallis Filtering
-	if (filterToBeApplied == APPLY_WALLIS) {
+	if (filterToBeApplied == DataManager::APPLY_WALLIS) {
 		int k = 3;
 		logfile->append(TAG + "start image pre-processing, wallis filter");
 		WallisGrayscaleChannelOnly(imageToBeFiltered, imageFiltered, k);
 	}
 
 	// Apply Denoising
-	if (filterToBeApplied == APPLY_FASTNLMEANS_COLOR) {
+	if (filterToBeApplied == DataManager::APPLY_FASTNLMEANS_COLOR) {
 		float h = 10; float hColor = 10; int tempWindow = 7; int searchWindow = 21;
 		logfile->append(TAG + "start Image pre-processing, denoise image applying fast nl_means");
 		cv::fastNlMeansDenoisingColored(imageToBeFiltered, imageFiltered, h, hColor, tempWindow, searchWindow);
 	}
 
 	// APPLY Bilateral Filtering
-	if (filterToBeApplied == APPLY_BILATERAL_COLOR) {
+	if (filterToBeApplied == DataManager::APPLY_BILATERAL_COLOR) {
 		int d = 5, borderType = cv::BORDER_DEFAULT; double sigmaColor = 200, sigmaSpace = 200;
 		logfile->append(TAG + "start image pre-processing, Ddnoise Image applying bilateral filter");
 		cv::bilateralFilter(imageToBeFiltered, imageFiltered, d, sigmaColor, sigmaSpace, borderType); // sigma > 150 -> cartoon effekt... bei beiden testen?

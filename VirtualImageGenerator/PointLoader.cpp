@@ -18,8 +18,8 @@ PointLoader::PointLoader(std::string filename, DataManager* dataManager) {
     input_stream_ptr = new std::ifstream();
 	color_points = false;
 
-	shifter_x = dataManager->getShifter_x();
-	shifter_y = dataManager->getShifter_y();
+	shifter_x = dataManager->get_utm_shift_x();
+	shifter_y = dataManager->get_utm_shift_y();
 
 	logfile->append(TAG + "shifter_x " + std::to_string(shifter_x) + ", shifter_y " + std::to_string(shifter_y), 3);
 
