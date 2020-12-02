@@ -538,7 +538,7 @@ float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_
  * @param 		  	shift_vector_y   	[input] shift vector y coordinate, shift re-aligne point clouds with large coordinates (UTM) back to roots
  */
 
-void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_vector_x, double shift_vector_y, bool print_pcl) {
+void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double utm_shift_x, double utm_shift_y, bool print_pcl) {
 
 	// --- init 
 	// remove points that doesn´t fit distance from plane for further processing
@@ -697,8 +697,8 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 
 		for (int i = 0; i < projected_waterline_3D_OCV_ptr->size(); i++) {
 			myfile << std::fixed << std::setprecision(4)
-				<< (*projected_waterline_3D_OCV_ptr)[i].x + shift_vector_x << ","
-				<< (*projected_waterline_3D_OCV_ptr)[i].y + shift_vector_y << ","
+				<< (*projected_waterline_3D_OCV_ptr)[i].x + utm_shift_x << ","
+				<< (*projected_waterline_3D_OCV_ptr)[i].y + utm_shift_y << ","
 				<< (*projected_waterline_3D_OCV_ptr)[i].z << "\n";
 
 			mean_z += (*projected_waterline_3D_OCV_ptr)[i].z;
@@ -884,7 +884,7 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 
 	// print point cloud
 	if (print_pcl)
-		modell_ocv.print_point_cloud_recolored(mWorkingDirectory, synth_pts_3D_cv, point_cloud_color, shift_vector_x, shift_vector_y);
+		modell_ocv.print_point_cloud_recolored(mWorkingDirectory, synth_pts_3D_cv, point_cloud_color, utm_shift_x, utm_shift_y);
 
 
 }

@@ -468,16 +468,11 @@ int main(int argc, char** argv)
 
 
 	// 10. projection water line into object space
-	double shifter_x = dataManager->get_utm_shift_x();
-	double shifter_y = dataManager->get_utm_shift_y();
-
 	logFilePrinter->append(TAG + "Object_points_size: " + std::to_string((*dataManager->get_pts_synth_3D_double()).size()));
 	logFilePrinter->append(TAG + "Waterline_image_points_size: " + std::to_string((*dataManager->get_water_line_image_points_2D_ptr()).size()));
-	std::cout << TAG << ", Tvec:\n" << tvec << std::endl;
-	std::cout << TAG << ", Rvec:\n" << rvec << std::endl;
 
 	bool print_pcl = false;
-	matching->waterlineProjection(*dataManager->get_water_line_image_points_2D_ptr(), *dataManager->get_pts_synth_3D_double(), dataManager->get_true_image(), camera_matrix, dist_coeffs, rvec, tvec, shifter_x, shifter_y, print_pcl);
+	matching->waterlineProjection(*dataManager->get_water_line_image_points_2D_ptr(), *dataManager->get_pts_synth_3D_double(), dataManager->get_true_image(), camera_matrix, dist_coeffs, rvec, tvec, dataManager->get_utm_shift_x(), dataManager->get_utm_shift_y(), print_pcl);
 
 
 	logFilePrinter->print_content_disk(path_working_directory + "logfile.txt");
