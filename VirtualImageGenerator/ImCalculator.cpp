@@ -623,7 +623,7 @@ void ImCalculator::fillVektorsForImFill() {
 
 
 			punkte->push_back(Vek2d((*it)->xi, (*it)->yi));
-			punkte3D->push_back(Vek3d((*it)->x, (*it)->y, (*it)->z)); // Shifter --> see dataManager/ pointLoader
+			punkte3D->push_back(Vek3d((*it)->x, (*it)->y, (*it)->z)); 
 
 
 			if (colorPoints)

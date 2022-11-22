@@ -90,6 +90,7 @@ public:
 		Rz = _Rz;
 	}
 
+	
 	// get X0 (stores the current position from the camera)
 	double* get_X0_Cam_World()const { return X0_Cam_World; }
 
@@ -117,7 +118,7 @@ public:
 
 	void calcBoundingBox();
 
-	void calc_rotationMatrix_xyz(float* _Rxyz); // in case of no rotation matrix from json, calc!
+	void calcRotM_XYZ(float* _Rxyz); // in case of no rotation matrix from json, calc!
 
 
 private:
@@ -144,7 +145,9 @@ private:
 	r.
 	*/
 	
-	void calc_rotationMatrix_min_z(); // define rotation matrix -Rz
+	void calc_Rz(); // define rotation matrix -Rz
+
+	//https://robotics.stackexchange.com/a/19616
 
 	/* Rotationsmatrix um die Z-Achse (für die Berechnung der Bounding Box). Berechnet aus dem negativen Azimut:
 	Rz =		cos(azi)	sin(azi)	0

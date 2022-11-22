@@ -26,6 +26,7 @@ BoundingBox::BoundingBox(LogFile* logfile) {
 	// init Position and Rz
 	X0_Cam_World = new double[3];
 	
+	// note! row major!
 	Rz = new float[9];
 	Rz[0] = 1.0f; Rz[1] = 0.0f; Rz[2] = 0.0f; 
 	Rz[3] = 0.0f; Rz[4] = 1.0f; Rz[5] = 0.0f;
@@ -64,13 +65,12 @@ The new bounding box will be translate by x0, y0 and z0.
 */
 void BoundingBox::set_X0_Cam_World(double x0, double y0, double z0){
 
-	logFilePrinter->append("I´m in"); // return one line
 	X0_Cam_World[0] = x0;
-	logFilePrinter->append("x0 set: " + std::to_string(X0_Cam_World[0]));
+	logFilePrinter->append(TAG + "BBox, set x0: " + std::to_string(X0_Cam_World[0]));
 	X0_Cam_World[1] = y0;
-	logFilePrinter->append("y0 set: " + std::to_string(X0_Cam_World[1]));
+	logFilePrinter->append(TAG + "BBox, set y0: " + std::to_string(X0_Cam_World[1]));
 	X0_Cam_World[2] = z0;
-	logFilePrinter->append("z0 set: " + std::to_string(X0_Cam_World[2]));
+	logFilePrinter->append(TAG + "BBox, set z0: " + std::to_string(X0_Cam_World[2]));
 	// we have translate the bounding Box
 }
 
@@ -108,26 +108,45 @@ void BoundingBox::setAngles(float _azimuth, float _roll, float _pitch){
 	Cx = static_cast<float>(cos(_pitch * M_PI / 180.0f));
 	Sx = static_cast<float>(sin(_pitch * M_PI / 180.0f));
 
-	calc_rotationMatrix_min_z(); // calc rotation matrix -Rz
+	calc_Rz(); // calc rotation matrix -Rz
 	
 }
 
-void BoundingBox::calc_rotationMatrix_xyz(float* _Rxyz) {
+void BoundingBox::calcRotM_XYZ(float* Rxyz) {
 
-	// Rxyz Drehung aus OpenGL xyz
-	// determine left axis			 // determine up axis			// determine forward axis	
-	_Rxyz[0] = Cy*Cz;				 _Rxyz[3] = -Cy*Sz;				_Rxyz[6] = Sy;
-	_Rxyz[1] = Sx*Sy*Cz + Cx*Sz;	 _Rxyz[4] = -Sx*Sy*Sz + Cx*Cz;	_Rxyz[7] = -Sx*Cy;
-	_Rxyz[2] = -Cx*Sy*Cz + Sx*Sz;	 _Rxyz[5] = Cx*Sy*Sz + Sx*Cz;	_Rxyz[8] = Cx*Cy;
+	// Rxyz, performs 3 rotations in order of Rz (azi), Ry (roll) then Rx (pitch).
+	// determine left axis [x, pitch]	determine up axis [y, roll]		determine forward axis [z, Azimuth]	
+	Rxyz[0] = Cy*Cz;				Rxyz[3] = -Cy*Sz;				Rxyz[6] = Sy;
+	Rxyz[1] = Sx*Sy*Cz + Cx*Sz;		Rxyz[4] = -Sx*Sy*Sz + Cx*Cz;	Rxyz[7] = -Sx*Cy;
+	Rxyz[2] = -Cx*Sy*Cz + Sx*Sz;	Rxyz[5] = Cx*Sy*Sz + Sx*Cz;		Rxyz[8] = Cx*Cy;
 }
 
-void BoundingBox::calc_rotationMatrix_min_z() {
-	// here we will calculate Rz 
+// here we will calculate Rz (rotation around z-axis (Azimuth)) clockwise
+void BoundingBox::calc_Rz() {
 
-	// Drehmatrix -Rz,
-	Rz[0] = Cz;		 Rz[3] = Sz;	 Rz[6] = 0.0;
-	Rz[1] = -Sz; 	 Rz[4] = Cz;	 Rz[7] = 0.0;
-	Rz[2] = 0.0;	 Rz[5] = 0.0;	 Rz[8] = 1.0;
+	/* Rotationsmatrix um die Z-Achse (für die Berechnung der Bounding Box). Berechnet aus dem negativen Azimut:
+	Rz =		cos(azi)	sin(azi)	0
+				-sin(az)	cos(azi)	0
+				0			0			1
+	mit Rz =	R0			R1			R2
+				R3			R4			R5
+				R6			R7			R8*/
+
+	// workes but weird
+	Rz[0] = Cz;		Rz[1] = -Sz;	Rz[2] = 0.0;
+	Rz[3] = Sz;		Rz[4] = Cz;		Rz[5] = 0.0;
+	Rz[6] = 0.0;	Rz[7] = 0.0;	Rz[8] = 1.0;
+
+	//// correct from Richards descripzion, necessary to rotate azi like a compass works (north to east to south to north)
+	//Rz[0] = Cz;	Rz[1] = Sz;		Rz[2] = 0.0;
+	//Rz[3] = -Sz;	Rz[4] = Cz;		Rz[5] = 0.0;
+	//Rz[6] = 0.0;	Rz[7] = 0.0;	Rz[8] = 1.0;
+	 	 
+	
+	
+		 
+		 
+	
 
 }
 

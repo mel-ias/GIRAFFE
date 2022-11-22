@@ -51,9 +51,6 @@
     <ClInclude Include="CoordinateImage.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SpectralIndices.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vek.h">
       <Filter>Header Files\KDtree_fillImages</Filter>
     </ClInclude>
@@ -105,9 +102,6 @@
     <ClInclude Include="DLT.hpp">
       <Filter>Header Files\unused_code</Filter>
     </ClInclude>
-    <ClInclude Include="AccurateMatcher.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="opencv_includes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -138,6 +132,9 @@
     <ClInclude Include="Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AccurateMatcher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -162,9 +159,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CoordinateImage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AccurateMatcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Matching.cpp">
@@ -196,6 +190,9 @@
     </ClCompile>
     <ClCompile Include="Modell.cpp">
       <Filter>Source Files\unused_code</Filter>
+    </ClCompile>
+    <ClCompile Include="AccurateMatcher.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

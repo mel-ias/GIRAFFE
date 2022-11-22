@@ -157,7 +157,7 @@ cv::Mat AccurateMatcher::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, s
 	cv::Mat fundemental;
 
 	double confidence = 0.95;
-	double distance = 5.0;
+	double distance = 8.0;
 
 	// Compute F matrix using RANSAC
 	std::vector<uchar> inliers(points1.size(), 0);
@@ -184,7 +184,7 @@ cv::Mat AccurateMatcher::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, s
 				indices_inliers_fund.push_back(r);
 		}
 
-		std::cout << "RansacTest, Vsfm, Number of inliers Fundamental Mat, ideal camera (cxr): " << indices_inliers_fund.size() << std::endl;
+		std::cout << "RansacTest, Number of inliers Fundamental Mat, ideal camera (cxr): " << indices_inliers_fund.size() << std::endl;
 
 		// prüfe glelichen Elemente in beiden Vektoren ab
 		for (int i = 0; i < _points1.size(); i++)
@@ -194,8 +194,13 @@ cv::Mat AccurateMatcher::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, s
 				points2_good.push_back(points2[i]);
 			}
 		}
+		_points1.clear();
+		_points2.clear();
 
-		std::cout << "RansacTest, Size After FundMat: " << points1_good.size() << ", 2: " << points2_good.size() << std::endl;
+		_points1 = points1_good;
+		_points2 = points2_good;
+
+		std::cout << "RansacTest, Size After FundMat: " << _points1.size() << ", 2: " << _points2.size() << std::endl;
 
 		if (refineF) {
 			// The F matrix will be recomputed with
@@ -218,9 +223,7 @@ cv::Mat AccurateMatcher::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, s
 
 			if (points1.size()>3 && points2.size()>3)
 			{
-#ifdef DEBUG
-				std::cout << "Num outMatches: " << outMatches.size() << ", Distances: ";
-#endif
+				
 				// berechne nun homography 
 				cv::Mat homography = cv::findHomography(cv::Mat(points1), cv::Mat(points2), cv::LMEDS, distance);
 
@@ -234,9 +237,9 @@ cv::Mat AccurateMatcher::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, s
 					col /= col.at<double>(2);
 					double dist = sqrt(pow(col.at<double>(0) - points2_good[i].x, 2) +
 						pow(col.at<double>(1) - points2_good[i].y, 2));
-#ifdef DEBUG
+
 					std::cout << dist << " ";
-#endif
+
 
 					if (dist < distance) {
 						points1_passed.push_back(points1_good[i]);
@@ -244,21 +247,19 @@ cv::Mat AccurateMatcher::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, s
 					}
 				}
 			}
+
+		_points1.clear();
+		_points2.clear();
+
+		_points1 = points1_passed;
+		_points2 = points2_passed;
 		}
 
 
-#ifdef DEBUG
-		std::cout << std::endl;
-#endif
 	}
 
-	_points1.clear();
-	_points2.clear();
 
-	_points1 = points1_passed;
-	_points2 = points2_passed;
-
-	std::cout << "RansacTest, Size of Passed points 1: " << points1_passed.size() << ", 2: " << points2_passed.size() << std::endl;
+	std::cout << "RansacTest, Size of Passed points 1: " << _points1.size() << ", 2: " << _points2.size() << std::endl;
 	return fundemental;
 }
 

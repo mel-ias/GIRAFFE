@@ -199,58 +199,6 @@ inline std::vector<cv::Point3f> orthoProjection_xyPlaneWorld(std::vector<cv::Poi
 
 
 
-// Calculates rotation matrix given euler angles.
-
-// all column major!
-
-// hier herausnehmen und in datenmanager rein tun... hat nix mit bounding box zu tun. rz wird gesondert berechnet 
-inline float* calc_rotationMatrix_xyz(float& azimuth, float& pitch, float&roll) {
-
-	const double PI = 3.14159265359;
-
-	float Cz = static_cast<float>(cos(azimuth * PI / 180.0f));
-	float Sz = static_cast<float>(sin(azimuth *PI / 180.0f));
-
-	float Cy = static_cast<float>(cos(roll * PI / 180.0f));
-	float Sy = static_cast<float>(sin(roll * PI / 180.0f));
-	
-	float Cx = static_cast<float>(cos(pitch * PI / 180.0f));
-	float Sx = static_cast<float>(sin(pitch * PI / 180.0f));
-	
-	float Rxyz[9];
-	// Rxyz Drehung aus OpenGL xyz
-	// determine left axis			 // determine up axis			// determine forward axis	
-	Rxyz[0] = Cy*Cz;				 Rxyz[3] = -Cy*Sz;				Rxyz[6] = Sy;
-	Rxyz[1] = Sx*Sy*Cz + Cx*Sz;		 Rxyz[4] = -Sx*Sy*Sz + Cx*Cz;	Rxyz[7] = -Sx*Cy;
-	Rxyz[2] = -Cx*Sy*Cz + Sx*Sz;	 Rxyz[5] = Cx*Sy*Sz + Sx*Cz;	Rxyz[8] = Cx*Cy;
-
-	return Rxyz;
-}
-
-inline float* calc_rotationMatrix_z(float& azimuth, float& pitch, float&roll) {
-	// here we will calculate Rz 
-
-	const double PI = 3.14159265359;
-
-	float Cz = static_cast<float>(cos(azimuth * PI / 180.0f));
-	float Sz = static_cast<float>(sin(azimuth *PI / 180.0f));
-
-	float Cy = static_cast<float>(cos(roll * PI / 180.0f));
-	float Sy = static_cast<float>(sin(roll * PI / 180.0f));
-
-	float Cx = static_cast<float>(cos(pitch * PI / 180.0f));
-	float Sx = static_cast<float>(sin(pitch * PI / 180.0f));
-
-	float Rz[9];
-	//Drehung von Norden nach Osten nach Süden nach Westen ; Drehung um -z-Achse - neg AZI! borz -sx und sx getauschrg
-	Rz[0] = Cz;		 Rz[3] = Sz;	 Rz[6] = 0.0;
-	Rz[1] = -Sz; 	 Rz[4] = Cz;	 Rz[7] = 0.0;
-	Rz[2] = 0.0;	 Rz[5] = 0.0;	 Rz[8] = 1.0;
-
-	return Rz;
-
-}
-
 
 
 

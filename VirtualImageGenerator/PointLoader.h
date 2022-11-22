@@ -66,8 +66,7 @@ private:
 	// need DataManager for Shift x,y
 	DataManager *dataManager = nullptr;
 
-	double shifter_x = -1;
-	double shifter_y = -1;
+	double shift_x, shift_y;
 
 	
 

@@ -18,10 +18,10 @@ PointLoader::PointLoader(std::string filename, DataManager* dataManager) {
     input_stream_ptr = new std::ifstream();
 	color_points = false;
 
-	shifter_x = dataManager->get_utm_shift_x();
-	shifter_y = dataManager->get_utm_shift_y();
+	shift_x = dataManager->get_shift_x();
+	shift_y = dataManager->get_shift_y();
 
-	logfile->append(TAG + "shifter_x " + std::to_string(shifter_x) + ", shifter_y " + std::to_string(shifter_y), 3);
+	logfile->append(TAG + "shift_x " + std::to_string(shift_x) + ", shift_y " + std::to_string(shift_y), 3);
 
 
 		 
@@ -158,9 +158,9 @@ int PointLoader::read_binary_file(){
 		}
 		++p;
 
-		// apply shifter
-		x -= shifter_x;
-		y -= shifter_y;
+		// apply shift
+		x -= shift_x;
+		y -= shift_y;
 
 		// check if the point is necessary
 		if (x > xMax_world || x < xMin_world) continue;

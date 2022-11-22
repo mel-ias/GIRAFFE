@@ -14,7 +14,6 @@
 #include"DLT.hpp"
 #include"opencv_includes.h"
 #include"fillImages.hpp"
-#include"SpectralIndices.h"
 #include"AccurateMatcher.h"
 #include"Modell.h"
 #include"plyloader.h"

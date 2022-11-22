@@ -35,7 +35,7 @@ public:
     void generateImage();
 
 	// public Funktion zum Filtern von Bilddaten wenn gewünscht!
-	cv::Mat PerspectiveImage::applyFilterAlgorithms(
+	cv::Mat PerspectiveImage::apply_filter(
 		const cv::Mat& imageToBeFiltered,
 		DataManager::FILTER_APPS filterToBeApplied);
 
@@ -57,7 +57,7 @@ private:
 	DataManager* dataManager;
 
 	// instance of pointloader
-	PointLoader* _pointloader;
+	PointLoader* pointloader;
 
 	// an Calculator that generates our images
 	ImCalculator calculator;

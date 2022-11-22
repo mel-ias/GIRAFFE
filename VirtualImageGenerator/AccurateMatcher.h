@@ -56,7 +56,7 @@ public:
 	// Return fundemental matrix
 	cv::Mat ransacTest(const std::vector<cv::DMatch>& matches, const std::vector<cv::KeyPoint>& keypoints1, const std::vector<cv::KeyPoint>& keypoints2, std::vector<cv::DMatch>& outMatches);
 	// Abwandlung von Christians Matching Test
-	cv::Mat ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vector<cv::Point2d>& _points2, bool refineF);
+	static cv::Mat ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vector<cv::Point2d>& _points2, bool refineF);
 	// Match feature points using symmetry test and RANSAC
 	// returns fundemental matrix
 	cv::Mat match(cv::Mat& image1, cv::Mat& image2, std::vector<cv::DMatch>& matches, std::vector<cv::KeyPoint>& keypoints1, std::vector<cv::KeyPoint>& keypoints2, cv::InputArray& maskROI);

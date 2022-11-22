@@ -67,13 +67,13 @@ public:
 		logFilePrinter = logFile;
 		path_file_point_cloud = "noPointCloud.bin"; // causes a "not a pw" error
 		path_working_directory = "noDir";
-		path_directory_result = "noDir";
+		name_working_directory = "unknown";
 		path_directory_feature_matching_tool = "noDir";
-		path_file_output_VSfM_matches = "noDir";
 		path_file_output_D2Net_matches = "noDir";
+		path_file_output_superglue_matches = "noDir";
 		path_file_batch_call_jarEllipsoid = "noDir";
-		path_file_batch_call_exeVSfM = "noDir";
 		path_file_batch_call_pyD2Net = "noDir";
+		path_file_batch_call_superglue = "noDir";
 		path_file_point_cloud = "noFile";
 
 		// --- from json ---
@@ -88,15 +88,15 @@ public:
 		view_angle_half_V = 30.0f;
 		
 		// parameters for EOP
-		x0 = 0.0, y0 = 0.0, z0 = 0.0; // translation params: projC
-		utm_shift_x = 0.0, utm_shift_y = 0.0; // shift utm values for better handling
-		z_smartphone_height = 1.50; // add height of hand-held smartphone // TODO read this from smartphone application and transfer parameter via json
+		x0 = 0.0f, y0 = 0.0f, z0 = 0.0f; // translation params: projC
+		shift_x = 0.0f, shift_y = 0.0f; // shift utm values for better handling
+		//z_smartphone_height = 1.50; // add height of hand-held smartphone // TODO read this from smartphone application and transfer parameter via json
 		
 		azimuth = roll = pitch = 0.0f; //rotation params: Euler angles
 	
 		
 		// thresholds / uncertainity values for point cloud projection
-		thresh_projtPt_distanceToProjC = 1.0f;
+		thresh_projtPt_distanceToProjC = 2.0f;// 1.0f;
 		thresh_projPt_maxDepthPtCloud = 200.0f;
 		dh = 20.0f;
 		r = 20.0f;
@@ -105,6 +105,12 @@ public:
 		// cout.precision(3); // set precision for outputlog if required
 		d2Net_scalingFactor_trueImage = 1.0; // scaling factors for image scaling, only necessary for d2net image matching, use "no scaling", i.e. factor = 1.0 by default
 		d2Net_scalingFactor_synthImage = 1.0;
+		superglue_scalingFactor_trueImage = 1.0;
+		superglue_scalingFactor_synthImage = 1.0;
+		k_for_knn = 3;
+		superglue_matching_thresh = 0.1f;
+		filter_matches_ransac_fisheye = 200.0f; // run solvepnoransac to find good image-to-object matches before running spatial resection -> fisheye thresh (should be high cause OCVs solvepnp does not support fisheye cams)
+		filter_matches_ransac_pinhole = 8.0f; // run solvepnoransac to find good image-to-object matches before running spatial resection -> pinhole thresh (should be small)
 
 		// -------------------
 		// INSTANTIATE OBJECTS
@@ -130,7 +136,6 @@ public:
 
 		// bools
 		haveVegetationMask = false; // check if TGI vegetation mask have to be applied
-		failedMatching = false; // for matching
 		have_precalibrated_IOP_camMatrix, have_precalibrated_IOP_distCoeffs, have_precalibrated_IOP_calibRMSE, have_calibration_values_android = false; // check if smartphone camera is precalibrated
 		have_android_rotation_matrix = false; // check if native rotM is provided from client side
 		well_distributed_object_points_3D_space = false; // check if distribution of object points is sufficient to refine cameras intrinsics
@@ -216,17 +221,17 @@ public:
 				camera_matrix_temp[i] = std::stod(substr);				
 			}
 
-			camera_matrix_android = cv::Mat(3, 3, CV_64FC1); // convert to opencv array
+			precalib_camera_matrix = cv::Mat(3, 3, CV_64FC1); // convert to opencv array
 			int element_counter = 0; // loop over indexes and assign values
 			for (int rows = 0; rows < 3; rows++) {
 				for (int cols = 0; cols < 3; cols++) {
-					camera_matrix_android.at<double>(rows, cols) = camera_matrix_temp[element_counter];
+					precalib_camera_matrix.at<double>(rows, cols) = camera_matrix_temp[element_counter];
 					element_counter++;
 				}
 			}
 
 			have_precalibrated_IOP_camMatrix = true;
-			log_readJson << "Set 'camera_matrix' from smartphone-based pre-calibration: " << camera_matrix_android << endl;
+			log_readJson << "Set 'camera_matrix' from pre-calibration: " << precalib_camera_matrix << endl;
 		}
 		else
 			log_readJson << "No value for 'camera_matrix' in json. No pre-calibrated IOP available." << std::endl;
@@ -252,14 +257,16 @@ public:
 			while (dist_strs.good()) {
 				i++;
 				std::string substr;
-				getline(dist_strs, substr, ';');		
+				getline(dist_strs, substr, ',');		
 				distortion_coefficents_temp[i] = std::stod(substr);
+				
 			}
 	
 			distortion_coefficents_android = cv::Mat(1, 5, CV_64FC1);// convert to opencv array
 			int element_counter = 0; //loop over indexes and assign values
 			for (int cols = 0; cols < 5; cols++) {
 				distortion_coefficents_android.at<double>(0, cols) = distortion_coefficents_temp[element_counter];
+				
 				element_counter++;
 			}
 
@@ -472,14 +479,19 @@ public:
 		log_readJson << "Get true image successuflly from path: " << path_file_trueImage << ". True image size: " << true_image.size() << endl;
 
 
-		// read water line
-		std::string path_water_line = path_file_json.substr(0, path_file_json.find_last_of("\\/")) + "\\" + file_name_water_line;
-		std::ifstream inputStream(path_water_line);
-		double x, y, z; // z=0
-		char sep;
-		while (inputStream >> x >> sep >> y >> sep >> z)
-			pts_waterLine_2D_double->push_back(cv::Point2d(x, y));
-		log_readJson << "Get 2D water line from path. Number of image points: " << pts_waterLine_2D_double->size() << endl;
+		// read water line if given
+		if (file_name_water_line != "noFileName") {
+			std::string path_water_line = path_file_json.substr(0, path_file_json.find_last_of("\\/")) + "\\" + file_name_water_line;
+			std::ifstream inputStream(path_water_line);
+			double x, y, z; // z=0
+			char sep;
+			while (inputStream >> x >> sep >> y >> sep >> z)
+				pts_waterLine_2D_double->push_back(cv::Point2d(x, y));
+			log_readJson << "Get 2D water line from path. Number of image points: " << pts_waterLine_2D_double->size() << endl;
+		}
+		else {
+			log_readJson << "No waterline given" << endl;
+		}
 		
 
 		// update parameters to calculate BBox
@@ -488,28 +500,29 @@ public:
 		view_angle_half_H /= 2;
 		view_angle_half_V /= 2;
 		// check if view angle is to large 'cause view angles > 60° doesn't make sense, in these cases use default (half) view angles of 30.0°
-		if (view_angle_half_H > 30.0f)
+		/*if (view_angle_half_H > 30.0f)
 			view_angle_half_H = 30.0f;
 		if (view_angle_half_V > 30.0f)
-			view_angle_half_V = 30.0f;
+			view_angle_half_V = 30.0f;*/
 		boundingBox->setViewAngle(view_angle_half_H, view_angle_half_V); //update bounding box
 		log_readJson << "Update (half) view angles for BBox calculation: H: " << view_angle_half_H << " [°], V: " << view_angle_half_V << " [°]" << endl;
 
 
 		// shift the horizontal component of projection centre to x0 = 0 and y = 0 to work with smaller coordinates (more efficient than using UTM values)
 		// save shift values (must be applied to point cloud as well and later to restore original coordinates of 3D water levels) 
-		utm_shift_x = x0;
-		utm_shift_y = y0;
-		x0 -= utm_shift_x;
-		y0 -= utm_shift_y;		
-		z0 += z_smartphone_height; // add of camera when smartphone is held by human (default: 1.50 m)
-		log_readJson << "Apply shift_x/shift_y to horizontal components of projection centre. Save shift_x/shift_y for point cloud translation. shift_x: " << std::fixed << utm_shift_x << " [m], shift_y: " << utm_shift_y << " [m]" << endl; //Use std::fixed floating-point notation for formatting
-		log_readJson << "Add height of hand-held smartphone to vertical compontent of projection centre. z_smartphone_height:" << z_smartphone_height << " [m]" << endl; 
+		shift_x =  x0;
+		shift_y =  y0; 
+		x0 -= shift_x;
+		y0 -= shift_y;		
+		//z0 += z_smartphone_height; // add of camera when smartphone is held by human (default: 1.50 m)
+		
+		log_readJson << "Apply shift_x/shift_y to horizontal components of projection centre. Save shift_x/shift_y for point cloud translation. shift_x: " << std::fixed << shift_x << " [m], shift_y: " << shift_y << " [m]" << endl; //Use std::fixed floating-point notation for formatting
+		//log_readJson << "Add height of hand-held smartphone to vertical compontent of projection centre. z_smartphone_height:" << z_smartphone_height << " [m]" << endl; 
 		boundingBox->set_X0_Cam_World(x0, y0, z0); //update bounding box projC
 
 		boundingBox->setAngles(azimuth, roll, pitch); //update bounding box rotP
 		if (!have_android_rotation_matrix) 
-			boundingBox->calc_rotationMatrix_xyz(Rxyz); // calculate rotation matrix from Euler angles if no rotation matrix is availabe from the client
+			boundingBox->calcRotM_XYZ(Rxyz); // calculate rotation matrix from Euler angles if no rotation matrix is availabe from the client
 
 		log_readJson << "Set projection centre (x0,y0,z0) for BBox calculation: " << x0 << ", " << y0 << ", " << z0 << " [m]" << endl;
 		log_readJson << "Set Euler angles (azimuth,roll,pitch) for BBox calculation: " << azimuth << ", " << roll << ", " << pitch << " [°]" << endl;
@@ -553,15 +566,11 @@ public:
 		std::string path_file_trueImage_to_match = (path_directory_myData + "true_image.jpg").c_str();
 		std::string path_file_synthImage_to_match = (path_directory_myData + "synth_image.jpg").c_str();
 		path_file_output_D2Net_matches = (path_directory_myData + "kpts.txt").c_str();
+		path_file_output_superglue_matches = (path_directory_myData + "kpts.txt").c_str();
 
 		log_generateBatchFile << "path image_file_list.txt: " << path_file_imagelist_to_match << endl;
 
-		if (flag == VSFM) {
-			// write images to myData path
-			cv::imwrite(path_file_trueImage_to_match, in_true_image);
-			cv::imwrite(path_file_synthImage_to_match, in_synth_image);
-		}
-		else if (flag == D2NET) {
+		if (flag == D2NET) {
 			// check if max_edge and max_sum_edges of trueImage and synthImage fit the requirements from d2net
 			// otherwise, reduce image size (half sized currently)
 			// calculate scaling factor
@@ -577,6 +586,20 @@ public:
 			// write images to myData path
 			cv::imwrite(path_file_trueImage_to_match, trueImage_scaled);
 			cv::imwrite(path_file_synthImage_to_match, synthImage_scaled);
+		}
+		else if (flag == SUPERGLUE) {
+			superglue_scalingFactor_trueImage = static_cast<double>(max_img_size) / (in_true_image.size().width); //0.5; 
+			superglue_scalingFactor_synthImage = static_cast<double>(max_img_size) / (in_synth_image.size().width); //0.5
+			std::cout << "superglue: scaling factors, true image: " << superglue_scalingFactor_trueImage << ", synth image: " << superglue_scalingFactor_synthImage << endl;
+			log_generateBatchFile << "d2net: scaling factors, true image: " << superglue_scalingFactor_trueImage << ", synth image: " << superglue_scalingFactor_synthImage << endl;
+
+			// apply scaling factor
+			cv::Mat trueImage_scaled, synthImage_scaled;
+			cv::resize(in_true_image, trueImage_scaled, cv::Size(), superglue_scalingFactor_trueImage, superglue_scalingFactor_trueImage);
+			cv::resize(in_synth_image, synthImage_scaled, cv::Size(), superglue_scalingFactor_synthImage, superglue_scalingFactor_synthImage);
+			// write images to myData path
+			cv::imwrite(path_file_trueImage_to_match, in_true_image);
+			cv::imwrite(path_file_synthImage_to_match, in_synth_image);
 		}
 		else {
 			// TODO write error message 
@@ -604,30 +627,7 @@ public:
 		}
 
 
-		if (flag == VSFM) {
-
-			// generate batch file
-			path_file_batch_call_exeVSfM = (path_directory_myData + "myBatchSfM.bat").c_str();
-			path_file_output_VSfM_matches = (path_directory_myData + "outputSfmMatches.txt").c_str();
-
-			std::string tempPath = path_directory_feature_matching_tool;
-			log_generateBatchFile << tempPath.substr(0, tempPath.find_last_of("\\/")) << endl;
-
-			std::string pathVsfm = (tempPath.substr(0, tempPath.find_last_of("\\/")) + "\\VisualSFM\\VisualSFM.exe").c_str();
-
-			std::ofstream myVsfmBatchFile;
-			myVsfmBatchFile.open(path_file_batch_call_exeVSfM); // Ablage im WD
-
-
-			myVsfmBatchFile << "@echo off" << endl;
-			myVsfmBatchFile << pathVsfm << " sfm " << path_file_imagelist_to_match << " " << path_file_output_VSfM_matches << endl;
-			myVsfmBatchFile << pathVsfm << " sfm[pairs+exportf] " << path_file_imagelist_to_match << " " << path_file_output_VSfM_matches << endl;
-
-			myVsfmBatchFile.close(); // Ablage im WD
-
-			return true;
-		} 
-		else if (flag == D2NET) {
+		if (flag == D2NET) {
 			// generate batch file 
 			path_file_batch_call_pyD2Net = (path_directory_feature_matching_tool.substr(0, path_directory_feature_matching_tool.find_last_of("\\/")) + "\\d2net\\myBatchD2Net-1.bat").c_str();
 			std::string path_d2net = (path_directory_feature_matching_tool.substr(0, path_directory_feature_matching_tool.find_last_of("\\/")) + "\\d2net").c_str();
@@ -638,7 +638,7 @@ public:
 				<< "cd " << path_d2net
 				<< " &"
 				<< " %windir%\\System32\\cmd.exe /k"
-				<< " \"\"C:\\ProgramData\\Anaconda3\\Scripts\\activate.bat\" env_d2net & python --version & python.exe " << path_d2net << "\\extract_features.py"
+				<< " \"\"C:\\Users\\Mela\\miniconda3\\Scripts\\activate.bat\" py38d2net & python --version & python.exe " << path_d2net << "\\extract_features.py" //TODO make path to anaconda env generic!
 				<< " --image_list_file " << path_file_imagelist_to_match
 				<< " --max_edge " << max_edge
 				<< " --max_sum_edges " << max_sum_edges
@@ -646,6 +646,39 @@ public:
 			myD2NetBatchFile.close(); // store in WD
 
 			return true;
+		}
+		else if (flag == SUPERGLUE) {
+			// TODO: Work in Progress
+			// generate batch file 
+			path_file_batch_call_superglue = (path_directory_feature_matching_tool.substr(0, path_directory_feature_matching_tool.find_last_of("\\/")) + "\\superglue\\myBatchSuperglue.bat").c_str();
+			std::string path_superglue = (path_directory_feature_matching_tool.substr(0, path_directory_feature_matching_tool.find_last_of("\\/")) + "\\superglue").c_str();
+
+			// open filestreams for 'image_list_file' and batch file 
+			std::ofstream myFileImageList;
+			myFileImageList.open(path_file_imagelist_to_match); // store in WD
+			myFileImageList << path_file_trueImage_to_match << " " << path_file_synthImage_to_match << endl;
+			myFileImageList.close();
+
+			
+			std::ofstream mySuperglueBatchFile;
+			mySuperglueBatchFile.open(path_file_batch_call_superglue); 
+			mySuperglueBatchFile << "cd " << path_superglue
+				<< " &"
+				<< " %windir%\\System32\\cmd.exe /k"
+				<< " \"\"C:\\Users\\Mela\\miniconda3\\Scripts\\activate.bat\" py38superglue & python --version & python.exe " << path_superglue << "./match_pairs.py" //TODO make path to anaconda env generic!
+				<< " --resize " << std::to_string(max_img_size)
+				<< " --max_length 100000 --keypoint_threshold 0.005 --sinkhorn_iterations 20 --match_threshold " << std::to_string(superglue_matching_thresh) <<  " --show_keypoints --superglue outdoor --max_keypoints -1 --nms_radius 4 --viz"
+				<< " --input_dir " << path_directory_myData
+				<< " --input_pairs " << path_file_imagelist_to_match
+				<< " --output_dir " << path_directory_myData
+				<< " & exit() & cd " << path_directory_myData << "\"" << endl;
+
+
+
+			// --input_dir assets/lemko_sample_images/ --input_pairs assets/lemko_sample.txt --output_dir dump_match_pairs_lemko --viz
+
+
+
 		}
 		else {
 			// TODO: error message 
@@ -658,9 +691,9 @@ public:
 	// -----
 	// ENUMS
 	// -----
-	// added enums to select matching approach (VSFM or D2NET)
+	// added enums to select matching approach (D2NET/SG)
 	enum Flags_Matching_Approach {
-		VSFM, D2NET
+		D2NET, SUPERGLUE
 	};
 
 	enum FILTER_APPS {
@@ -714,17 +747,17 @@ public:
 
 	// PATHS
 	std::string get_path_working_directory() { return path_working_directory; }	
-	std::string get_path_directory_result() { return path_directory_result; }
+	std::string get_name_working_directory() { return name_working_directory; }
 	std::string get_path_file_pointcloud() { return path_file_point_cloud; }
-	std::string getPathOutputFile_Vsfm() { return path_file_output_VSfM_matches; }
 	std::string getPathOutputFile_D2Net() { return path_file_output_D2Net_matches; }
-	std::string getPathBatchFile_VSfM() { return path_file_batch_call_exeVSfM; }
+	std::string getPathOutputFile_Superglue() { return path_file_output_superglue_matches; }
 	std::string getPathBatchFile_D2Net() { return path_file_batch_call_pyD2Net; }
+	std::string getPathBatchFile_Superglue() { return path_file_batch_call_superglue; }
 	std::string getExeDirectory() { return path_directory_feature_matching_tool; }
 	std::string getPathBatchFile_EllipsoidJar() { return path_file_batch_call_jarEllipsoid; }
 
 	void set_path_working_directory(std::string path_dir) { path_working_directory = path_dir; }
-	void set_path_directory_result(std::string path_dir) { path_directory_result = path_dir; }	// get/set path to result directory
+	void set_working_directory_name(std::string wD_name) { name_working_directory = wD_name; }
 	void set_path_file_pointcloud(std::string path) { path_file_point_cloud = path; } // get/set path of point cloud used for synthetic image rendering (pointcloud.pw file)
 	void setDirectoryExecutable(std::string value) { path_directory_feature_matching_tool = value; }
 	void setPath_to_ellipsoid_jar_batch(std::string _path) { path_file_batch_call_jarEllipsoid = _path; }
@@ -773,10 +806,10 @@ public:
 	std::vector<Recolored_Point_Cloud>* get_point_cloud_recolored() { return pointCloud_recolored; }
 
 	// getter/setter utm shift
-	double get_utm_shift_x() { return utm_shift_x; }
-	double get_utm_shift_y() { return utm_shift_y; }
-	void set_utm_shift_x(double _shifter_x) { utm_shift_x = _shifter_x; }
-	void set_utm_shift_y(double _shifter_y) { utm_shift_y = _shifter_y; }
+	double get_shift_x() { return shift_x; }
+	double get_shift_y() { return shift_y; }
+	void set_shift_x(double x) { shift_x = x; }
+	void set_shift_y(double y) { shift_y = y; }
 
 	// getter BoundingBox 
 	BoundingBox* getBoundingBox() { return boundingBox; }
@@ -798,9 +831,9 @@ public:
 	bool get_have_camera_calibration_android_dc() { return have_precalibrated_IOP_distCoeffs; } // distortion coefficients
 	
 	cv::Mat get_camera_calibration_android_cm() { 
-		std::stringstream cam_mat_string; cam_mat_string << camera_matrix_android;
+		std::stringstream cam_mat_string; cam_mat_string << precalib_camera_matrix;
 		logFilePrinter->append(TAG + "Deliver camera matrix: " + cam_mat_string.str());
-		return camera_matrix_android; }
+		return precalib_camera_matrix; }
 	
 	cv::Mat get_camera_calibration_android_dc() { 
 		std::stringstream dist_mat_string; dist_mat_string << distortion_coefficents_android;
@@ -829,22 +862,9 @@ public:
 
 	cv::Point3d& getProjectionCenter() { return cv::Point3d(x0, y0, z0); }
 
-	void set_projection_centre(double _x0, double _y0, double _z0) {
+	void set_ProjectionCenter(double _x0, double _y0, double _z0) {
 		x0 = _x0;
 		y0 = _y0;
-		z0 = _z0;
-	}
-
-	// set projection center and define shifters new!
-	// shifters are necessary to work with large coordinates (e.g. UTM coordinates) --> needed to reduce the lengths of coordinates to work with
-	void set_projC_zeroOrigin_updateShiftVals_setX0BBox(double new_utm_shift_x, double new_utm_shift_y, double _z0) {
-		// define shifter for point cloud shifting!
-		
-		utm_shift_x = new_utm_shift_x;
-		utm_shift_y = new_utm_shift_y;
-		
-		x0 = 0.0;
-		y0 = 0.0;
 		z0 = _z0;
 
 		boundingBox->set_X0_Cam_World(x0, y0, z0);
@@ -858,44 +878,66 @@ public:
 	// get rotation matrix
 	float* getRotationMatrix() { return Rxyz; } 
 
-	// set rotation matrix
-	void setRotationMatrix_cvMat(cv::Mat _rotM) {
-		
-		Rxyz[0] = _rotM.at<double>(0,0);
-		Rxyz[1] = _rotM.at<double>(1,0);
-		Rxyz[2] = _rotM.at<double>(2,0);
-		Rxyz[3] = _rotM.at<double>(0,1);
-		Rxyz[4] = _rotM.at<double>(1,1);
-		Rxyz[5] = _rotM.at<double>(2,1);
-		Rxyz[6] = _rotM.at<double>(0,2);
-		Rxyz[7] = _rotM.at<double>(1,2);
-		Rxyz[8] = _rotM.at<double>(2,2);		
-
+	// set rotation matrix [row-major]
+	void set_RotationMatrix(cv::Mat rotM) {
+		Rxyz[0] = rotM.at<double>(0, 0); Rxyz[1] = rotM.at<double>(0, 1); Rxyz[2] = rotM.at<double>(0, 2);
+		Rxyz[3] = rotM.at<double>(1, 0); Rxyz[4] = rotM.at<double>(1, 1); Rxyz[5] = rotM.at<double>(1, 2);
+		Rxyz[6] = rotM.at<double>(2, 0); Rxyz[7] = rotM.at<double>(2, 1); Rxyz[8] = rotM.at<double>(2, 2);
 	}
 
-	void setRz_4_BBox(cv::Mat _rotM) {
-		
-		Rz[0] = _rotM.at<double>(0, 0);
-		Rz[1] = _rotM.at<double>(0, 1);
-		Rz[2] = 0;
-		Rz[3] = -_rotM.at<double>(0, 1);
-		Rz[4] = _rotM.at<double>(0, 0);
-		Rz[5] = 0;
-		Rz[6] = 0;
-		Rz[7] = 0;
-		Rz[8] = 1;
+	// set Rz [row-major]
+	//void setRz_4_BBox(cv::Mat rotM) {
+	//	
+	//	Rz[0] = rotM.at<double>(0, 0);		Rz[1] = rotM.at<double>(0, 1);	Rz[2] = 0;
+	//	Rz[3] = -rotM.at<double>(0, 1);		Rz[4] = rotM.at<double>(0, 0);	Rz[5] = 0; //note, Ryz Rotation clockwise arount z-axis like a compass
+	//	Rz[6] = 0;							Rz[7] = 0;						Rz[8] = 1;
 
-		boundingBox->set_Rz(Rz);
-	}
+	//	boundingBox->set_Rz(Rz);
+	//}
 
 	// MATCHING
-	// in case of failed matching, give error message to main and exit program safely (call destructors, ...)
-	void setFailedMatching(bool value) { failedMatching = value; } // defined in Matching.cpp
-	bool getFailedMatching() { return failedMatching; }
 
 	// get d2Net scaling factor for true and synthetic image to match max_edge_sum and max_edge
 	double get_d2Net_scalingFactor_trueImage() { return d2Net_scalingFactor_trueImage; }
 	double get_d2Net_scalingFactor_synthImage() { return d2Net_scalingFactor_synthImage; }
+
+	double get_superglue_scalingFactor_trueImage() { return superglue_scalingFactor_trueImage; }
+	double get_superglue_scalingFactor_synthImage() { return superglue_scalingFactor_synthImage; }
+
+	void set_superglue_matching_thresh(float val) { 
+		if (val > 0.0 && val < 1.0) {
+			superglue_matching_thresh = val;
+		}
+		else {
+			logFilePrinter->append("Invalid value for super glue matching threshold. Must be 0.0<val<1.0. Restore default (0.1)");
+			superglue_matching_thresh = 0.1f;
+		}
+	}
+	float get_superglue_matching_thresh() {	return superglue_matching_thresh; }
+
+	void set_filter_matches_ransac_fisheye(float val) {
+		if (val > 0.0) {
+			filter_matches_ransac_fisheye = val;
+		}
+		else {
+			logFilePrinter->append("Invalid value for filter_matches_ransac_fisheye threshold. Must be val > 0. Restore default (200.0)");
+			filter_matches_ransac_fisheye = 200.0f;
+		}
+	}
+	float get_filter_matches_ransac_fisheye() { return filter_matches_ransac_fisheye; }
+
+	void set_filter_matches_ransac_pinhole(float val) {
+		if (val > 0.0) {
+			filter_matches_ransac_pinhole = val;
+		}
+		else {
+			logFilePrinter->append("Invalid value for filter_matches_ransac_pinhole threshold. Must be val > 0. Restore default (8.0)");
+			filter_matches_ransac_pinhole = 8.0f;
+		}
+	}
+	float get_filter_matches_ransac_pinhole() { return filter_matches_ransac_pinhole; }
+
+
 
 	// get/set infos about object point distribution & IO refinement (if or if not!)
 	void set_well_distributed_object_points_3D_space(bool val) { well_distributed_object_points_3D_space = val; }
@@ -903,6 +945,10 @@ public:
 	void set_well_distributed_object_points_image_space(bool val) { well_distributed_object_points_image_space = val; }
 	bool get_well_distributed_object_points_image_space() { return well_distributed_object_points_image_space; }
 
+	// neighbour surrounding for image fill knn
+	void setKnn(size_t knn) { k_for_knn = knn; }
+	size_t getKnn() { return k_for_knn; }
+	
 
 
 
@@ -913,19 +959,23 @@ private:
 	const std::string TAG = "DataManager:\t";
 	// D2Net
 	const uint max_edge = 1600; // set local parameters max_edge and max_sum_edges
-	const uint max_sum_edges = 2800; // caution! definition from d2net, do better not change (otherwise it will require a lot of VRAM on GPU or the calculation will take a lot of time!)
+	const uint max_sum_edges = 2400; // 2800; // caution! definition from d2net, do better not change (otherwise it will require a lot of VRAM on GPU or the calculation will take a lot of time!)
+
+	// SUPERGLUE
+	const uint max_img_size = 960;
+	
 
 	// paths to directories or files
 	// -----------------------------
 	std::string path_working_directory;
-	std::string path_directory_result;
+	std::string name_working_directory;
 	std::string path_directory_feature_matching_tool;
 	std::string path_file_point_cloud;
-	std::string path_file_output_VSfM_matches;
 	std::string path_file_output_D2Net_matches;
+	std::string path_file_output_superglue_matches;
 	std::string path_file_batch_call_jarEllipsoid;
-	std::string path_file_batch_call_exeVSfM;
 	std::string path_file_batch_call_pyD2Net;
+	std::string path_file_batch_call_superglue;
 	std::string file_name_true_image, file_name_water_line;
 
 	// logoutput (gesammelt plotten)
@@ -943,12 +993,12 @@ private:
 	// ----------
 	std::string uuid;// uuid client from json
 	float pix_size, dh, r, view_angle_half_H, view_angle_half_V, principal_distance; // for IOP
-	cv::Mat camera_matrix_android;
+	cv::Mat precalib_camera_matrix;
 	cv::Mat distortion_coefficents_android;
 	double rmse_calibration_android;
 
-	double x0, y0, z0, z_smartphone_height; //for EOP
-	double utm_shift_x, utm_shift_y; // enable shift of georeferenced point clouds (utm values very large numbers) 
+	double x0, y0, z0; // , z_smartphone_height; //for EOP
+	double shift_x, shift_y; // enable shift of georeferenced point clouds (utm values very large numbers) 
 	cv::Mat tvecs_prev, rvecs_prev; // in case of previous done exterior orientation determination
 	float azimuth, roll, pitch; 
 	float* Rxyz;
@@ -959,6 +1009,12 @@ private:
 
 	double d2Net_scalingFactor_trueImage; // scaling factors for image scaling, only necessary for 2net image matching, use "no scaling", i.e. factor = 1.0 by default
 	double d2Net_scalingFactor_synthImage;
+	double superglue_scalingFactor_trueImage;
+	double superglue_scalingFactor_synthImage;
+	float superglue_matching_thresh;
+	float filter_matches_ransac_fisheye;
+	float filter_matches_ransac_pinhole;
+	size_t k_for_knn;
 
 	// objects
 	// -------
@@ -982,7 +1038,6 @@ private:
 	// bools
 	// -----
 	bool haveVegetationMask;	
-	bool failedMatching;
 	bool have_precalibrated_IOP_camMatrix, have_precalibrated_IOP_distCoeffs, have_precalibrated_IOP_calibRMSE, have_calibration_values_android ;
 	bool have_android_rotation_matrix ;
 	bool well_distributed_object_points_3D_space; // check if distribution of object points is sufficient to refine cameras intrinsics

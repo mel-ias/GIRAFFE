@@ -2,39 +2,25 @@
 
 
 
-Modell_OCV::Modell_OCV(LogFile* _logfile, cv::Mat& _cameraMatrix, cv::Mat& _distCoeffs, cv::Mat& _rvec, cv::Mat& _tvec, std::vector<cv::Point2d>& _waterlinePoints) {
+Modell_OCV::Modell_OCV(LogFile* _logfile) {
 
 	logfile = _logfile;
 	logfile->append("");
 	logfile->append(TAG + "---- initialisation open computer vision modell ----");
 
-	rvec = _rvec; // translation vector
-	tvec = _tvec; // rotation matrix
-	cameraMatrix = _cameraMatrix;
-	distCoeffs = _distCoeffs;
-
-	waterlinePoints = _waterlinePoints;
-	//waterlinePoints_projected = new std::vector<cv::Point3d>;
-
-
-
 
 }
 
 Modell_OCV::~Modell_OCV() {
-//	if (waterlinePoints_projected != nullptr)
-//		delete waterlinePoints_projected;
 }
 
 
-
-
 /*
+* INFOS:
 * returns corresponding colors for all points of vector<cv::Point3d> point_cloud using input image cv::Mat& image_for_color
 * overrides vector point_cloud_colors because of referencing!
 * in case of water line points, use kd tree nearest neighbour approach to find next image point of projected point cloud to input water line point (iterative) 
 * use fix_aspect_ratio != 0.0 in case of fx=fy (standard fix_aspect_ratio = 1.0)
-
 * for project points: 
 	for( i = 0; i < count; i++ )
 	{
@@ -58,17 +44,17 @@ Modell_OCV::~Modell_OCV() {
 		icdist2 = 1./(1 + k[5]*r2 + k[6]*r4 + k[7]*r6);
 		xd = x*cdist*icdist2 + k[2]*a1 + k[3]*a2 + k[8]*r2+k[9]*r4;
 		yd = y*cdist*icdist2 + k[2]*a3 + k[3]*a1 + k[10]*r2+k[11]*r4;
-		
-		
+				
 		m[i].x = xd*fx + cx;
 		m[i].y = yd*fy + cy;
 }
-
 */
-void Modell_OCV::getColorFor(std::vector<cv::Point3d>& point_cloud, cv::Mat& image_for_color, std::vector<cv::Vec3b>& point_cloud_colors, bool fix_aspect_ratio) {
+std::vector<cv::Point3d> Modell_OCV::getColorFor(std::vector<cv::Point3d>& point_cloud, cv::Mat& image_for_color, std::vector<cv::Vec3b>& point_cloud_colors, std::vector<cv::Point2d>& image_coords_colors, bool fix_aspect_ratio, cv::Mat& cameraMatrix, cv::Mat& distCoeffs, cv::Mat& rvec, cv::Mat& tvec, std::vector<cv::Point2d>& waterlinePoints) {
 
 	
 	std::vector<cv::Point2d> image_pixels;
+	std::vector<cv::Point3d> waterlinePoints_projected;
+
 	cv::projectPoints(point_cloud, rvec, tvec, cameraMatrix, distCoeffs, image_pixels, cv::noArray(), fix_aspect_ratio);
 
 	std::cout << "image_pixels size: " << image_pixels.size() << endl;
@@ -80,9 +66,12 @@ void Modell_OCV::getColorFor(std::vector<cv::Point3d>& point_cloud, cv::Mat& ima
 
 		if (pixel.x > 0 && pixel.y > 0 && pixel.x < image_for_color.cols && pixel.y < image_for_color.rows) {
 			point_cloud_colors.push_back(image_for_color.at<cv::Vec3b>(pixel.y, pixel.x));
+			image_coords_colors.push_back(cv::Point2d(pixel.x, pixel.y));
 		}
-		else
-			point_cloud_colors.push_back(cv::Vec3b(0, 0, 0)); //add black if outside of image		
+		else {
+			point_cloud_colors.push_back(cv::Vec3b(0, 0, 0)); //add black if outside of image	
+			image_coords_colors.push_back(cv::Point2d(-1, -1)); // negative coordinates not exist thus add -1
+		}
 	}
 
 	std::cout << "pointcloud_color size: " << point_cloud_colors.size() << endl;
@@ -91,7 +80,7 @@ void Modell_OCV::getColorFor(std::vector<cv::Point3d>& point_cloud, cv::Mat& ima
 
 	// check water line points, if zero, return here, else continue
 	if (waterlinePoints.size() == 0)
-		return;
+		return waterlinePoints_projected;
 
 
 	// use nearest neighbour kd tree approach to find nearest image point to water line image point to push back corresponding object point
@@ -123,6 +112,8 @@ void Modell_OCV::getColorFor(std::vector<cv::Point3d>& point_cloud, cv::Mat& ima
 		//std::cout << "FLANN, look for water line point: " << p_wl.x << "," << p_wl.y << ", nn: " << image_points_to_search[indices[0]] << ",dists: " << dists[0] << std::endl;
 	
 	}
+
+	return waterlinePoints_projected;
 	
 		
 }
@@ -132,20 +123,22 @@ void Modell_OCV::getColorFor(std::vector<cv::Point3d>& point_cloud, cv::Mat& ima
 
 
 
-void Modell_OCV::print_point_cloud_recolored(std::string workingDirectory, std::vector<cv::Point3d>& point_cloud, std::vector<cv::Vec3b>& point_cloud_colors, double shifter_x, double shifter_y) {
+void Modell_OCV::export_point_cloud_recolored(std::string workingDirectory, std::string wD_name, std::vector<cv::Point3d>& point_cloud, std::vector<cv::Vec3b>& point_cloud_colors, std::vector<cv::Point2d>& image_coords_colors, double shifter_x, double shifter_y) {
 
 	// output point cloud to file, apply coordinate shifting
 	std::ofstream outStream;
-	outStream.open(workingDirectory + "output_pointcloud.txt");
+	outStream.open(workingDirectory + wD_name + "_pcl.txt");
 
 	int i = 0;
 	for (i = 0; i < point_cloud.size(); i++) {
 
 		cv::Point3d& p = point_cloud[i];
 		cv::Vec3b& c = point_cloud_colors[i];
+		cv::Point2d& imgP = image_coords_colors[i];
 
-		if (static_cast<unsigned int>(c.val[0]) != 0 && static_cast<unsigned int>(c.val[1]) != 0 && static_cast<unsigned int>(c.val[2]) != 0) {
-
+		//if (static_cast<unsigned int>(c.val[0]) != 0 && static_cast<unsigned int>(c.val[1]) != 0 && static_cast<unsigned int>(c.val[2]) != 0) {
+		if ((c.val[0]) > 0.0 || (c.val[1]) > 0.0 || (c.val[2]) > 0.0) {
+		
 			std::setprecision(4);
 			outStream
 				<< std::fixed << p.x + shifter_x << "," // apply shift_x
@@ -153,7 +146,11 @@ void Modell_OCV::print_point_cloud_recolored(std::string workingDirectory, std::
 				<< std::fixed << p.z << ","
 				<< static_cast<unsigned int>(c.val[2]) << ","
 				<< static_cast<unsigned int>(c.val[1]) << ","
-				<< static_cast<unsigned int>(c.val[0]) << std::endl;
+				<< static_cast<unsigned int>(c.val[0]) << ","
+				<< std::fixed << imgP.x << "," // add image coordinates to list
+				<< std::fixed << imgP.y << "," << std::endl;
+
+
 
 		}
 	}
@@ -164,5 +161,6 @@ void Modell_OCV::print_point_cloud_recolored(std::string workingDirectory, std::
 
 
 }
+
 
 

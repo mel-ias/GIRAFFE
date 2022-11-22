@@ -17,7 +17,7 @@ PerspectiveImage::PerspectiveImage(DataManager* _dataManager) {
 	dataManager = _dataManager;
 	calculator.init(_dataManager);
 
-	_pointloader = new PointLoader(_dataManager->get_path_file_pointcloud(), _dataManager); //new PointLoader(path);    
+	pointloader = new PointLoader(_dataManager->get_path_file_pointcloud(), _dataManager); //new PointLoader(path);    
 
 	
 }
@@ -25,7 +25,7 @@ PerspectiveImage::PerspectiveImage(DataManager* _dataManager) {
 // D'tor
 PerspectiveImage::~PerspectiveImage() {
 	// tidy up
-	delete _pointloader;
+	delete pointloader;
   
 }
 
@@ -36,20 +36,20 @@ void
 PerspectiveImage::generateImage(){
    	
 	// NUR MATCHING TESTEN!
-	_pointloader->set_imc(&calculator); //startet init von imcalculator
-	_pointloader->check_color();
+	pointloader->set_imc(&calculator); //startet init von imcalculator
+	pointloader->check_color();
 	
-	_pointloader->set_bb(dataManager->getBoundingBox()); // bouding box is specified by dataManager
+	pointloader->set_bb(dataManager->getBoundingBox()); // bouding box is specified by dataManager
 	calculator.init_Image(dataManager->getBoundingBox()); // bouding box is specified by dataManager
 
     // read point file
-	_pointloader->read_binary_file();
+	pointloader->read_binary_file();
 	
 	calculator.writeImages();
 	calculator.saveImages();
 	calculator.fillVektorsForImFill();
 
-	size_t k_for_knn = 3;
+	size_t k_for_knn = dataManager->getKnn(); 
 	calculator.fillImage(k_for_knn); 
 
 	cv::Mat synthImage = calculator.get_FilledImage_Knn();
@@ -60,7 +60,7 @@ PerspectiveImage::generateImage(){
 
 
 // FilterAlgorithmen für Bildvorberarbeitung. aktuell implementiert: WallisFilter, GaussFilter
-cv::Mat PerspectiveImage::applyFilterAlgorithms(
+cv::Mat PerspectiveImage::apply_filter(
 	const cv::Mat& imageToBeFiltered,
 	DataManager::FILTER_APPS filterToBeApplied) {
 

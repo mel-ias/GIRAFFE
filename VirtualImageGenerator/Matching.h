@@ -11,6 +11,7 @@
 #include <opencv2/core/eigen.hpp>
 #include "Modell_OCV.h"
 #include "DataManager.h"
+#include "Utils.h"
 
 #include <thread>
 #endif
@@ -33,7 +34,7 @@ public:
 	};
 
 	enum Flags_resec {
-		FIX_NOTHING, FIX_INTR, FIX_EXTR, FIX_INTR_EXTR
+		CALC_EO_IO, CALC_EO, FIXED_EO_IO
 	};
 	
 	// C'tor
@@ -66,31 +67,12 @@ public:
 	
 	
 
-	float enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_object_points, std::vector<cv::Point2d>& in_matched_image_points_real, cv::Mat& real_canvas, double in_pix_size, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec, cv::Mat& tvec, Flags_resec in_flag);
+	float enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_object_points, std::vector<cv::Point2d>& in_matched_image_points_real, cv::Mat& real_canvas, double in_pix_size, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec, cv::Mat& tvec, cv::Mat& stdDev_In, cv::Mat& stdDev_Ext, Flags_resec in_flag, bool fisheye);
 
 
 	
-	static void appendLineToFile(std::string filepath, std::string line);
-	// sets output path
-	//void setOutputPath(std::string path);
+	
 
-	// 08.12.17 übergebe Flags mit was gemacht werden soll! 
-	//void Matching::matching_Kehl(cv::Mat& realImage, cv::Mat& synthImage, Matching::Detector useThisDetector = MSCR);
-
-	//bool useDetectorMSCR = true, bool useDetectorSIFT = false, bool useDetectorFAST = false);
-	//void matching_Kehl(); //referenz von synth bild hier verlangt
-	//Berechne SolvePNP für Kamerapos und innere O
-	//void berechneSolvePnP();
-
-
-	//void ausreissertest_bildmatches(std::vector<cv::Point2d> realImg_pts, std::vector<cv::Point2d> synthImg_pts, Matching::OutlierTests testChoice);
-	//void run_ausreissertests_matching(std::vector<cv::Point2d>& real_m_pts, std::vector<cv::Point2d>& synth_m_pts); // ausführfunktion! 
-
-
-	//void writer_Naeherungen();
-	//void Matching::writer_Naeherungen_SolvePnP();
-	//std::vector<cv::Point3f> projectPointCloud_orthogonal(std::vector<cv::Point3f> pointcloud, cv::Point3d projectionCenter, std::vector<float> rotationMatrix);
-	//cv::Mat euler2rotM_rzyx(cv::Vec3f &theta);
 	
 
 private:
@@ -138,29 +120,12 @@ private:
 
 	cv::Mat ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vector<cv::Point2d>& _points2, bool refineF);
 
-	// Real Camera internals, inital values for initialisation
-	//double focal_length_mm, focal_length_px, pix_size; // real.cols; // Approximate focal length.
-	//cv::Point2d center; // = cv::Point2d(0, 0);
-	//cv::Mat camera_matrix; //= focal_length, 0, center.x, 0, focal_length, center.y, 0, 0, 1);
-	//cv::Mat dist_coeffs; // lens distortion
-
-	// Real Camera extrinsics, inital values for init
-	//cv::Mat tvecs = cv::Mat::zeros(3, 1, CV_64FC1);
-	//cv::Mat rvecs = cv::Mat::zeros(3, 1, CV_64FC1);
-	
-	//cv::Mat tvec_cc_orig_copy;
-	//cv::Mat rvec_cc_orig_copy;
-	//::Mat T; //transformationsmatrix
-
 
 	//Hier Matching - Parameterisierung
 	double _confidence = 0.9999998;
 	double _distance = 1.0;
 
-	
-	//cv::Mat synth_image, real_image;
-
-	// constants
+		// constants
 	std::string TAG = "Matching:\t";
 	
 
@@ -170,15 +135,6 @@ private:
 	std::string mWorkingDirectory;
 	float mReproError4JSON = 0.0f; // copy of repro_error after camera calibration for json output
 
-
-
-
-	//std::vector<Recolored_Point_Cloud>* point_cloud_recolored_ptr;
-	//std::vector<Vek3d>* synth_pts_3D;
-
-	// masking vegetation, currently off
-	// cv::Mat mask_real_image_veg, mask_synth_image_veg;
-	// bool have_mask_real_image_veg = false, have_mask_synth_image_veg = false;
 
 	// global definition for concern in output
 	double inliers_per_importance_cell_percent = 0.0;

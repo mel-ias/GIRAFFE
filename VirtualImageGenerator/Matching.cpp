@@ -59,23 +59,6 @@ void Matching::init(DataManager* _dataManager) {
 	mWorkingDirectory = (mDataManager->get_path_working_directory() + "\\Matching\\");
 	CreateDirectoryA(LPCSTR(mWorkingDirectory.c_str()), NULL);
 
-
-	// vegetation masking --> currently off! 
-	/*if (!mDataManager->get_mask_real_image_veg_TGI().empty()) {
-		mask_real_image_veg = mDataManager->get_mask_real_image_veg_TGI();
-		have_mask_real_image_veg = true;
-
-		mLogFile->append(TAG + "mask_real_image_veg: " + std::to_string(mask_real_image_veg.size().width) + "x" + std::to_string(mask_real_image_veg.size().width) + "," + std::to_string(mask_real_image_veg.type()));
-	}
-
-	// check if vegetation masking for synthetic image is available (and receive)
-	if (!mDataManager->get_mask_synth_image_veg_TGI().empty()) {
-		mask_synth_image_veg = mDataManager->get_mask_synth_image_veg_TGI();
-		have_mask_synth_image_veg = true;
-
-		mLogFile->append(TAG + "mask_synth_image_veg: " + std::to_string(mask_synth_image_veg.size().width) + "x" + std::to_string(mask_synth_image_veg.size().width) + "," + std::to_string(mask_synth_image_veg.type()));
-	}*/
-
 }
 
 /**
@@ -127,7 +110,7 @@ void Matching::calculate_nn_synth_key___pts_image_pts(
 	out_matched_object_points.clear();
 
 	// append log_file
-	mLogFile->append(TAG + "count synth_keypoints_float: " + std::to_string(in_synth_pts_float.size()));
+	mLogFile->append(TAG + "count synth_keypoints_float: " + std::to_string(in_synth_keypoints_float.size()));
 	mLogFile->append(TAG + "count real_keypoints_float: " + std::to_string(in_real_keypoints_float.size()));
 	mLogFile->append(TAG + "neighbour distance threshold: " + std::to_string(in_neighbour_distance));
 
@@ -199,7 +182,7 @@ void Matching::calculate_nn_synth_key___pts_image_pts(
 
 
 /**
- * @fn	void Matching::loadMatches( std::string in_path_VSfM_FMatrixOutput, cv::Mat&amp; in_real_image, cv::Mat&amp; in_synth_image, std::vector&lt;cv::Point2d&gt;&amp; in_wl_pts_2D, std::vector&lt;Vek2d&gt;&amp; in_synth_pts_2D, std::vector&lt;Vek3d&gt;&amp; in_synth_pts_3D, std::vector&lt;cv::Point3d&gt;&amp; out_matched_object_points, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_real, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_synth)
+ * @fn	void Matching::loadMatches( std::string in_path_FMatrixOutput, cv::Mat&amp; in_real_image, cv::Mat&amp; in_synth_image, std::vector&lt;cv::Point2d&gt;&amp; in_wl_pts_2D, std::vector&lt;Vek2d&gt;&amp; in_synth_pts_2D, std::vector&lt;Vek3d&gt;&amp; in_synth_pts_3D, std::vector&lt;cv::Point3d&gt;&amp; out_matched_object_points, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_real, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_synth)
  *
  * @summary	public function read f-inlier matches from SiftGPU (included in Visual SFM console
  * 			application)
@@ -208,7 +191,7 @@ void Matching::calculate_nn_synth_key___pts_image_pts(
  *
  * @date	25.04.2018
  *
- * @param 			in_path_VSfM_FMatrixOutput	  	input string path to matching results from Visual SFM.
+ * @param 			in_path_FMatrixOutput	  	input string path to matching results from Visual SFM.
  * @param [in]		in_real_image				  	matrix of real image.
  * @param [in]		in_synth_image				  	matrix of rendered image.
  * @param [in]		in_wl_pts_2D					image points of the detected water line
@@ -228,8 +211,8 @@ void Matching::loadMatches(
 	std::vector<cv::Point3d>& out_matched_object_points,
 	std::vector<cv::Point2d>& out_matched_image_points_real,
 	std::vector<cv::Point2d>& out_matched_image_points_synth,
-	double d2Net_scalingFactor_trueImage,
-	double d2net_scalingFactor_synthImage,
+	double scalingFactor_trueImage,
+	double scalingFactor_synthImage,
 	int flag_matching_type,
 	float neighbour_distance_allowed_pointcloud) {
 
@@ -248,48 +231,35 @@ void Matching::loadMatches(
 	// read line-by-line
 	while (std::getline(file, line)) {
 
-			if (flag_matching_type == DataManager::VSFM) {
-				// skip first 12 lines
-				if (counter > 11) {
-					// create an input string stream
-					std::istringstream stm(line);
-					int id1, id2;
-					double img1_x, img1_y, img2_x, img2_y; //coordinates of feature point inliers
-					stm >> id1 >> img1_x >> img1_y >> id2 >> img2_x >> img2_y;
-					// push back inlieres separately
-					real_matched_pts.push_back(cv::Point2d(img1_x, img1_y));
-					synth_matched_pts.push_back(cv::Point2d(img2_x, img2_y));
-				}
-				counter++;
-			}
+		if (flag_matching_type == DataManager::D2NET || flag_matching_type == DataManager::SUPERGLUE) {
 
-			if (flag_matching_type == DataManager::D2NET) {
+			// create an input string stream
+			std::istringstream stm(line);
+			int id;
+			double img1_x, img1_y, img2_x, img2_y; //coordinates of feature point inliers; img1 = real image; img2 = synth image
+			stm >> id >> img1_x >> img1_y >> img2_x >> img2_y;
 
-				// create an input string stream
-				std::istringstream stm(line);
-				int id;
-				double img1_x, img1_y, img2_x, img2_y; //coordinates of feature point inliers; img1 = real image; img2 = synth image
-				stm >> id >> img1_x >> img1_y >> img2_x >> img2_y;
+			// rescale coordinates from matched images
+			// trueImage 
+			img1_x = img1_x * 1.0 / scalingFactor_trueImage;
+			img1_y = img1_y * 1.0 / scalingFactor_trueImage;
+			// synthImage 
+			img2_x = img2_x * 1.0 / scalingFactor_synthImage;
+			img2_y = img2_y * 1.0 / scalingFactor_synthImage;
 
-				// rescale coordinates from matched images
-				// trueImage 
-				img1_x = img1_x * 1.0 / d2Net_scalingFactor_trueImage;
-				img1_y = img1_y * 1.0 / d2Net_scalingFactor_trueImage;
-				// synthImage 
-				img2_x = img2_x * 1.0 / d2net_scalingFactor_synthImage;
-				img2_y = img2_y * 1.0 / d2net_scalingFactor_synthImage;
+			// push back inlieres separately
+			real_matched_pts.push_back(cv::Point2d(img1_x, img1_y));
+			synth_matched_pts.push_back(cv::Point2d(img2_x, img2_y));
 
-				// push back inlieres separately
-				real_matched_pts.push_back(cv::Point2d(img1_x, img1_y));
-				synth_matched_pts.push_back(cv::Point2d(img2_x, img2_y));
-
-				counter++;
-			}
-		
-
+			counter++;
+		}
 	}
 
 	mLogFile->append(TAG + "count fundamental inlier matches (real_matched_pts/synth_matched_pts):" + std::to_string(real_matched_pts.size()) + "/" + std::to_string(synth_matched_pts.size()));
+
+	// check for outlieres
+	//AccurateMatcher::ransacTest_reimpl(real_matched_pts, synth_matched_pts, false);
+
 
 	// data conversion for image matching
 	std::vector<Vek2d> real_matched_pts_Vek2d, synth_matched_pts_Vek2d;
@@ -314,15 +284,26 @@ void Matching::loadMatches(
 		return;
 	}
 
-	// visualisation of inlier matches distribution for rectification of real image
-	int raster_size = 2;
-	draw_inliers_distribution(in_real_image, out_matched_image_points_real, in_wl_pts_2D, raster_size, "matching_distribution");
+	// visualisation of inlier matches distribution for rectification of real image (related to water line points, so only run function if water line points are given!)
+	if (!in_wl_pts_2D.empty()) {
+		int raster_size = 2;
+		draw_inliers_distribution(in_real_image, out_matched_image_points_real, in_wl_pts_2D, raster_size, "matching_distribution");
+	}
 
 	// output to ascii point cloud file (matched_object_points, matched_image_points_real, matched_imagePoints_synth)
 	writer_matches_txt_ellipsoid_bat(out_matched_object_points, out_matched_image_points_real, out_matched_image_points_synth);
 
 	// draw matches
-	draw_matches_reimpl_MK(in_real_image, in_synth_image, real_matched_pts_Vek2d, synth_matched_pts_Vek2d, "vsfm_matches_inliers");
+	draw_matches_reimpl_MK(in_real_image, in_synth_image, real_matched_pts_Vek2d, synth_matched_pts_Vek2d, "matches_2D");
+
+	// update 02.07.22 because function above do not print inlier matches alone!
+	std::vector<Vek2d> out_matched_image_points_real_Vek2d, out_matched_image_points_synth_Vek2d;
+	for (cv::Point p : out_matched_image_points_real)
+		out_matched_image_points_real_Vek2d.push_back(Vek2d(p.x, p.y));
+
+	for (cv::Point p : out_matched_image_points_synth)
+		out_matched_image_points_synth_Vek2d.push_back(Vek2d(p.x, p.y));
+	draw_matches_reimpl_MK(in_real_image, in_synth_image, out_matched_image_points_real_Vek2d, out_matched_image_points_synth_Vek2d, "matches_with_3D_val");
 
 }
 
@@ -352,7 +333,7 @@ void Matching::loadMatches(
  * 											FIX_INTR_EXTR = all parameters are fixed, no need of re-calculation
  */
 
-float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_object_points, std::vector<cv::Point2d>& in_matched_image_points_real, cv::Mat& real_canvas, double in_pix_size, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec, cv::Mat& tvec, Flags_resec in_flag) {
+float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_object_points, std::vector<cv::Point2d>& in_matched_image_points_real, cv::Mat& true_image, double in_pix_size, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec, cv::Mat& tvec, cv::Mat& stdDev_In, cv::Mat& stdDev_Ext, Flags_resec in_flag, bool fisheye) {
 
 
 
@@ -373,35 +354,33 @@ float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_
 		return -1;
 	}
 
-	// in case of no extrinsics, need to calculate from object-image point correspondences,
+
+	// in case of no extrinsics, need to calculate from object-image point correspondences
 
 	// remove [image point - object point] outliers using fundamental mat calculation due to solvePnPRansac
 	// set ransac threshold to 8 px because of initial camera matrix, dist_coeffs and extrinsics (having errors)
 	std::vector<int> inliers;
-	float reproError_allowedInit = 8.0f; // real_canvas.size().width / 4; //8.0f;  // use half of image as threshold 	// allowed reprojection error [px] regarding outlier elimination
+	float reproFisheye = mDataManager->get_filter_matches_ransac_fisheye();
+	float reproPinhole = mDataManager->get_filter_matches_ransac_pinhole();
+	float solvePnPRansac_reproErr =  (fisheye) ? reproFisheye : reproPinhole; //allowed reprojection error [px] regarding outlier elimination 
+	int iterationsCount = 100;
 
-	// search for outlier
-	cv::solvePnPRansac(in_matched_object_points, in_matched_image_points_real, camera_matrix, dist_coeffs, rvec, tvec, true, 100, reproError_allowedInit, 0.9999, inliers, CV_ITERATIVE);
-
-	// find matching indices in both vectors of matching points
+	// search for outlier (please do not use for fisheye cameras as solvePnP expect central perspecive rather than fisheye
 	std::vector<cv::Point3f> object_points_ransac;
 	std::vector<cv::Point2f> image_points_real_ransac;
+
+	 // find matching indices in both vectors of matching points
+	// note: solve PnP considers central perspective images. Using fisheye will lead to many matches to be detected as outliers, set reproError to a high value to get most matches
+
+	
+	cv::solvePnPRansac(in_matched_object_points, in_matched_image_points_real, camera_matrix, dist_coeffs, rvec, tvec, true, iterationsCount = iterationsCount, solvePnPRansac_reproErr, 0.9999, inliers, CV_ITERATIVE);
 	for (int i = 0; i < in_matched_object_points.size(); i++) {
 		if (std::find(inliers.begin(), inliers.end(), i) != inliers.end()) {
 			image_points_real_ransac.push_back(in_matched_image_points_real[i]);
 			object_points_ransac.push_back(in_matched_object_points[i]);
 		}
 	}
-
-
-	
-	
-
-	// append log_file
-	//mLogFile->append(TAG + "perform cv::solvePnPRansac for outlier removal regarding real-synth image matching and respecting corresponding 3D object points.");
-	//mLogFile->append(TAG + "count inliers (inliers/matched_object_points): " + std::to_string(inliers.size()) + "/" + std::to_string(in_matched_object_points.size()) + ") inliers.");
 	mLogFile->append(TAG + "total matched (object_points_ransac/image_points_real_ransac): " + std::to_string(object_points_ransac.size()) + "/" + std::to_string(image_points_real_ransac.size()));
-
 	
 
 	// -- run bundle adjustment, calibration and determination of position 
@@ -410,68 +389,74 @@ float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_
 	// run Levenberg-Marquard adjustment to minimize reprojection error;
 	// converge after 300 iterations or TermCriteria::COUNT + EPS
 	// result: camera matrix, dist_coeefs, optimised position and orientation - valid for current application case
-	cv::Mat stdDev_In, stdDev_Ext, perViewErrors;
+	cv::Mat perViewErrors;
 
 	cv::TermCriteria termCrit = cv::TermCriteria((cv::TermCriteria::COUNT) + (cv::TermCriteria::EPS), 300, DBL_EPSILON);	// criterium for termination/ converge, max number of iterations: 300
 	//criteria = TermCriteria(TermCriteria::EPS+TermCriteria::COUNT, 20, FLT_EPSILON) 
 
 
 	// define calibration flags + init repro_error
-	int flags_4_calibration = 0;
 	float repro_error = -1.0f;
 
 	// 3. performance
-	if (in_flag == FIX_INTR_EXTR) {
+	if (in_flag == FIXED_EO_IO) {
 		mLogFile->append(TAG + "IO fixed, EO fixed");
 		return -1;
 	}
 	// fix entire IOR
-	if (in_flag == FIX_INTR) {
-		flags_4_calibration += CV_CALIB_USE_INTRINSIC_GUESS + CV_CALIB_FIX_FOCAL_LENGTH + CV_CALIB_FIX_PRINCIPAL_POINT + CV_CALIB_FIX_ASPECT_RATIO + CV_CALIB_FIX_K1 + CV_CALIB_FIX_K2 + CV_CALIB_FIX_K3 + CV_CALIB_ZERO_TANGENT_DIST; // 11.01.2019 test --> alles fix außer brennweite  ;
-		mLogFile->append(TAG + "IO fixed, EO optimisation");
-		// run --> extO determination only
-		
+	if (in_flag == CALC_EO) {
+		mLogFile->append(TAG + "IO fixed, EO optimisation via solvePnPRefineLM");
 		cv::solvePnPRefineLM(object_points_ransac, image_points_real_ransac, camera_matrix, dist_coeffs, rvec, tvec, termCrit);
-		repro_error = 0; // no return of projection error when using solvePNPRefineLM technique. 
-		std::cout << "rvec: " << rvec << ", tvec: " << tvec << std::endl;
 	}
 	else {
-
-		//flags_4_calibration += (CV_CALIB_USE_INTRINSIC_GUESS + CV_CALIB_FIX_ASPECT_RATIO); // original
-		//mLogFile->append(TAG + "IO optimisation (full), EO optimisation");
-
-		// fix entire IOR but not the focal lengh --> works really good!
-		flags_4_calibration += CV_CALIB_USE_INTRINSIC_GUESS + CV_CALIB_FIX_PRINCIPAL_POINT + CV_CALIB_FIX_ASPECT_RATIO + CV_CALIB_FIX_K1 + CV_CALIB_FIX_K2 + CV_CALIB_FIX_K3 + CV_CALIB_ZERO_TANGENT_DIST; // 11.01.2019 test --> alles fix außer brennweite  ;
-		mLogFile->append(TAG + "IO fixed but optimize principal distance");
-
-		// support necessary data type
-		std::vector<std::vector<cv::Point3f>> object_points_ransac_vector;
-		std::vector<std::vector<cv::Point2f>> image_points_real_ransac_vector;
+		mLogFile->append(TAG + "IO + EO optimisation");
+		std::vector<std::vector<cv::Point3f>> object_points_ransac_vector;	// OCV required data structure
+		std::vector<std::vector<cv::Point2f>> image_points_real_ransac_vector;	// OCV requred data structure
 		object_points_ransac_vector.push_back(object_points_ransac);
 		image_points_real_ransac_vector.push_back(image_points_real_ransac);
 
-		// no need for overwriting exterior orientation
-		if (in_flag == FIX_EXTR) {
-			// run --> determine both, exterior orientation and camera calibration with initial guess (LM optim)
-			mLogFile->append(TAG + "EO fixed");
-
-
-			repro_error = cv::calibrateCamera(object_points_ransac_vector, image_points_real_ransac_vector, real_canvas.size(),
-				camera_matrix, dist_coeffs, cv::Mat(), cv::Mat(), stdDev_In, stdDev_Ext, perViewErrors, flags_4_calibration, termCrit);
+		if (!fisheye) {
+			int flagsCalib = CV_CALIB_USE_INTRINSIC_GUESS; // +CV_CALIB_FIX_ASPECT_RATIO; // Test 28.07.2022
+			repro_error = cv::calibrateCamera(object_points_ransac_vector, image_points_real_ransac_vector, true_image.size(), camera_matrix, dist_coeffs, rvec, tvec, stdDev_In, stdDev_Ext, perViewErrors, flagsCalib, termCrit);
 		}
 		else {
-			// run --> determine both, exterior orientation and camera calibration with initial guess (LM optim)
-			mLogFile->append(TAG + "EO optimisation");
-			repro_error = calibrateCamera(object_points_ransac_vector, image_points_real_ransac_vector, real_canvas.size(),
-				camera_matrix, dist_coeffs, rvec, tvec, stdDev_In, stdDev_Ext, perViewErrors, flags_4_calibration, termCrit);
+			// Todo find out how to use extrinsics here -> perhaps simply put to vector?
+			// https://gist.github.com/suzumura-ss/db91b901f5a300e6b9949cf5e012278e
+			std::vector<cv::Mat> rvecs, tvecs;
+			int flagsCalib = cv::fisheye::CALIB_USE_INTRINSIC_GUESS + cv::fisheye::CALIB_FIX_SKEW + cv::fisheye::CALIB_RECOMPUTE_EXTRINSIC;
+			repro_error = cv::fisheye::calibrate(object_points_ransac_vector, image_points_real_ransac_vector, true_image.size(), camera_matrix, dist_coeffs, rvecs, tvecs, flagsCalib, termCrit);
 		}
+	}
+
+	
+	// Compute repro error & covariance matrix to estimate standard deviations [things done by OCV are weird, do it yourself!]: https://stackoverflow.com/a/20911906
+	std::vector<cv::Point2f> image_points_repro;
+	cv::Mat jacobian;
+
+	if (fisheye) {
+		cv::fisheye::projectPoints(object_points_ransac, image_points_repro, rvec, tvec, camera_matrix, dist_coeffs, 0, jacobian);
+
+	} else {
+		cv::projectPoints(object_points_ransac, rvec, tvec, camera_matrix, dist_coeffs, image_points_repro, jacobian);	
+		// central perspective / undistort image only!
+		// Compute standard deviation for extrinsics and intrinsics [no need for dist_coeffs as we undistort the images immediately and stdDevs of distortion parameters are difficult to interpret]
+		cv::Mat sigma_extr = cv::Mat(jacobian.t() * jacobian, cv::Rect(0, 0, 6, 6)).inv(); // jacobian matrix of derivatives of image points with respect to components of the rotation vector, translation vector, focal lengths, coordinates of the principal point and the distortion coefficients
+		cv::Mat sigma_intr = cv::Mat(jacobian.t() * jacobian, cv::Rect(6, 6, 9, 9)).inv();
+		sqrt(sigma_extr.diag(), stdDev_Ext);
+		sqrt(sigma_intr.diag(), stdDev_In);
 	}
 
 
 
 
-	// copy repro error to member for json output
-	mReproError4JSON = repro_error;
+	// Compute rmse
+	float mean_error = 0.0f;
+	for (int i = 0; i < image_points_real_ransac.size(); i++) {
+		float error = cv::norm(cv::Mat(image_points_real_ransac.at(i)), cv::Mat(image_points_repro.at(i)), cv::NORM_L2, cv::noArray());
+		mean_error += error;
+	}
+	repro_error = mean_error / object_points_ransac.size();
+	mReproError4JSON = repro_error;	// copy repro error for json output
 
 
 	// data_conversion if necessary, convert data (64FC3 to 64FC1)
@@ -487,40 +472,23 @@ float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_
 		rvec_1ch.copyTo(rvec);
 		tvec_1ch.copyTo(tvec);
 	}
-
 	// end spatial resection
-	std::cout << TAG << "Spatial resection, estimated rvec: " << rvec << std::endl;
-	std::cout << TAG << "Spatial resection, estimated tvec: " << tvec << std::endl;
-	//mLogFile->append(TAG + "Spatial resection, estimated tvec: " + std::to_string(&tvec.at<double>[0]) + std::to_string(&tvec.at<double>[1]) + std::to_string(&tvec.at<double>[2]));
-
-
-	// ---------------- start output section --------------------- //
 	
-
-	// print correlation matrix if no pre-calibrated camera is available
-	 if (!(in_flag == FIX_INTR)) {
-		 // outsourced printer for output
-		 output_enhanced_spatial_resection(camera_matrix, dist_coeffs, rvec, tvec, stdDev_In, stdDev_Ext, perViewErrors, in_pix_size);
-		
-	 }
-
-	// visualisation of valid matches determined by project object points into image space using calculated intrinsic and extrinsics
-	std::vector<cv::Point2f> matched_object_points_ransac_projected;
-	cv::projectPoints(object_points_ransac, rvec, tvec, camera_matrix, dist_coeffs, matched_object_points_ransac_projected, cv::noArray(), 1.0);
-	draw_valid_matches_after_back_projection(real_canvas, image_points_real_ransac, matched_object_points_ransac_projected);
-
+	draw_valid_matches_after_back_projection(true_image, image_points_real_ransac, image_points_repro);
 	// ----------------- end output section ---------------------- //
 
 	return repro_error;
-
-
 }
 
 
 
 
+
+
+
+
 /**
- * @fn	void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix,cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_vector_x, double shift_vector_y)
+ * @fn	void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix,cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y)
  *
  * @brief	Waterline projection.
  *
@@ -538,36 +506,28 @@ float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_
  * @param 		  	shift_vector_y   	[input] shift vector y coordinate, shift re-aligne point clouds with large coordinates (UTM) back to roots
  */
 
-void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double utm_shift_x, double utm_shift_y, bool print_pcl) {
+void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y, bool export_pcl) {
 
-	// --- init 
+	
+	
+	// --- init variables ---
 	// remove points that doesn´t fit distance from plane for further processing
 	// remove points that may be highly affacted by distortion (which could not determined precisely)
 	double max_distance_from_line = 0.025; // m
 	double tolerance_distortion = 5; // px
 
-	// get shift vector for point cloud displacement due to UTM description
-	//double shift_vector_x = mDataManager->getShifter_x();
-	//double shift_vector_y = mDataManager->getShifter_y();
-
 	// logger for stats in this function
 	std::stringstream log_statistics;
-
-
-
-	mLogFile->append("");
-	mLogFile->append(TAG + "---- start water line projection ----");
-
-	// in case of non available water line, return
-	if (in_wl_pts_2D.size() == 0) {
-		mLogFile->append(TAG + "no waterline provided, return");
-		return;
-	}
-
-
 	// undistort water line points and push back into image coordinate system
 	std::vector<cv::Point2d> wl_pts_2D_undistort_normalized_coordinates;
 	std::vector<cv::Point2d> wl_pts_2D_undistort_image_coordinates;
+	std::vector<cv::Point2d> water_line_points_reduced_by_dist; // check distance water line undistort -> water line distort, remove points in regions of uncertainity
+
+	// ----- 3D projection  using OCV model ----- //
+	// for opencv project points and application of collinearity equation using cv model! 
+	Modell_OCV modell_ocv = Modell_OCV(mLogFile);
+	std::vector<cv::Vec3b> point_cloud_color;
+	std::vector<cv::Point2d> image_coordinates_color;
 
 	// Computes the ideal point coordinates from the observed point coordinates. (CV Doc)
 	// where undistort() is an approximate iterative algorithm that estimates the normalized original point coordinates out of the normalized distorted point coordinates (“normalized” means that the coordinates do not depend on the camera matrix).
@@ -584,37 +544,31 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 	//		u' = x*fx' + cx'
 	//		v' = y*fy' + cy',
 
-	cv::undistortPoints(in_wl_pts_2D, wl_pts_2D_undistort_normalized_coordinates, camera_matrix, dist_coeffs);
+	if (in_wl_pts_2D.size() != 0) {
+		// undist 2D image points of water line
+		cv::undistortPoints(in_wl_pts_2D, wl_pts_2D_undistort_normalized_coordinates, camera_matrix, dist_coeffs);
 
-	// conversion image coordinates
-	for (cv::Point2d p : wl_pts_2D_undistort_normalized_coordinates) {
-		wl_pts_2D_undistort_image_coordinates.push_back(cv::Point2d(
-			camera_matrix.at<double>(0, 0) * p.x + camera_matrix.at<double>(0, 2),
-			camera_matrix.at<double>(1, 1) * p.y + camera_matrix.at<double>(1, 2)));
+			// conversion image coordinates
+			for (cv::Point2d p : wl_pts_2D_undistort_normalized_coordinates) {
+				wl_pts_2D_undistort_image_coordinates.push_back(cv::Point2d(
+					camera_matrix.at<double>(0, 0) * p.x + camera_matrix.at<double>(0, 2),
+					camera_matrix.at<double>(1, 1) * p.y + camera_matrix.at<double>(1, 2)));
+			}
+
+			// compute distance between distorted image coordinates and undistorted image coordinates, push back only coordinates in "save" distance [tolerance_distortion]
+			for (int i = 0; i < in_wl_pts_2D.size(); i++) {
+				cv::Point2d p_distorted = in_wl_pts_2D.at(i);
+				cv::Point2d p_undistorted = wl_pts_2D_undistort_image_coordinates.at(i);
+				double distance_undistortion = sqrt(sq(p_distorted.x - p_undistorted.x) + sq(p_distorted.y - p_undistorted.y));
+
+				if (distance_undistortion < tolerance_distortion)
+					water_line_points_reduced_by_dist.push_back(p_undistorted); // new push_back undistorted line
+			}
+			mLogFile->append(TAG + "count reduced 2D waterline points regarding image distortion (redu/orig): " + std::to_string(water_line_points_reduced_by_dist.size()) + "/" + std::to_string(in_wl_pts_2D.size()));
+	} else {
+		mLogFile->append(TAG + "no waterline provided, will only color point cloud");
 	}
-
-	// check distance water line undistort -> water line distort, remove points in regions of uncertainity
-	std::vector<cv::Point2d> water_line_points_reduced_by_dist;
-
-	// compute distance between distorted image coordinates and undistorted image coordinates, push back only coordinates in "save" distance [tolerance_distortion]
-	for (int i = 0; i < in_wl_pts_2D.size(); i++) {
-
-		cv::Point2d p_distorted = in_wl_pts_2D.at(i);
-		cv::Point2d p_undistorted = wl_pts_2D_undistort_image_coordinates.at(i);
-		double distance_undistortion = sqrt(sq(p_distorted.x - p_undistorted.x) + sq(p_distorted.y - p_undistorted.y));
-
-		if (distance_undistortion < tolerance_distortion)
-			water_line_points_reduced_by_dist.push_back(p_undistorted); // new push_back undistorted line
-	}
-
-	mLogFile->append(TAG + "count reduced 2D waterline points regarding image distortion (redu/orig): " + std::to_string(water_line_points_reduced_by_dist.size()) + "/" + std::to_string(in_wl_pts_2D.size()));
-
-
-	// ----- 3D projection  using OCV model ----- //
-
-	// for opencv project points and application of collinearity equation using cv model! 
-	Modell_OCV modell_ocv = Modell_OCV(mLogFile, camera_matrix, dist_coeffs, rvec_cc_orig_copy, tvec_cc_orig_copy, water_line_points_reduced_by_dist);
-	std::vector<cv::Vec3b> point_cloud_color;
+	
 
 	// convert synth_pts_3D to cv::Point3d
 	std::vector<cv::Point3d> synth_pts_3D_cv;
@@ -623,22 +577,23 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 
 	// get colors from real image for point cloud colorization (nice to have for validation) and receive 3D depth coordinates for water line points using
 	// kdtree.knnSearch to look for nearest neighbour image pixel water line <-> virtual image. take corresponding 3D values respectively
-	modell_ocv.getColorFor(synth_pts_3D_cv, in_image_4_color, point_cloud_color);
+	std::vector<cv::Point3d> projected_waterline_3D_OCV = modell_ocv.getColorFor(synth_pts_3D_cv, in_image_4_color, point_cloud_color, image_coordinates_color, 1.0, camera_matrix, dist_coeffs, rvec_cc_orig_copy, tvec_cc_orig_copy, water_line_points_reduced_by_dist);
 
-	// receive 3D water line
-	std::vector<cv::Point3d>* projected_waterline_3D_OCV_ptr = modell_ocv.get_water_line_points_back_projected_3D();
-
-	if (projected_waterline_3D_OCV_ptr != nullptr)
-		log_statistics << "OCV, projected " << projected_waterline_3D_OCV_ptr->size() << " water line points into object space" << std::endl << std::endl;
-
+	// print point cloud
+	if (export_pcl) {
+		mLogFile->append(TAG + "---- export 3D point cloud ----");
+		modell_ocv.export_point_cloud_recolored(mWorkingDirectory, mDataManager->get_name_working_directory(), synth_pts_3D_cv, point_cloud_color, image_coordinates_color, shift_x, shift_y);
+	}
 
 	// Water line analysis & statistics
-	if (projected_waterline_3D_OCV_ptr->size() != 0.0) {
+	if (projected_waterline_3D_OCV.size() != 0) {
+		mLogFile->append(TAG + "---- start water line projection ----");
+		log_statistics << "OCV, projected " << projected_waterline_3D_OCV.size() << " water line points into object space" << std::endl << std::endl;
 
 		// 3D plane fitting using SVD
 		std::vector<Eigen::Vector3d> points;
 
-		for (cv::Point3d p : *projected_waterline_3D_OCV_ptr)
+		for (cv::Point3d &p : projected_waterline_3D_OCV)
 			points.push_back(Eigen::Vector3d(p.x, p.y, p.z));
 
 		std::pair<Eigen::Vector3d, Eigen::Vector3d> result = best_plane_from_points(points);
@@ -659,7 +614,9 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 		std::vector<cv::Point3d> optimized_waterline;
 		std::vector<float> distances;
 
-		double mean_sq_plane, root_mean_sq_plane;
+		double mean_sq_plane = 0.0f;
+		double root_mean_sq_plane = 0.0f;
+
 		// calc distance 3D water level point <-> fitted 3D plane
 		for (Eigen::Vector3d vec : points) {
 			float dist = normal.dot(vec - centroid);
@@ -683,8 +640,8 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 
 
 		// use only points with distance < threshold (currently 0.025 m)
-		projected_waterline_3D_OCV_ptr->clear(); // clear old projected points
-		projected_waterline_3D_OCV_ptr = &optimized_waterline; // put in optimized water line
+		projected_waterline_3D_OCV.clear(); // clear old projected points
+		projected_waterline_3D_OCV = optimized_waterline; // put in optimized water line
 
 
 		// infos calculation statistics: https://www.frustfrei-lernen.de/mathematik/standardabweichung-berechnen.html
@@ -695,25 +652,25 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 		std::ofstream myfile;
 		myfile.open(mWorkingDirectory + "waterlinepoints_projected.txt");
 
-		for (int i = 0; i < projected_waterline_3D_OCV_ptr->size(); i++) {
+		for (int i = 0; i < projected_waterline_3D_OCV.size(); i++) {
 			myfile << std::fixed << std::setprecision(4)
-				<< (*projected_waterline_3D_OCV_ptr)[i].x + utm_shift_x << ","
-				<< (*projected_waterline_3D_OCV_ptr)[i].y + utm_shift_y << ","
-				<< (*projected_waterline_3D_OCV_ptr)[i].z << "\n";
+				<< (projected_waterline_3D_OCV)[i].x + shift_x << ","
+				<< (projected_waterline_3D_OCV)[i].y + shift_y << ","
+				<< (projected_waterline_3D_OCV)[i].z << "\n";
 
-			mean_z += (*projected_waterline_3D_OCV_ptr)[i].z;
-			mean_x += (*projected_waterline_3D_OCV_ptr)[i].x;
+			mean_z += (projected_waterline_3D_OCV)[i].z;
+			mean_x += (projected_waterline_3D_OCV)[i].x;
 
 		}
-		mean_z /= projected_waterline_3D_OCV_ptr->size(); // calc mean_z
-		mean_x /= projected_waterline_3D_OCV_ptr->size(); // calc mean_x
+		mean_z /= projected_waterline_3D_OCV.size(); // calc mean_z
+		mean_x /= projected_waterline_3D_OCV.size(); // calc mean_x
 
-		for (int i = 0; i < projected_waterline_3D_OCV_ptr->size(); i++) {
-			variance_z += sq((*projected_waterline_3D_OCV_ptr)[i].z - mean_z); //subtr mean
+		for (int i = 0; i < projected_waterline_3D_OCV.size(); i++) {
+			variance_z += sq((projected_waterline_3D_OCV)[i].z - mean_z); //subtr mean
 		}
 
 		// calc variance s² 
-		variance_z /= projected_waterline_3D_OCV_ptr->size();
+		variance_z /= projected_waterline_3D_OCV.size();
 		// calc standard derviation
 		stdev_z = sqrt(variance_z);
 
@@ -726,7 +683,7 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 		// shift water line before orthogonal projection that water level point x is in image center
 		// rotate xz plane arround observed water level that line becomes parallel zu xy-plane (levelling)
 		std::vector<cv::Point2d> optimized_water_points_xz;
-		for (cv::Point3d p : optimized_waterline)
+		for (cv::Point3d &p : optimized_waterline)
 			optimized_water_points_xz.push_back(cv::Point2d(p.x - mean_x, p.z));// -mean_z)); //shift to origin by x only
 
 
@@ -778,8 +735,8 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 		std::vector<double> z_values;
 
 		//push z values into vector
-		for (int i = 0; i < projected_waterline_3D_OCV_ptr->size(); i++) {
-			z_values.push_back((*projected_waterline_3D_OCV_ptr)[i].z);
+		for (int i = 0; i < projected_waterline_3D_OCV.size(); i++) {
+			z_values.push_back((projected_waterline_3D_OCV)[i].z);
 		}
 
 
@@ -846,14 +803,14 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 			<< ";repro_error;" << mReproError4JSON << ";inl_dist_cl_wl_perc;" << std::to_string(inliers_per_importance_cell_percent) << ";inl_dist_cl_wl_no;" << std::to_string(point_counter_importance) << ";total_inliers;" << std::to_string(no_inliers_4_stat)
 			<< ";f;" << camera_matrix.at<double>(0, 0) << ";cx;" << camera_matrix.at<double>(0, 2) << ";cy;" << camera_matrix.at<double>(1, 2) << ";a;" << dist_coeffs.at<double>(0, 0) << ";" << dist_coeffs.at<double>(1, 0) << ";" << dist_coeffs.at<double>(2, 0)
 			<< ";b;" << dist_coeffs.at<double>(3, 0) << ";" << dist_coeffs.at<double>(4, 0) << ";c;" << dist_coeffs.at<double>(5, 0) << ";" << dist_coeffs.at<double>(6, 0);
-		appendLineToFile(mDataManager->get_path_directory_result() + "\\result.txt", line_4_results.str());
+		Utils::append_line_to_file(mDataManager->get_path_working_directory() + "\\result.txt", line_4_results.str());
 
 
 		// ----------------------------------------------------------------------------------------
 		// 22.10.2020 backprojection 3D water line into camera image (master)
 		// projected_waterline_3D_OCV_ptr = 3D water line coordinates
 		std::vector<cv::Point2d> imagePoints;
-		cv::projectPoints(*projected_waterline_3D_OCV_ptr, rvec_cc_orig_copy, tvec_cc_orig_copy, camera_matrix, dist_coeffs, imagePoints);
+		cv::projectPoints(projected_waterline_3D_OCV, rvec_cc_orig_copy, tvec_cc_orig_copy, camera_matrix, dist_coeffs, imagePoints);
 		
 		cv::Mat copy_masterimage = in_image_4_color.clone();
 		
@@ -875,51 +832,17 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 
 	}
 
-	else {
-		mLogFile->append(TAG + "no waterline detectable");
+	else if (in_wl_pts_2D.size() != 0) { // only append to text file if 2D water line was given but it could not be intersected with 3D data; otherwise tool was only run to color point cloud
+		mLogFile->append(TAG + "no water level detected");
 		std::ostringstream line_4_results;
-		line_4_results << mDataManager->get_filename_true_image() + ";_;no waterline";
-		appendLineToFile(mDataManager->get_path_directory_result() + "\\result.txt", line_4_results.str());
+		line_4_results << mDataManager->get_filename_true_image() + ";_;no_level";
+		Utils::append_line_to_file(mDataManager->get_path_working_directory() + "\\result.txt", line_4_results.str());
 	}
 
-	// print point cloud
-	if (print_pcl)
-		modell_ocv.print_point_cloud_recolored(mWorkingDirectory, synth_pts_3D_cv, point_cloud_color, utm_shift_x, utm_shift_y);
-
+	
 
 }
 
-
-// helper
-
-/**
- * @fn	void Matching::appendLineToFile(std::string filepath, std::string line)
- *
- * @brief	Helper function to append a string to a text file
- *
- * @author	Mela
- * @date	25.04.2018
- *
- * @exception	std::ios_base::failure	Thrown when a failure error condition occurs. (if file is not open, not created or broken)
- *
- * @param	filepath	The filepath.
- * @param	line		The line.
- */
-
-void Matching::appendLineToFile(std::string filepath, std::string line)
-{
-	std::ofstream file;
-	//can't enable exception now because of gcc bug that raises ios_base::failure with useless message
-	//file.exceptions(file.exceptions() | std::ios::failbit);
-	file.open(filepath, std::ios::out | std::ios::app);
-	if (file.fail())
-		throw std::ios_base::failure(std::strerror(errno));
-
-	//make sure write fails with exception if something is wrong
-	file.exceptions(file.exceptions() | std::ios::failbit | std::ifstream::badbit);
-
-	file << line << std::endl;
-}
 
 
 //////////////////////////////////// OUTPUT FUNCTIONS //////////////////////////////////////////////////////////////////////////
@@ -938,9 +861,9 @@ void Matching::appendLineToFile(std::string filepath, std::string line)
   * @param [in,out]	in_matched_object_points_ransac_projected	The in matched object points ransac projected.
   */
 
-void Matching::draw_valid_matches_after_back_projection(cv::Mat& in_canvas, std::vector<cv::Point2f>& in_image_points_real_ransac, std::vector<cv::Point2f>& in_matched_object_points_ransac_projected) {
+void Matching::draw_valid_matches_after_back_projection(cv::Mat& image, std::vector<cv::Point2f>& in_image_points_real_ransac, std::vector<cv::Point2f>& in_matched_object_points_ransac_projected) {
 
-
+	cv::Mat in_canvas = image.clone();
 	// make image darker for better contrast to matches
 	// Do the operation new_image(i,j) = alpha*image(i,j) + beta
 	cv::Mat in_canvas_lower_brightness_100;
@@ -1035,7 +958,7 @@ void Matching::draw_inliers_distribution(cv::Mat& real_image, std::vector<cv::Po
 
 	//std::cout << "Region of importance: x,y: " << std::to_string(region_of_importance.x)  << "," << std::to_string(region_of_importance.y) << "w/h: " << std::to_string(region_of_importance.width) << "," << std::to_string(region_of_importance.height) << std::endl;
 
-	// create bounding box around water line points for region of importance
+	// create bounding box around water line points for region of importance [if waterline points are given]
 	// draw points onto blank image plane
 	cv::Mat water_line_points_canvas = cv::Mat::zeros(real_image.size(), CV_8UC1);
 	for (cv::Point2d p : waterline_points) {
@@ -1469,7 +1392,7 @@ cv::Mat Matching::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vec
 				indices_inliers_fund.push_back(r);
 		}
 
-		std::cout << "RansacTest, Vsfm, Number of inliers Fundamental Mat, ideal camera (cxr): " << indices_inliers_fund.size() << std::endl;
+		std::cout << "RansacTest, Number of inliers Fundamental Mat, ideal camera (cxr): " << indices_inliers_fund.size() << std::endl;
 
 		// prüfe glelichen Elemente in beiden Vektoren ab
 		for (int i = 0; i < _points1.size(); i++)

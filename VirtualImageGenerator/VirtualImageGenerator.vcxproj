@@ -337,7 +337,6 @@
     <ClInclude Include="PerspectiveImage.h" />
     <ClInclude Include="plyloader.h" />
     <ClInclude Include="PointLoader.h" />
-    <ClInclude Include="SpectralIndices.h" />
     <ClInclude Include="spline.h" />
     <ClInclude Include="spline\Bezier.h" />
     <ClInclude Include="spline\BSpline.h" />
