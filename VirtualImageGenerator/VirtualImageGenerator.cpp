@@ -591,7 +591,7 @@ int main(int argc, char** argv)
 					std::to_string(ptr_rVecCam[2]) + ";" +
 					std::to_string(ptr_tVecCam[0] + data_manager->get_shift_x()) + ";" +
 					std::to_string(ptr_tVecCam[1] + data_manager->get_shift_y()) + ";" +
-					std::to_string(ptr_tVecCam[2]) + ";" +
+					std::to_string(ptr_tVecCam[2] + data_manager->get_shift_z()) +  ";" +
 					std::to_string(ptr_stdDevObj_rvec[0]) + ";" +
 					std::to_string(ptr_stdDevObj_rvec[1]) + ";" +
 					std::to_string(ptr_stdDevObj_rvec[2]) + ";" +
@@ -607,7 +607,7 @@ int main(int argc, char** argv)
 					std::to_string(ptr_rVecCam[2]) + ";" +
 					std::to_string(ptr_tVecCam[0] + data_manager->get_shift_x()) + ";" +
 					std::to_string(ptr_tVecCam[1] + data_manager->get_shift_y()) + ";" +
-					std::to_string(ptr_tVecCam[2]));
+					std::to_string(ptr_tVecCam[2] + data_manager->get_shift_z()) );
 			}
 
 			log_printer->append("\n" + TAG + "------------- extrinsics [m] -------------");
@@ -722,7 +722,7 @@ int main(int argc, char** argv)
 	log_printer->append(TAG + "Object_points_size: " + std::to_string((*data_manager->get_pts_synth_3D_double()).size()));
 	log_printer->append(TAG + "Waterline_image_points_size: " + std::to_string((*data_manager->get_water_line_image_points_2D_ptr()).size()));
 
-	matching->waterlineProjection(*data_manager->get_water_line_image_points_2D_ptr(), *data_manager->get_pts_synth_3D_double(), data_manager->get_true_image(), camera_matrix, dist_coeffs, rMatObj, tVecObj, data_manager->get_shift_x(), data_manager->get_shift_y(), output_pointcloud);
+	matching->waterlineProjection(*data_manager->get_water_line_image_points_2D_ptr(), *data_manager->get_pts_synth_3D_double(), data_manager->get_true_image(), camera_matrix, dist_coeffs, rMatObj, tVecObj, data_manager->get_shift_x(), data_manager->get_shift_y(), data_manager->get_shift_z(), output_pointcloud);
 
 	log_printer->print_content_disk(path + "\\logfile.txt");
 

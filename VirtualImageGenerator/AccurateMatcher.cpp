@@ -137,7 +137,7 @@ cv::Mat AccurateMatcher::ransacTest(const std::vector<cv::DMatch>& matches, cons
 
 
 // Abwandlung von Christians Matching Test
-cv::Mat AccurateMatcher::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vector<cv::Point2d>& _points2, bool refineF)
+cv::Mat AccurateMatcher::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vector<cv::Point2d>& _points2, double confidence, double distance, bool refineF)
 {
 	// Convert keypoints into Point2f
 	std::vector<cv::Point2d> points1(_points1);
@@ -156,8 +156,8 @@ cv::Mat AccurateMatcher::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, s
 
 	cv::Mat fundemental;
 
-	double confidence = 0.95;
-	double distance = 8.0;
+	//double confidence = 0.95; // 19.04.2023 -> parameter to be set
+	//double distance = 8.0; // 19.04.2023 -> parameter to be set
 
 	// Compute F matrix using RANSAC
 	std::vector<uchar> inliers(points1.size(), 0);

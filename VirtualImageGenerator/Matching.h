@@ -47,7 +47,7 @@ public:
 	void init(DataManager* _dataManager);
 	
 	// logic
-	void waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_vector_x, double shift_vector_y, bool print_pcl);
+	void waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_vector_x, double shift_vector_y, double shift_vector_z, bool print_pcl);
 
 	void Matching::loadMatches(
 		std::string in_path_matching_output,

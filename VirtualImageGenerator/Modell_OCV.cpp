@@ -57,6 +57,14 @@ std::vector<cv::Point3d> Modell_OCV::getColorFor(std::vector<cv::Point3d>& point
 
 	cv::projectPoints(point_cloud, rvec, tvec, cameraMatrix, distCoeffs, image_pixels, cv::noArray(), fix_aspect_ratio);
 
+	//Test
+	//std::ofstream outputFile("my_test_file.csv");
+	//for (cv::Point2f pixel: image_pixels) {
+	//		outputFile << std::fixed << pixel.x << "," << std::fixed << pixel.y << std::endl;
+	//}
+	//outputFile.close();
+
+
 	std::cout << "image_pixels size: " << image_pixels.size() << endl;
 
 	// iterate through all pixel coordinates and save corresponding color from image_for_color
@@ -123,7 +131,7 @@ std::vector<cv::Point3d> Modell_OCV::getColorFor(std::vector<cv::Point3d>& point
 
 
 
-void Modell_OCV::export_point_cloud_recolored(std::string workingDirectory, std::string wD_name, std::vector<cv::Point3d>& point_cloud, std::vector<cv::Vec3b>& point_cloud_colors, std::vector<cv::Point2d>& image_coords_colors, double shifter_x, double shifter_y) {
+void Modell_OCV::export_point_cloud_recolored(std::string workingDirectory, std::string wD_name, std::vector<cv::Point3d>& point_cloud, std::vector<cv::Vec3b>& point_cloud_colors, std::vector<cv::Point2d>& image_coords_colors, double shifter_x, double shifter_y, double shifter_z) {
 
 	// output point cloud to file, apply coordinate shifting
 	std::ofstream outStream;
@@ -143,7 +151,7 @@ void Modell_OCV::export_point_cloud_recolored(std::string workingDirectory, std:
 			outStream
 				<< std::fixed << p.x + shifter_x << "," // apply shift_x
 				<< std::fixed << p.y + shifter_y << "," // apply shift_y
-				<< std::fixed << p.z << ","
+				<< std::fixed << p.z + shifter_z << ","
 				<< static_cast<unsigned int>(c.val[2]) << ","
 				<< static_cast<unsigned int>(c.val[1]) << ","
 				<< static_cast<unsigned int>(c.val[0]) << ","

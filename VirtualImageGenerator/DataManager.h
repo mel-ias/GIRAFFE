@@ -89,7 +89,7 @@ public:
 		
 		// parameters for EOP
 		x0 = 0.0f, y0 = 0.0f, z0 = 0.0f; // translation params: projC
-		shift_x = 0.0f, shift_y = 0.0f; // shift utm values for better handling
+		shift_x = 0.0f, shift_y = 0.0f, shift_z = 0.0; // shift utm values for better handling
 		//z_smartphone_height = 1.50; // add height of hand-held smartphone // TODO read this from smartphone application and transfer parameter via json
 		
 		azimuth = roll = pitch = 0.0f; //rotation params: Euler angles
@@ -512,11 +512,13 @@ public:
 		// save shift values (must be applied to point cloud as well and later to restore original coordinates of 3D water levels) 
 		shift_x =  x0;
 		shift_y =  y0; 
+		shift_z = z0;
 		x0 -= shift_x;
-		y0 -= shift_y;		
+		y0 -= shift_y;
+		z0 -= shift_z;
 		//z0 += z_smartphone_height; // add of camera when smartphone is held by human (default: 1.50 m)
 		
-		log_readJson << "Apply shift_x/shift_y to horizontal components of projection centre. Save shift_x/shift_y for point cloud translation. shift_x: " << std::fixed << shift_x << " [m], shift_y: " << shift_y << " [m]" << endl; //Use std::fixed floating-point notation for formatting
+		log_readJson << "Apply shift_x/shift_y/shift_z to 3D projection centre. Save shift_x/shift_y/shift_z for point cloud translation. shift_x: " << std::fixed << shift_x << " [m], shift_y: " << shift_y << " [m], shift_z: " << shift_z << " [m]" << endl; //Use std::fixed floating-point notation for formatting
 		//log_readJson << "Add height of hand-held smartphone to vertical compontent of projection centre. z_smartphone_height:" << z_smartphone_height << " [m]" << endl; 
 		boundingBox->set_X0_Cam_World(x0, y0, z0); //update bounding box projC
 
@@ -808,8 +810,10 @@ public:
 	// getter/setter utm shift
 	double get_shift_x() { return shift_x; }
 	double get_shift_y() { return shift_y; }
+	double get_shift_z() { return shift_z; }
 	void set_shift_x(double x) { shift_x = x; }
 	void set_shift_y(double y) { shift_y = y; }
+	void set_shift_z(double z) { shift_z = z; }
 
 	// getter BoundingBox 
 	BoundingBox* getBoundingBox() { return boundingBox; }
@@ -998,7 +1002,7 @@ private:
 	double rmse_calibration_android;
 
 	double x0, y0, z0; // , z_smartphone_height; //for EOP
-	double shift_x, shift_y; // enable shift of georeferenced point clouds (utm values very large numbers) 
+	double shift_x, shift_y, shift_z; // enable shift of georeferenced point clouds (utm values very large numbers) 
 	cv::Mat tvecs_prev, rvecs_prev; // in case of previous done exterior orientation determination
 	float azimuth, roll, pitch; 
 	float* Rxyz;

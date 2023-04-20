@@ -112,7 +112,7 @@ void Matching::calculate_nn_synth_key___pts_image_pts(
 	// append log_file
 	mLogFile->append(TAG + "count synth_keypoints_float: " + std::to_string(in_synth_keypoints_float.size()));
 	mLogFile->append(TAG + "count real_keypoints_float: " + std::to_string(in_real_keypoints_float.size()));
-	mLogFile->append(TAG + "neighbour distance threshold: " + std::to_string(in_neighbour_distance));
+	mLogFile->append(TAG + "neighbour distance threshold (in Px, synth match to surrounding waiting for synth point with 3D data serving as reference point): " + std::to_string(in_neighbour_distance));
 
 
 	// run kd_tree to determine nearest neighbour of matched synth_keypoint by synth_image points
@@ -258,7 +258,9 @@ void Matching::loadMatches(
 	mLogFile->append(TAG + "count fundamental inlier matches (real_matched_pts/synth_matched_pts):" + std::to_string(real_matched_pts.size()) + "/" + std::to_string(synth_matched_pts.size()));
 
 	// check for outlieres
-	//AccurateMatcher::ransacTest_reimpl(real_matched_pts, synth_matched_pts, false);
+	double confidence = 0.95;
+	double distance = 8.0;
+	AccurateMatcher::ransacTest_reimpl(real_matched_pts, synth_matched_pts, confidence, distance, false);
 
 
 	// data conversion for image matching
@@ -363,7 +365,7 @@ float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_
 	float reproFisheye = mDataManager->get_filter_matches_ransac_fisheye();
 	float reproPinhole = mDataManager->get_filter_matches_ransac_pinhole();
 	float solvePnPRansac_reproErr =  (fisheye) ? reproFisheye : reproPinhole; //allowed reprojection error [px] regarding outlier elimination 
-	int iterationsCount = 100;
+	int iterationsCount = 10000;
 
 	// search for outlier (please do not use for fisheye cameras as solvePnP expect central perspecive rather than fisheye
 	std::vector<cv::Point3f> object_points_ransac;
@@ -416,19 +418,19 @@ float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_
 		image_points_real_ransac_vector.push_back(image_points_real_ransac);
 
 		if (!fisheye) {
-			int flagsCalib = CV_CALIB_USE_INTRINSIC_GUESS; // +CV_CALIB_FIX_ASPECT_RATIO; // Test 28.07.2022
+			int flagsCalib = CV_CALIB_USE_INTRINSIC_GUESS;// +CV_CALIB_FIX_ASPECT_RATIO; // Test 28.07.2022
 			repro_error = cv::calibrateCamera(object_points_ransac_vector, image_points_real_ransac_vector, true_image.size(), camera_matrix, dist_coeffs, rvec, tvec, stdDev_In, stdDev_Ext, perViewErrors, flagsCalib, termCrit);
 		}
 		else {
 			// Todo find out how to use extrinsics here -> perhaps simply put to vector?
 			// https://gist.github.com/suzumura-ss/db91b901f5a300e6b9949cf5e012278e
 			std::vector<cv::Mat> rvecs, tvecs;
-			int flagsCalib = cv::fisheye::CALIB_USE_INTRINSIC_GUESS + cv::fisheye::CALIB_FIX_SKEW + cv::fisheye::CALIB_RECOMPUTE_EXTRINSIC;
+			int flagsCalib = cv::fisheye::CALIB_USE_INTRINSIC_GUESS + cv::fisheye::CALIB_FIX_SKEW + cv::fisheye::CALIB_RECOMPUTE_EXTRINSIC + cv::fisheye::CALIB_FIX_K4 + cv::fisheye::CALIB_FIX_K3 + cv::fisheye::CALIB_FIX_K2 + cv::fisheye::CALIB_FIX_PRINCIPAL_POINT;
 			repro_error = cv::fisheye::calibrate(object_points_ransac_vector, image_points_real_ransac_vector, true_image.size(), camera_matrix, dist_coeffs, rvecs, tvecs, flagsCalib, termCrit);
 		}
 	}
 
-	
+
 	// Compute repro error & covariance matrix to estimate standard deviations [things done by OCV are weird, do it yourself!]: https://stackoverflow.com/a/20911906
 	std::vector<cv::Point2f> image_points_repro;
 	cv::Mat jacobian;
@@ -446,8 +448,7 @@ float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_
 		sqrt(sigma_intr.diag(), stdDev_In);
 	}
 
-
-
+	
 
 	// Compute rmse
 	float mean_error = 0.0f;
@@ -455,9 +456,10 @@ float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_
 		float error = cv::norm(cv::Mat(image_points_real_ransac.at(i)), cv::Mat(image_points_repro.at(i)), cv::NORM_L2, cv::noArray());
 		mean_error += error;
 	}
-	repro_error = mean_error / object_points_ransac.size();
+	repro_error = mean_error / object_points_ransac.size();  // mean_error / image_points_real_ransac.size();
 	mReproError4JSON = repro_error;	// copy repro error for json output
 
+	std::cout << "My repro error " << repro_error << std::endl;
 
 	// data_conversion if necessary, convert data (64FC3 to 64FC1)
 	if (tvec.channels() == 3 || rvec.channels() == 3) {
@@ -506,7 +508,7 @@ float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_
  * @param 		  	shift_vector_y   	[input] shift vector y coordinate, shift re-aligne point clouds with large coordinates (UTM) back to roots
  */
 
-void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y, bool export_pcl) {
+void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y, double shift_z, bool export_pcl) {
 
 	
 	
@@ -582,7 +584,7 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 	// print point cloud
 	if (export_pcl) {
 		mLogFile->append(TAG + "---- export 3D point cloud ----");
-		modell_ocv.export_point_cloud_recolored(mWorkingDirectory, mDataManager->get_name_working_directory(), synth_pts_3D_cv, point_cloud_color, image_coordinates_color, shift_x, shift_y);
+		modell_ocv.export_point_cloud_recolored(mWorkingDirectory, mDataManager->get_name_working_directory(), synth_pts_3D_cv, point_cloud_color, image_coordinates_color, shift_x, shift_y, shift_z);
 	}
 
 	// Water line analysis & statistics
@@ -656,7 +658,7 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 			myfile << std::fixed << std::setprecision(4)
 				<< (projected_waterline_3D_OCV)[i].x + shift_x << ","
 				<< (projected_waterline_3D_OCV)[i].y + shift_y << ","
-				<< (projected_waterline_3D_OCV)[i].z << "\n";
+				<< (projected_waterline_3D_OCV)[i].z + shift_z << "\n";
 
 			mean_z += (projected_waterline_3D_OCV)[i].z;
 			mean_x += (projected_waterline_3D_OCV)[i].x;
@@ -1093,7 +1095,11 @@ void Matching::draw_matches_reimpl_MK(cv::Mat& in_real_image, cv::Mat& in_synth_
 	//cv::Mat realImage = mDataManager->get_real_image();
 
 	// ---- start output, draw inlier matches ---- //
-	cv::Mat matchesImage = cv::Mat::zeros(in_synth_image.rows > in_real_image.rows ? in_synth_image.rows : in_real_image.rows, in_synth_image.cols + in_real_image.cols, in_synth_image.type());
+
+
+	cv::Mat matchesImage = cv::Mat(in_synth_image.rows > in_real_image.rows ? in_synth_image.rows : in_real_image.rows, in_synth_image.cols + in_real_image.cols, in_synth_image.type(), cv::Scalar(0,0,0));
+
+
 	mLogFile->append(TAG + "visualisation: draw matches");
 
 	for (int i = 0; i < matchesImage.rows; i++) {
