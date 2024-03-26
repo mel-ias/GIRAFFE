@@ -106,6 +106,9 @@ void read_init_file() {
 		else if (matching_approach_str.compare("SUPERGLUE") == 0) {
 			matching_approach = DataManager::SUPERGLUE;
 		}
+		else if (matching_approach_str.compare("LIGHTGLUE") == 0) {
+			matching_approach = DataManager::LIGHTGLUE;
+		}
 		else {
 			terminate_program("read init.txt, no valid matching approach found. Break.");
 		}
@@ -221,6 +224,19 @@ void read_init_file() {
 	else {
 		terminate_program("read init.txt, no valid knn value found. Break.");
 	}
+
+	if (j["conda_path"] != nullptr) {
+		std::string path_conda_env = j.at("conda_path").get<std::string>();
+		data_manager->set_path_conda_env(path_conda_env); // 5. set and read json. using dataManager for reading and storage 
+		log_printer->append(TAG + "Set path to conda env");
+	}
+
+	if (j["conda_name"] != nullptr) {
+		std::string name_conda_env = j.at("conda_name").get<std::string>();
+		data_manager->set_name_conda_env(name_conda_env); // 5. set and read json. using dataManager for reading and storage 
+		log_printer->append(TAG + "Set name of conda env");
+	}
+
 }
 
 
@@ -252,7 +268,7 @@ int main(int argc, char** argv)
 	// -------------------
 	// interpret input arguments from cmd line
 	std::stringstream s;
-	std::string path_file_pointcloudPW, path_file_jsonTxt;
+	std::string path_file_pointcloudPW, path_file_jsonTxt, path_conda_env, name_conda_env;
 	for (int i = 1; i < argc; ++i) {
 		char check = argv[i][1];
 		switch (check) {
@@ -454,6 +470,12 @@ int main(int argc, char** argv)
 				path_matching_out = data_manager->getPathOutputFile_Superglue().c_str();
 				scale_true_img = data_manager->get_superglue_scalingFactor_trueImage();
 				scale_synth_img = data_manager->get_superglue_scalingFactor_synthImage();
+			}
+			else if (matching_approach == DataManager::LIGHTGLUE) {
+				path_matching_batch = data_manager->getPathBatchFile_Lightglue().c_str();
+				path_matching_out = data_manager->getPathOutputFile_Lightglue().c_str();
+				scale_true_img = data_manager->get_lightglue_scalingFactor_trueImage();
+				scale_synth_img = data_manager->get_lightglue_scalingFactor_synthImage();
 			}
 			else {
 				log_printer->append(TAG + "cannot continue, no matching available!");

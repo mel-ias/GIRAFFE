@@ -71,9 +71,11 @@ public:
 		path_directory_feature_matching_tool = "noDir";
 		path_file_output_D2Net_matches = "noDir";
 		path_file_output_superglue_matches = "noDir";
+		path_file_output_lightglue_matches = "noDir";
 		path_file_batch_call_jarEllipsoid = "noDir";
 		path_file_batch_call_pyD2Net = "noDir";
 		path_file_batch_call_superglue = "noDir";
+		path_file_batch_call_lightglue = "noDir";
 		path_file_point_cloud = "noFile";
 
 		// --- from json ---
@@ -107,6 +109,8 @@ public:
 		d2Net_scalingFactor_synthImage = 1.0;
 		superglue_scalingFactor_trueImage = 1.0;
 		superglue_scalingFactor_synthImage = 1.0;
+		lightglue_scalingFactor_trueImage = 1.0;
+		lightglue_scalingFactor_synthImage = 1.0;
 		k_for_knn = 3;
 		superglue_matching_thresh = 0.1f;
 		filter_matches_ransac_fisheye = 200.0f; // run solvepnoransac to find good image-to-object matches before running spatial resection -> fisheye thresh (should be high cause OCVs solvepnp does not support fisheye cams)
@@ -569,6 +573,7 @@ public:
 		std::string path_file_synthImage_to_match = (path_directory_myData + "synth_image.jpg").c_str();
 		path_file_output_D2Net_matches = (path_directory_myData + "kpts.txt").c_str();
 		path_file_output_superglue_matches = (path_directory_myData + "kpts.txt").c_str();
+		path_file_output_lightglue_matches = (path_directory_myData + "kpts.txt").c_str();
 
 		log_generateBatchFile << "path image_file_list.txt: " << path_file_imagelist_to_match << endl;
 
@@ -600,8 +605,21 @@ public:
 			cv::resize(in_true_image, trueImage_scaled, cv::Size(), superglue_scalingFactor_trueImage, superglue_scalingFactor_trueImage);
 			cv::resize(in_synth_image, synthImage_scaled, cv::Size(), superglue_scalingFactor_synthImage, superglue_scalingFactor_synthImage);
 			// write images to myData path
-			cv::imwrite(path_file_trueImage_to_match, in_true_image);
-			cv::imwrite(path_file_synthImage_to_match, in_synth_image);
+			cv::imwrite(path_file_trueImage_to_match, trueImage_scaled);
+			cv::imwrite(path_file_synthImage_to_match, synthImage_scaled);
+		}
+		else if (flag == LIGHTGLUE) {
+			lightglue_scalingFactor_trueImage = 1.0; // static_cast<double>(max_img_size) / (in_true_image.size().width); //0.5; 
+			lightglue_scalingFactor_synthImage = 1.0; // static_cast<double>(max_img_size) / (in_synth_image.size().width); //0.5
+			log_generateBatchFile << "lightglue: scaling factors, true image: " << lightglue_scalingFactor_trueImage << ", synth image: " << lightglue_scalingFactor_synthImage << endl;
+
+			//// apply scaling factor
+			cv::Mat trueImage_scaled, synthImage_scaled;
+			cv::resize(in_true_image, trueImage_scaled, cv::Size(), lightglue_scalingFactor_trueImage, lightglue_scalingFactor_trueImage);
+			cv::resize(in_synth_image, synthImage_scaled, cv::Size(), lightglue_scalingFactor_synthImage,lightglue_scalingFactor_synthImage);
+			//// write images to myData path
+			cv::imwrite(path_file_trueImage_to_match, trueImage_scaled);
+			cv::imwrite(path_file_synthImage_to_match, synthImage_scaled);
 		}
 		else {
 			// TODO write error message 
@@ -615,6 +633,7 @@ public:
 		}
 
 		log_generateBatchFile << "file size real image: " << Utils::calculateFileSize(path_file_trueImage_to_match) << ", file size virtual image: " << Utils::calculateFileSize(path_file_synthImage_to_match) << endl;
+		std::cout << "image sizes (true/synth) " << in_true_image.size().width << "," << in_true_image.size().height << in_synth_image.size().width << in_synth_image.size().height << std::endl;
 
 		// open filestreams for 'image_list_file' and batch file 
 		std::ofstream myFileImageList;
@@ -649,6 +668,35 @@ public:
 
 			return true;
 		}
+		else if (flag == LIGHTGLUE) {
+			// TODO: Work in Progress
+			// generate batch file 
+			path_file_batch_call_lightglue = (path_directory_feature_matching_tool.substr(0, path_directory_feature_matching_tool.find_last_of("\\/")) + "\\lightglue\\myBatchLightglue.bat").c_str();
+			std::string path_lightglue = (path_directory_feature_matching_tool.substr(0, path_directory_feature_matching_tool.find_last_of("\\/")) + "\\lightglue").c_str();
+
+
+			std::ofstream myLightglueBatchFile;
+			myLightglueBatchFile.open(path_file_batch_call_lightglue);
+
+			if (path_conda_env.empty() && name_conda_env.empty()) {
+				std::cout << "No path to conda environment given. Return." << std::endl;
+				return false;
+			}
+			else {
+				myLightglueBatchFile << "cd " << path_lightglue
+					<< " &"
+					<< " %windir%\\System32\\cmd.exe /k"
+					<< " " << "\"\"" << path_conda_env << "\""
+					<< " " << name_conda_env
+					<< " " << " & python.exe"
+					<< " " << path_lightglue << "./match_pairs_lightglue.py" //TODO make path to anaconda env generic!<< " --resize " << std::to_string(max_img_size)
+					<< " --left_image " << path_file_trueImage_to_match
+					<< " --right_image " << path_file_synthImage_to_match
+					<< " --output_dir " << path_directory_myData
+					<< " & exit() & cd " << path_directory_myData << "\"" << endl;
+				std::cout << "my path to lightglue " << path_file_batch_call_lightglue << std::endl;
+			}
+		}
 		else if (flag == SUPERGLUE) {
 			// TODO: Work in Progress
 			// generate batch file 
@@ -663,24 +711,37 @@ public:
 
 			
 			std::ofstream mySuperglueBatchFile;
-			mySuperglueBatchFile.open(path_file_batch_call_superglue); 
-			mySuperglueBatchFile << "cd " << path_superglue
-				<< " &"
-				<< " %windir%\\System32\\cmd.exe /k"
-				<< " \"\"C:\\Users\\Mela\\miniconda3\\Scripts\\activate.bat\" py38superglue & python --version & python.exe " << path_superglue << "./match_pairs.py" //TODO make path to anaconda env generic!
-				<< " --resize " << std::to_string(max_img_size)
-				<< " --max_length 100000 --keypoint_threshold 0.005 --sinkhorn_iterations 20 --match_threshold " << std::to_string(superglue_matching_thresh) <<  " --show_keypoints --superglue outdoor --max_keypoints -1 --nms_radius 4 --viz"
-				<< " --input_dir " << path_directory_myData
-				<< " --input_pairs " << path_file_imagelist_to_match
-				<< " --output_dir " << path_directory_myData
-				<< " & exit() & cd " << path_directory_myData << "\"" << endl;
+			mySuperglueBatchFile.open(path_file_batch_call_superglue);
+			
+			if (path_conda_env.empty() && name_conda_env.empty()) {
+				std::cout << "No path to conda environment given. Using the default setting." << std::endl;
 
+				mySuperglueBatchFile << "cd " << path_superglue
+					<< " &"
+					<< " %windir%\\System32\\cmd.exe /k"
+					<< " \"\"C:\\Users\\Mela\\miniconda3\\Scripts\\activate.bat\" py38superglue & python --version & python.exe " << path_superglue << "./match_pairs.py" //TODO make path to anaconda env generic!
+					<< " --max_length 100000 --keypoint_threshold 0.005 --sinkhorn_iterations 20 --match_threshold " << std::to_string(superglue_matching_thresh) << " --show_keypoints --superglue outdoor --max_keypoints -1 --nms_radius 4 --viz"
+					<< " --input_dir " << path_directory_myData
+					<< " --input_pairs " << path_file_imagelist_to_match
+					<< " --output_dir " << path_directory_myData
+					<< " & exit() & cd " << path_directory_myData << "\"" << endl;
+			}
+			else {
+				mySuperglueBatchFile << "cd " << path_superglue
+					<< " &"
+					<< " %windir%\\System32\\cmd.exe /k"
+					<< " " << "\"\"" << path_conda_env << "\""
+					<< " " << name_conda_env
+					<< " " << " & python.exe"
+					<< " " << path_superglue << "./match_pairs.py" //TODO make path to anaconda env generic!<< " --resize " << std::to_string(max_img_size)
+					<< " --max_length 100000 --keypoint_threshold 0.005 --sinkhorn_iterations 20 --match_threshold " << std::to_string(superglue_matching_thresh) << " --show_keypoints --superglue outdoor --max_keypoints -1 --nms_radius 4 --viz"
+					<< " --input_dir " << path_directory_myData
+					<< " --input_pairs " << path_file_imagelist_to_match
+					<< " --output_dir " << path_directory_myData
+					<< " & exit() & cd " << path_directory_myData << "\"" << endl;
 
-
+			}
 			// --input_dir assets/lemko_sample_images/ --input_pairs assets/lemko_sample.txt --output_dir dump_match_pairs_lemko --viz
-
-
-
 		}
 		else {
 			// TODO: error message 
@@ -695,7 +756,7 @@ public:
 	// -----
 	// added enums to select matching approach (D2NET/SG)
 	enum Flags_Matching_Approach {
-		D2NET, SUPERGLUE
+		D2NET, SUPERGLUE, LIGHTGLUE
 	};
 
 	enum FILTER_APPS {
@@ -753,8 +814,10 @@ public:
 	std::string get_path_file_pointcloud() { return path_file_point_cloud; }
 	std::string getPathOutputFile_D2Net() { return path_file_output_D2Net_matches; }
 	std::string getPathOutputFile_Superglue() { return path_file_output_superglue_matches; }
+	std::string getPathOutputFile_Lightglue() { return path_file_output_lightglue_matches; }
 	std::string getPathBatchFile_D2Net() { return path_file_batch_call_pyD2Net; }
 	std::string getPathBatchFile_Superglue() { return path_file_batch_call_superglue; }
+	std::string getPathBatchFile_Lightglue() { return path_file_batch_call_lightglue; }
 	std::string getExeDirectory() { return path_directory_feature_matching_tool; }
 	std::string getPathBatchFile_EllipsoidJar() { return path_file_batch_call_jarEllipsoid; }
 
@@ -908,6 +971,10 @@ public:
 	double get_superglue_scalingFactor_trueImage() { return superglue_scalingFactor_trueImage; }
 	double get_superglue_scalingFactor_synthImage() { return superglue_scalingFactor_synthImage; }
 
+	double get_lightglue_scalingFactor_trueImage() { return lightglue_scalingFactor_trueImage; }
+	double get_lightglue_scalingFactor_synthImage() { return lightglue_scalingFactor_synthImage; }
+
+
 	void set_superglue_matching_thresh(float val) { 
 		if (val > 0.0 && val < 1.0) {
 			superglue_matching_thresh = val;
@@ -953,7 +1020,11 @@ public:
 	void setKnn(size_t knn) { k_for_knn = knn; }
 	size_t getKnn() { return k_for_knn; }
 	
-
+	// set path/name to conda env
+	void set_path_conda_env(std::string path) { path_conda_env = path; }
+	void set_name_conda_env(std::string name) { name_conda_env = name; }
+	std::string get_path_conda_env() { return path_conda_env; }
+	std::string get_name_conda_env() { return name_conda_env; }
 
 
 private:
@@ -976,11 +1047,15 @@ private:
 	std::string path_directory_feature_matching_tool;
 	std::string path_file_point_cloud;
 	std::string path_file_output_D2Net_matches;
+	std::string path_file_output_lightglue_matches;
 	std::string path_file_output_superglue_matches;
 	std::string path_file_batch_call_jarEllipsoid;
 	std::string path_file_batch_call_pyD2Net;
 	std::string path_file_batch_call_superglue;
+	std::string path_file_batch_call_lightglue;
 	std::string file_name_true_image, file_name_water_line;
+	std::string path_conda_env;
+	std::string name_conda_env;
 
 	// logoutput (gesammelt plotten)
 	LogFile* logFilePrinter;
@@ -1015,6 +1090,8 @@ private:
 	double d2Net_scalingFactor_synthImage;
 	double superglue_scalingFactor_trueImage;
 	double superglue_scalingFactor_synthImage;
+	double lightglue_scalingFactor_trueImage;
+	double lightglue_scalingFactor_synthImage;
 	float superglue_matching_thresh;
 	float filter_matches_ransac_fisheye;
 	float filter_matches_ransac_pinhole;

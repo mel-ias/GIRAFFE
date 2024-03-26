@@ -231,13 +231,14 @@ void Matching::loadMatches(
 	// read line-by-line
 	while (std::getline(file, line)) {
 
-		if (flag_matching_type == DataManager::D2NET || flag_matching_type == DataManager::SUPERGLUE) {
+		if (flag_matching_type == DataManager::D2NET || flag_matching_type == DataManager::SUPERGLUE || flag_matching_type == DataManager::LIGHTGLUE) {
 
 			// create an input string stream
 			std::istringstream stm(line);
 			int id;
 			double img1_x, img1_y, img2_x, img2_y; //coordinates of feature point inliers; img1 = real image; img2 = synth image
 			stm >> id >> img1_x >> img1_y >> img2_x >> img2_y;
+
 
 			// rescale coordinates from matched images
 			// trueImage 
@@ -250,6 +251,8 @@ void Matching::loadMatches(
 			// push back inlieres separately
 			real_matched_pts.push_back(cv::Point2d(img1_x, img1_y));
 			synth_matched_pts.push_back(cv::Point2d(img2_x, img2_y));
+
+			//std::cout << "Imgpoints_DEBUG: " << img1_x << "," << img1_y << "," << img2_x << "," << img2_y << std::endl;
 
 			counter++;
 		}
@@ -581,6 +584,7 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 	// kdtree.knnSearch to look for nearest neighbour image pixel water line <-> virtual image. take corresponding 3D values respectively
 	std::vector<cv::Point3d> projected_waterline_3D_OCV = modell_ocv.getColorFor(synth_pts_3D_cv, in_image_4_color, point_cloud_color, image_coordinates_color, 1.0, camera_matrix, dist_coeffs, rvec_cc_orig_copy, tvec_cc_orig_copy, water_line_points_reduced_by_dist);
 
+
 	// print point cloud
 	if (export_pcl) {
 		mLogFile->append(TAG + "---- export 3D point cloud ----");
@@ -595,7 +599,7 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 		// 3D plane fitting using SVD
 		std::vector<Eigen::Vector3d> points;
 
-		for (cv::Point3d &p : projected_waterline_3D_OCV)
+		for (cv::Point3d& p : projected_waterline_3D_OCV)
 			points.push_back(Eigen::Vector3d(p.x, p.y, p.z));
 
 		std::pair<Eigen::Vector3d, Eigen::Vector3d> result = best_plane_from_points(points);
@@ -620,6 +624,8 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 		double root_mean_sq_plane = 0.0f;
 
 		// calc distance 3D water level point <-> fitted 3D plane
+		std::vector<int> pt_ids;
+		int pt_id = 0;
 		for (Eigen::Vector3d vec : points) {
 			float dist = normal.dot(vec - centroid);
 			mean_sq_plane += sq(dist);
@@ -627,7 +633,9 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 			if (dist < max_distance_from_line) {
 				optimized_waterline.push_back(cv::Point3d(vec.x(), vec.y(), vec.z()));
 				distances.push_back(dist);
+				pt_ids.push_back(pt_id);
 			}
+			pt_id++;
 		}
 
 		mean_sq_plane /= points.size(); // calc mean_sq
@@ -652,9 +660,24 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 		double median_z = 0.0; // for median calc
 
 		std::ofstream myfile;
+		std::ofstream myfile_ptids;
 		myfile.open(mWorkingDirectory + "waterlinepoints_projected.txt");
+		myfile_ptids.open(mWorkingDirectory + "waterlinepoints_projected_pt_IDs.txt");
+
+		// check if point id list has same size as projected water line 3D
+		if (projected_waterline_3D_OCV.size() != pt_ids.size()){
+			log_statistics << "size of waterline point id list and water line points projected list does not match! Retun." << std::endl << std::endl;
+			return;
+		}
+		else {
+			log_statistics << "will save water line points and point ids: " << projected_waterline_3D_OCV.size() << "/" << pt_ids.size() << std::endl << std::endl;
+
+		}
+
 
 		for (int i = 0; i < projected_waterline_3D_OCV.size(); i++) {
+			myfile_ptids << std::fixed << pt_ids[i] << "\n";
+
 			myfile << std::fixed << std::setprecision(4)
 				<< (projected_waterline_3D_OCV)[i].x + shift_x << ","
 				<< (projected_waterline_3D_OCV)[i].y + shift_y << ","
@@ -676,6 +699,7 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 		// calc standard derviation
 		stdev_z = sqrt(variance_z);
 
+		myfile_ptids.close();
 		myfile.close();
 
 		
@@ -819,13 +843,13 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 
 		// draw oroginal water line  on canvas
 		for (cv::Point2d p : water_line_points_reduced_by_dist) {
-			cv::circle(copy_masterimage, p, 3, cv::Scalar(255, 255, 0), -1); // circle water line on canvas
+			cv::circle(copy_masterimage, p, 5, cv::Scalar(255, 255, 0), -1); // circle water line on canvas
 
 
 		}
 		// draw reprojected water line on canvas
 		for (cv::Point2d p : imagePoints) {
-			cv::circle(copy_masterimage, p, 2, cv::Scalar(255, 0, 255), -1); // circle water line on canvas
+			cv::circle(copy_masterimage, p, 4, cv::Scalar(255, 0, 255), -1); // circle water line on canvas
 		}
 
 		cv::imwrite(mWorkingDirectory + "reprojected_waterline.png", copy_masterimage);
