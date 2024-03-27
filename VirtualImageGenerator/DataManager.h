@@ -133,14 +133,10 @@ public:
 		Rxyz[3] = 0.0f; Rxyz[4] = 1.0f; Rxyz[5] = 0.0f;
 		Rxyz[6] = 0.0f; Rxyz[7] = 0.0f; Rxyz[8] = 1.0f;
 
-		Rz = new float[9]; // rotation matrix arround z-axis
-		Rz[0] = 0.0f; Rz[1] = 0.0f; Rz[2] = 0.0f;
-		Rz[3] = 0.0f; Rz[4] = 0.0f; Rz[5] = 0.0f;
-		Rz[6] = 0.0f; Rz[7] = 0.0f; Rz[8] = 1.0f;
 
 		// bools
 		haveVegetationMask = false; // check if TGI vegetation mask have to be applied
-		have_precalibrated_IOP_camMatrix, have_precalibrated_IOP_distCoeffs, have_precalibrated_IOP_calibRMSE, have_calibration_values_android = false; // check if smartphone camera is precalibrated
+		have_precalibrated_IOP_camMatrix, have_precalibrated_IOP_distCoeffs = false; // check if camera is precalibrated
 		have_android_rotation_matrix = false; // check if native rotM is provided from client side
 		well_distributed_object_points_3D_space = false; // check if distribution of object points is sufficient to refine cameras intrinsics
 		well_distributed_object_points_image_space = false; // well distributed means: in each quadric of image are matched image points
@@ -156,7 +152,7 @@ public:
 		if (pts_synth_3D_double != nullptr) { delete pts_synth_3D_double; }
 		if (pts_color_RGB_int != nullptr) { delete pts_color_RGB_int; }
 		if (Rxyz != nullptr) { delete Rxyz; }
-		if (Rz != nullptr) { delete Rz; }
+
 		if (boundingBox != nullptr) { delete boundingBox; }	
 	}
 
@@ -281,15 +277,6 @@ public:
 			log_readJson << "No value for 'distortion_coefficents' in json. No pre-calibrated IOP available." << std::endl;
 
 
-		if (j["calibration_rmse"] != nullptr) {
-			rmse_calibration_android = std::stod(j.at("calibration_rmse").get<std::string>());
-			have_precalibrated_IOP_calibRMSE = true;
-			log_readJson << "Set 'calibration_rmse' from smartphone-based pre-calibration: " << rmse_calibration_android << endl;
-		}
-		else
-			log_readJson << "No value for 'calibration_rmse' in json." << std::endl;
-
-
 		// read approximate IOP
 		// set focal length in mm
 		if (j["focal_length_mm"] != nullptr) {
@@ -407,7 +394,7 @@ public:
 				Rxyz[i] = std::stof(substr);
 			}
 			have_android_rotation_matrix = true;
-			log_readJson << "Set Android 'rotationMatrix'. Size: " << i + 1 << endl;
+			log_readJson << "Set 'rotationMatrix'. Size: " << i + 1 << endl;
 		}
 		else {
 			log_readJsonErr << "No value for 'rotation Matrix' in json. Have to calculate bounding box from Euler angles." << std::endl;
@@ -514,8 +501,8 @@ public:
 
 		// shift the horizontal component of projection centre to x0 = 0 and y = 0 to work with smaller coordinates (more efficient than using UTM values)
 		// save shift values (must be applied to point cloud as well and later to restore original coordinates of 3D water levels) 
-		shift_x =  x0;
-		shift_y =  y0; 
+		shift_x = x0;
+		shift_y = y0; 
 		shift_z = z0;
 		x0 -= shift_x;
 		y0 -= shift_y;
@@ -541,11 +528,6 @@ public:
 		// when finished parameter updates --> recalculate bounding box of point cloud to be projected
 		boundingBox->calcBoundingBox();
 		
-		// check if android calibration is valid (all bools have to be true)
-		if (have_precalibrated_IOP_camMatrix && have_precalibrated_IOP_distCoeffs && have_precalibrated_IOP_calibRMSE)
-			have_calibration_values_android = true;
-		log_readJson << "have valid camera calibration [camera_matrix, distortion_coefficents, rmse] of client's camera" << endl;
-
 		// print content of received json data
 		printLogfile_log_readJson();
 
@@ -897,17 +879,15 @@ public:
 	bool get_have_camera_calibration_android_cm() { return have_precalibrated_IOP_camMatrix; } // cam matrix
 	bool get_have_camera_calibration_android_dc() { return have_precalibrated_IOP_distCoeffs; } // distortion coefficients
 	
-	cv::Mat get_camera_calibration_android_cm() { 
+	cv::Mat get_camera_matrix_ocv() { 
 		std::stringstream cam_mat_string; cam_mat_string << precalib_camera_matrix;
 		logFilePrinter->append(TAG + "Deliver camera matrix: " + cam_mat_string.str());
 		return precalib_camera_matrix; }
 	
-	cv::Mat get_camera_calibration_android_dc() { 
+	cv::Mat get_dist_vector_ocv() { 
 		std::stringstream dist_mat_string; dist_mat_string << distortion_coefficents_android;
 		logFilePrinter->append(TAG + "Deliver distortion coefficents: " + dist_mat_string.str());
 		return distortion_coefficents_android; }
-	
-	double get_camera_calibration_android_rmse() { return rmse_calibration_android; }
 		
 	// get information about projection settings
 	float& getDistance() { return thresh_projPt_maxDepthPtCloud; }
@@ -1074,14 +1054,13 @@ private:
 	float pix_size, dh, r, view_angle_half_H, view_angle_half_V, principal_distance; // for IOP
 	cv::Mat precalib_camera_matrix;
 	cv::Mat distortion_coefficents_android;
-	double rmse_calibration_android;
 
 	double x0, y0, z0; // , z_smartphone_height; //for EOP
 	double shift_x, shift_y, shift_z; // enable shift of georeferenced point clouds (utm values very large numbers) 
 	cv::Mat tvecs_prev, rvecs_prev; // in case of previous done exterior orientation determination
 	float azimuth, roll, pitch; 
 	float* Rxyz;
-	float* Rz;
+
 
 	float thresh_projtPt_distanceToProjC; // for projection; check if point to be projected is to close to projection centre. use 1 m distance by default 
 	float thresh_projPt_maxDepthPtCloud; // max depth of point cloud to be projected starting from projection cnetre. use 200 m distance by default
@@ -1119,7 +1098,7 @@ private:
 	// bools
 	// -----
 	bool haveVegetationMask;	
-	bool have_precalibrated_IOP_camMatrix, have_precalibrated_IOP_distCoeffs, have_precalibrated_IOP_calibRMSE, have_calibration_values_android ;
+	bool have_precalibrated_IOP_camMatrix, have_precalibrated_IOP_distCoeffs ;
 	bool have_android_rotation_matrix ;
 	bool well_distributed_object_points_3D_space; // check if distribution of object points is sufficient to refine cameras intrinsics
 	bool well_distributed_object_points_image_space;  // well distributed means: in each quadric of image are matched image points

@@ -315,12 +315,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aabb.h" />
-    <ClInclude Include="AccurateMatcher.h" />
-    <ClInclude Include="ASiftDetector.h" />
     <ClInclude Include="BoundingBox.hpp" />
     <ClInclude Include="CoordinateImage.hpp" />
     <ClInclude Include="DataManager.h" />
-    <ClInclude Include="DLT.hpp" />
     <ClInclude Include="fillImages.hpp" />
     <ClInclude Include="ImCalculator.hpp" />
     <ClInclude Include="json.hpp" />
@@ -330,19 +327,11 @@
     <ClInclude Include="LogfilePrinter.h" />
     <ClInclude Include="Matching.h" />
     <ClInclude Include="Mathematics.h" />
-    <ClInclude Include="Modell.h" />
     <ClInclude Include="Modell_OCV.h" />
     <ClInclude Include="nachbardaten.h" />
     <ClInclude Include="opencv_includes.h" />
     <ClInclude Include="PerspectiveImage.h" />
-    <ClInclude Include="plyloader.h" />
     <ClInclude Include="PointLoader.h" />
-    <ClInclude Include="spline.h" />
-    <ClInclude Include="spline\Bezier.h" />
-    <ClInclude Include="spline\BSpline.h" />
-    <ClInclude Include="spline\CatmullRom.h" />
-    <ClInclude Include="spline\Curve.h" />
-    <ClInclude Include="spline\Vector.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="tree.h" />
@@ -350,23 +339,14 @@
     <ClInclude Include="vek.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AccurateMatcher.cpp" />
-    <ClCompile Include="ASiftDetector.cpp" />
     <ClCompile Include="BoundingBox.cpp" />
     <ClCompile Include="CoordinateImage.cpp" />
     <ClCompile Include="ImCalculator.cpp" />
     <ClCompile Include="LaserPoint.cpp" />
     <ClCompile Include="Matching.cpp" />
-    <ClCompile Include="Modell.cpp" />
     <ClCompile Include="Modell_OCV.cpp" />
     <ClCompile Include="PerspectiveImage.cpp" />
-    <ClCompile Include="plyloader.cpp" />
     <ClCompile Include="PointLoader.cpp" />
-    <ClCompile Include="spline\Bezier.cpp" />
-    <ClCompile Include="spline\BSpline.cpp" />
-    <ClCompile Include="spline\CatmullRom.cpp" />
-    <ClCompile Include="spline\Curve.cpp" />
-    <ClCompile Include="spline\Vector.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="VirtualImageGenerator.cpp" />
   </ItemGroup>

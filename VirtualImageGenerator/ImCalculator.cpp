@@ -832,7 +832,7 @@ void ImCalculator::colormappingIntensity(const cv::Mat& mat, const cv::Mat& mask
 	cv::applyColorMap(adjMap, falseColorsMap, cv::COLORMAP_JET);
 
 	cv::Mat copyMaske;
-	cv::cvtColor(maske, copyMaske, CV_GRAY2RGB);
+	cv::cvtColor(maske, copyMaske, cv::COLOR_GRAY2RGB);
 	falseColorsMap = falseColorsMap.mul(copyMaske);
 
 	// wenn Rechteck übergeben, croppe es

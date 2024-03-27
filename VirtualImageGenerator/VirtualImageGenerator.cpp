@@ -42,8 +42,6 @@ int matching_approach = DataManager::SUPERGLUE; //  DataManager::D2NET;
 float neighbourDistance_allowed = 5.5f; // hardly depends on point cloud density!
 int final_iteration_number = 0; // remember: counter starts at '0'
 bool calc_IO;
-bool apply_gaussian_blur_true_image; // only first iteration!
-bool apply_gaussian_blur_synth_image;
 bool output_pointcloud;
 bool fisheye;
 double balance_undist = 0.0;
@@ -189,23 +187,6 @@ void read_init_file() {
 		terminate_program("read init.txt, no valid balance_undist value found. Break.");
 	}
 
-	if (j["apply_gaussian_blur_true_image"] != nullptr && j.at("apply_gaussian_blur_true_image").get<std::string>().compare("true") == 0) {
-		apply_gaussian_blur_true_image = true;
-		log_printer->append(TAG + " read init.txt, will apply gaussian blurring to true camera image");
-	}
-	else {
-		apply_gaussian_blur_true_image = false;
-		log_printer->append(TAG + " read init.txt, will NOT apply gaussian blurring to true camera image");
-	}
-
-	if (j["apply_gaussian_blur_synth_image"] != nullptr && j.at("apply_gaussian_blur_synth_image").get<std::string>().compare("true") == 0) {
-		apply_gaussian_blur_synth_image = true;
-		log_printer->append(TAG + " read init.txt, will apply gaussian blurring to synthetic image");
-	}
-	else {
-		apply_gaussian_blur_synth_image = false;
-		log_printer->append(TAG + " read init.txt, will NOT apply gaussian blurring to synthetic image");
-	}
 
 	if (j["output_pointcloud"] != nullptr && j.at("output_pointcloud").get<std::string>().compare("true") == 0) {
 		output_pointcloud = true;
@@ -383,15 +364,6 @@ int main(int argc, char** argv)
 		pim = new PerspectiveImage(data_manager);
 		pim->generateImage();
 
-		// optional: pre-processing of true and/or synthetic image --> enter here
-		// apply gaussian filtering (only one time having the true image)
-		if (apply_gaussian_blur_true_image && iteration == 0) {
-			data_manager->set_true_image(pim->apply_filter(data_manager->get_true_image(), DataManager::APPLY_GAUSSIAN)); // slight smoothing because of unsharpness of rendered virtual image
-		}
-
-		if (apply_gaussian_blur_synth_image) {
-			data_manager->set_synth_image(pim->apply_filter(data_manager->get_synth_image(), DataManager::APPLY_GAUSSIAN)); // slight smoothing because of point pattern due to rendered virtual image
-		}
 
 		// b) prepare true/synth image matching
 		cv::Mat true_img_4matching, synth_img_4matching;
@@ -537,7 +509,7 @@ int main(int argc, char** argv)
 						cv::Mat map2;
 						cv::fisheye::estimateNewCameraMatrixForUndistortRectify(camera_matrix, dist_coeffs, data_manager->get_size_true_image(), E, camera_matrix_new, balance_undist);
 						cv::fisheye::initUndistortRectifyMap(camera_matrix, dist_coeffs, E, camera_matrix_new, data_manager->get_size_true_image(), CV_16SC2, map1, map2);
-						cv::remap(data_manager->get_true_image(), undist_true_image, map1, map2, CV_INTER_LINEAR, CV_HAL_BORDER_CONSTANT);
+						cv::remap(data_manager->get_true_image(), undist_true_image, map1, map2, cv::INTER_LINEAR, CV_HAL_BORDER_CONSTANT);
 					}
 					else {
 						camera_matrix_new = cv::getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, data_manager->get_size_true_image(), balance_undist);

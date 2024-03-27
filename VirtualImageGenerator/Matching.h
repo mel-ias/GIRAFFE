@@ -4,7 +4,6 @@
 #define MATCHING_H
 
 #include "ImCalculator.hpp"
-#include "spline\Bezier.h"
 #include "Mathematics.h"
 #include "LogfilePrinter.h"
 #include <Eigen/Dense>
@@ -118,7 +117,7 @@ private:
 		myfile_stats.close();
 	}
 
-	cv::Mat ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vector<cv::Point2d>& _points2, bool refineF);
+	cv::Mat ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vector<cv::Point2d>& _points2, double confidence, double distance, bool refineF);
 
 
 	//Hier Matching - Parameterisierung

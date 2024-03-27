@@ -4,31 +4,28 @@
 #define IMCALCULATOR_H
 
 #include"opencv2\opencv.hpp"
-#include <opencv2/xfeatures2d/nonfree.hpp>
-//#include"opencv2\nonfree\features2d.hpp"
-#include"opencv2/flann/defines.h"
+#include"opencv2\xfeatures2d\nonfree.hpp"
+#include"opencv2\flann\defines.h"
 #include"LaserPoint.h"
-#include<vector>
+
 #include"CoordinateImage.hpp"
 #include"BoundingBox.hpp"
-#include"DLT.hpp"
-#include"opencv_includes.h"
 #include"fillImages.hpp"
-#include"AccurateMatcher.h"
 #include"Modell.h"
-#include"plyloader.h"
 #include"LogfilePrinter.h"
-#include "Mathematics.h"
+#include"Mathematics.h"
 
 
 #include <iostream>
 #include <string>
 #include <algorithm>
 #include "kdtree.h"
-#include <omp.h>
+
 
 #include "DataManager.h"
 
+#include <omp.h>
+#include <vector>
 #include <Windows.h>
 
 #endif

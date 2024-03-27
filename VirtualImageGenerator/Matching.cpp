@@ -263,7 +263,7 @@ void Matching::loadMatches(
 	// check for outlieres
 	double confidence = 0.95;
 	double distance = 8.0;
-	AccurateMatcher::ransacTest_reimpl(real_matched_pts, synth_matched_pts, confidence, distance, false);
+	ransacTest_reimpl(real_matched_pts, synth_matched_pts, confidence, distance, false);
 
 
 	// data conversion for image matching
@@ -378,7 +378,7 @@ float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_
 	// note: solve PnP considers central perspective images. Using fisheye will lead to many matches to be detected as outliers, set reproError to a high value to get most matches
 
 	
-	cv::solvePnPRansac(in_matched_object_points, in_matched_image_points_real, camera_matrix, dist_coeffs, rvec, tvec, true, iterationsCount = iterationsCount, solvePnPRansac_reproErr, 0.9999, inliers, CV_ITERATIVE);
+	cv::solvePnPRansac(in_matched_object_points, in_matched_image_points_real, camera_matrix, dist_coeffs, rvec, tvec, true, iterationsCount = iterationsCount, solvePnPRansac_reproErr, 0.9999, inliers, cv::SOLVEPNP_ITERATIVE);
 	for (int i = 0; i < in_matched_object_points.size(); i++) {
 		if (std::find(inliers.begin(), inliers.end(), i) != inliers.end()) {
 			image_points_real_ransac.push_back(in_matched_image_points_real[i]);
@@ -421,7 +421,7 @@ float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_
 		image_points_real_ransac_vector.push_back(image_points_real_ransac);
 
 		if (!fisheye) {
-			int flagsCalib = CV_CALIB_USE_INTRINSIC_GUESS;// +CV_CALIB_FIX_ASPECT_RATIO; // Test 28.07.2022
+			int flagsCalib = cv::CALIB_USE_INTRINSIC_GUESS;// +CV_CALIB_FIX_ASPECT_RATIO; // Test 28.07.2022
 			repro_error = cv::calibrateCamera(object_points_ransac_vector, image_points_real_ransac_vector, true_image.size(), camera_matrix, dist_coeffs, rvec, tvec, stdDev_In, stdDev_Ext, perViewErrors, flagsCalib, termCrit);
 		}
 		else {
@@ -715,7 +715,7 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 
 		// fit 2D water line using least squares line fit (cv::fitLine) with standard parameters
 		cv::Vec4f lineFit;
-		cv::fitLine(optimized_water_points_xz, lineFit, CV_DIST_L12, 0, 0.01, 0.01);
+		cv::fitLine(optimized_water_points_xz, lineFit, cv::DIST_L12, 0, 0.01, 0.01);
 
 		// get line equation from vector
 		double vx = lineFit(0);
@@ -1002,10 +1002,10 @@ void Matching::draw_inliers_distribution(cv::Mat& real_image, std::vector<cv::Po
 	std::vector<cv::Vec4i> hierarchy;
 
 	/// Detect edges using Threshold
-	threshold(water_line_points_canvas, threshold_output, 200, 255, CV_THRESH_BINARY);
+	threshold(water_line_points_canvas, threshold_output, 200, 255, cv::THRESH_BINARY);
 
 	/// Find contours
-	findContours(threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+	findContours(threshold_output, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
 	/// Find the convex hull object for each contour
 	//std::vector<std::vector<cv::Point> >hull(contours.size());
@@ -1044,7 +1044,7 @@ void Matching::draw_inliers_distribution(cv::Mat& real_image, std::vector<cv::Po
 
 	for (cv::Rect r : list_of_rects) {
 		cv::rectangle(copy_real_image, r, cv::Scalar(0, 0, 255));
-		cv::putText(copy_real_image, std::to_string(counter), (r.br() + r.tl())*0.5, CV_FONT_NORMAL, 5, cv::Scalar(0, 0, 255));
+		cv::putText(copy_real_image, std::to_string(counter), (r.br() + r.tl())*0.5, cv::QT_FONT_NORMAL, 5, cv::Scalar(0, 0, 255));
 
 		// check if inlier is inside of rect
 		double point_counter = 0;
@@ -1375,7 +1375,7 @@ void Matching::writer_matches_txt_ellipsoid_bat(
 
 
 // Abwandlung von Christians Matching Test
-cv::Mat Matching::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vector<cv::Point2d>& _points2, bool refineF)
+cv::Mat Matching::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vector<cv::Point2d>& _points2, double confidence, double distance, bool refineF)
 {
 	// Convert keypoints into Point2f
 	std::vector<cv::Point2d> points1(_points1);
@@ -1394,8 +1394,8 @@ cv::Mat Matching::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vec
 
 	cv::Mat fundemental;
 
-	double confidence = 0.95;
-	double distance = 5.0;
+	//double confidence = 0.95; // 19.04.2023 -> parameter to be set
+	//double distance = 8.0; // 19.04.2023 -> parameter to be set
 
 	// Compute F matrix using RANSAC
 	std::vector<uchar> inliers(points1.size(), 0);
@@ -1409,7 +1409,7 @@ cv::Mat Matching::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vec
 			cv::FM_RANSAC, // RANSAC method
 			distance, // distance to epipolar line
 			confidence); // confidence probability
-						 // extract the surviving (inliers) matches
+		// extract the surviving (inliers) matches
 
 
 		std::cout << "RansacTest, Fund = " << std::endl << " " << Fund << std::endl << std::endl;
@@ -1432,11 +1432,19 @@ cv::Mat Matching::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vec
 				points2_good.push_back(points2[i]);
 			}
 		}
+		_points1.clear();
+		_points2.clear();
 
-		std::cout << "RansacTest, Size After FundMat: " << points1_good.size() << ", 2: " << points2_good.size() << std::endl;
+		_points1 = points1_good;
+		_points2 = points2_good;
+
+		std::cout << "RansacTest, Size After FundMat: " << _points1.size() << ", 2: " << _points2.size() << std::endl;
 
 		if (refineF) {
-			// The F matrix will be recomputed with all accepted matches
+			// The F matrix will be recomputed with
+			// all accepted matches
+			// Convert keypoints into Point2f
+			// for final F computation
 			points1.clear();
 			points2.clear();
 
@@ -1449,13 +1457,11 @@ cv::Mat Matching::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vec
 				fundemental = cv::findFundamentalMat(
 					cv::Mat(points1), cv::Mat(points2), // matches
 					cv::FM_8POINT); // 8-point method
-			}
+		}
 
 			if (points1.size() > 3 && points2.size() > 3)
 			{
-#ifdef DEBUG
-				std::cout << "Num outMatches: " << outMatches.size() << ", Distances: ";
-#endif
+
 				// berechne nun homography 
 				cv::Mat homography = cv::findHomography(cv::Mat(points1), cv::Mat(points2), cv::LMEDS, distance);
 
@@ -1469,32 +1475,31 @@ cv::Mat Matching::ransacTest_reimpl(std::vector<cv::Point2d>& _points1, std::vec
 					col /= col.at<double>(2);
 					double dist = sqrt(pow(col.at<double>(0) - points2_good[i].x, 2) +
 						pow(col.at<double>(1) - points2_good[i].y, 2));
-#ifdef DEBUG
+
 					std::cout << dist << " ";
-#endif
+
 
 					if (dist < distance) {
 						points1_passed.push_back(points1_good[i]);
 						points2_passed.push_back(points2_good[i]);
 					}
 				}
-		}
+					}
+
+			_points1.clear();
+			_points2.clear();
+
+			_points1 = points1_passed;
+			_points2 = points2_passed;
+				}
+
+
+			}
+
+
+	std::cout << "RansacTest, Size of Passed points 1: " << _points1.size() << ", 2: " << _points2.size() << std::endl;
+	return fundemental;
 	}
 
-
-#ifdef DEBUG
-		std::cout << std::endl;
-#endif
-}
-
-	_points1.clear();
-	_points2.clear();
-
-	_points1 = points1_passed;
-	_points2 = points2_passed;
-
-	std::cout << "RansacTest, Size of Passed points 1: " << points1_passed.size() << ", 2: " << points2_passed.size() << std::endl;
-	return fundemental;
-}
 
 

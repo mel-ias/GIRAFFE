@@ -34,11 +34,6 @@ public:
     // generates the image from the point cloud
     void generateImage();
 
-	// public Funktion zum Filtern von Bilddaten wenn gewünscht!
-	cv::Mat PerspectiveImage::apply_filter(
-		const cv::Mat& imageToBeFiltered,
-		DataManager::FILTER_APPS filterToBeApplied);
-
 
 
 private:
