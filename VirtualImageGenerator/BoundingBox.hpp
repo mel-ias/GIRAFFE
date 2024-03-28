@@ -118,8 +118,7 @@ public:
 
 	void calcBoundingBox();
 
-	void calcRotM_XYZ(float* _Rxyz); // in case of no rotation matrix from json, calc!
-
+	
 
 private:
 

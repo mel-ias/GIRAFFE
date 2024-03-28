@@ -129,9 +129,9 @@ public:
 		coord_img = nullptr;
 
 		Rxyz = new float[9]; // use only one instance for rotation matrix. for filling, just reference it
-		Rxyz[0] = 1.0f; Rxyz[1] = 0.0f; Rxyz[2] = 0.0f;
-		Rxyz[3] = 0.0f; Rxyz[4] = 1.0f; Rxyz[5] = 0.0f;
-		Rxyz[6] = 0.0f; Rxyz[7] = 0.0f; Rxyz[8] = 1.0f;
+		Rxyz[0] = 1.0f; Rxyz[3] = 0.0f; Rxyz[6] = 0.0f;
+		Rxyz[1] = 0.0f; Rxyz[4] = 1.0f; Rxyz[7] = 0.0f;
+		Rxyz[2] = 0.0f; Rxyz[5] = 0.0f; Rxyz[8] = 1.0f;
 
 
 		// bools
@@ -514,8 +514,32 @@ public:
 		boundingBox->set_X0_Cam_World(x0, y0, z0); //update bounding box projC
 
 		boundingBox->setAngles(azimuth, roll, pitch); //update bounding box rotP
-		if (!have_android_rotation_matrix) 
-			boundingBox->calcRotM_XYZ(Rxyz); // calculate rotation matrix from Euler angles if no rotation matrix is availabe from the client
+		
+		if (!have_android_rotation_matrix) {
+
+			const float M_PI = 3.14159265358979323846;   // pi
+			float Cz = static_cast<float>(cos(azimuth * M_PI / 180.0f));
+			float Sz = static_cast<float>(sin(azimuth * M_PI / 180.0f));
+
+			float Cy = static_cast<float>(cos(roll * M_PI / 180.0f));
+			float Sy = static_cast<float>(sin(roll * M_PI / 180.0f));
+
+			float Cx = static_cast<float>(cos(pitch * M_PI / 180.0f));
+			float Sx = static_cast<float>(sin(pitch * M_PI / 180.0f));
+
+			// Rxyz, performs 3 rotations in order of Rz (azi), Ry (roll) then Rx (pitch).
+			// determine left axis [x, pitch]	determine up axis [y, roll]		determine forward axis [z, Azimuth]	
+			Rxyz[0] = Cy * Cz;						Rxyz[3] = -Cy * Sz;					Rxyz[6] = Sy;
+			Rxyz[1] = Sx * Sy * Cz + Cx * Sz;		Rxyz[4] = -Sx * Sy * Sz + Cx * Cz;	Rxyz[7] = -Sx * Cy;
+			Rxyz[2] = -Cx * Sy * Cz + Sx * Sz;		Rxyz[5] = Cx * Sy * Sz + Sx * Cz;	Rxyz[8] = Cx * Cy;
+
+			logFilePrinter->append(TAG + "DM, RotM:");
+			logFilePrinter->append("\t\t" + std::to_string(Rxyz[0]) + " " + std::to_string(Rxyz[3]) + " " + std::to_string(Rxyz[6]), 4);
+			logFilePrinter->append("\t\t" + std::to_string(Rxyz[1]) + " " + std::to_string(Rxyz[4]) + " " + std::to_string(Rxyz[7]), 4);
+			logFilePrinter->append("\t\t" + std::to_string(Rxyz[2]) + " " + std::to_string(Rxyz[5]) + " " + std::to_string(Rxyz[8]), 4);
+			logFilePrinter->append("");
+		}
+			
 
 		log_readJson << "Set projection centre (x0,y0,z0) for BBox calculation: " << x0 << ", " << y0 << ", " << z0 << " [m]" << endl;
 		log_readJson << "Set Euler angles (azimuth,roll,pitch) for BBox calculation: " << azimuth << ", " << roll << ", " << pitch << " [°]" << endl;
@@ -927,9 +951,9 @@ public:
 
 	// set rotation matrix [row-major]
 	void set_RotationMatrix(cv::Mat rotM) {
-		Rxyz[0] = rotM.at<double>(0, 0); Rxyz[1] = rotM.at<double>(0, 1); Rxyz[2] = rotM.at<double>(0, 2);
-		Rxyz[3] = rotM.at<double>(1, 0); Rxyz[4] = rotM.at<double>(1, 1); Rxyz[5] = rotM.at<double>(1, 2);
-		Rxyz[6] = rotM.at<double>(2, 0); Rxyz[7] = rotM.at<double>(2, 1); Rxyz[8] = rotM.at<double>(2, 2);
+		Rxyz[0] = rotM.at<double>(0, 0); Rxyz[3] = rotM.at<double>(0, 1); Rxyz[6] = rotM.at<double>(0, 2);
+		Rxyz[1] = rotM.at<double>(1, 0); Rxyz[4] = rotM.at<double>(1, 1); Rxyz[7] = rotM.at<double>(1, 2);
+		Rxyz[2] = rotM.at<double>(2, 0); Rxyz[5] = rotM.at<double>(2, 1); Rxyz[8] = rotM.at<double>(2, 2);
 	}
 
 	// set Rz [row-major]

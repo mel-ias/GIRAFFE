@@ -544,10 +544,10 @@ int main(int argc, char** argv)
 		}
 
 		// convert to get cameraPose
-		cv::transpose(rMatObj, rMatCam);
-		tVecCam = -rMatCam * tVecObj;
-		data_manager->set_RotationMatrix(rMatCam);
-		data_manager->set_ProjectionCenter(tVecCam.at<double>(0), tVecCam.at<double>(1), tVecCam.at<double>(2));
+		//cv::transpose(rMatObj, rMatCam);
+		//tVecCam = -rMatCam * tVecObj;
+		data_manager->set_RotationMatrix(rMatObj);
+		data_manager->set_ProjectionCenter(tVecObj.at<double>(0), tVecObj.at<double>(1), tVecObj.at<double>(2));
 		data_manager->getBoundingBox()->calcBoundingBox();
 
 		
@@ -565,11 +565,11 @@ int main(int argc, char** argv)
 			std::string out_intr_mm = "";
 			std::string out_dist = "";
 			
-			cv::Mat rVecCam;
-			cv::Rodrigues(rMatCam, rVecCam);
+			cv::Mat rVecObj;
+			cv::Rodrigues(rMatObj, rVecObj);
 			
-			double* ptr_rVecCam = (double*)(rVecCam.data);
-			double* ptr_tVecCam = (double*)(tVecCam.data);
+			double* ptr_rVecObj = (double*)(rVecObj.data);
+			double* ptr_tVecObj = (double*)(tVecObj.data);
 			
 			// get standard deviations for extrinsics
 			// https://forum.opencv.org/t/unit-of-rvecs-stddeviationsextrinsics/4266 --> rvec in radiants
@@ -580,12 +580,12 @@ int main(int argc, char** argv)
 				double* ptr_stdDevObj_tvec = (double*)(stdDevObj_tvec.data);	
 				out_extr.append("rotV_r0;rotV_r1;rotV_r2;transV_X0;transV_Y0;transV_Z0;std_rotV_r0;std_rotV_r1;std_rotV_r2;std_transV_X0;std_transV_Y0;std_transV_Z0\n");
 				out_extr.append(
-					std::to_string(ptr_rVecCam[0]) + ";" +
-					std::to_string(ptr_rVecCam[1]) + ";" +
-					std::to_string(ptr_rVecCam[2]) + ";" +
-					std::to_string(ptr_tVecCam[0] + data_manager->get_shift_x()) + ";" +
-					std::to_string(ptr_tVecCam[1] + data_manager->get_shift_y()) + ";" +
-					std::to_string(ptr_tVecCam[2] + data_manager->get_shift_z()) +  ";" +
+					std::to_string(ptr_rVecObj[0]) + ";" +
+					std::to_string(ptr_rVecObj[1]) + ";" +
+					std::to_string(ptr_rVecObj[2]) + ";" +
+					std::to_string(ptr_tVecObj[0] + data_manager->get_shift_x()) + ";" +
+					std::to_string(ptr_tVecObj[1] + data_manager->get_shift_y()) + ";" +
+					std::to_string(ptr_tVecObj[2] + data_manager->get_shift_z()) +  ";" +
 					std::to_string(ptr_stdDevObj_rvec[0]) + ";" +
 					std::to_string(ptr_stdDevObj_rvec[1]) + ";" +
 					std::to_string(ptr_stdDevObj_rvec[2]) + ";" +
@@ -596,17 +596,17 @@ int main(int argc, char** argv)
 			else {
 				out_extr.append("rotV_r0;rotV_r1;rotV_r2;transV_X0;transV_Y0;transV_Z0;\n");
 				out_extr.append(
-					std::to_string(ptr_rVecCam[0]) + ";" +
-					std::to_string(ptr_rVecCam[1]) + ";" +
-					std::to_string(ptr_rVecCam[2]) + ";" +
-					std::to_string(ptr_tVecCam[0] + data_manager->get_shift_x()) + ";" +
-					std::to_string(ptr_tVecCam[1] + data_manager->get_shift_y()) + ";" +
-					std::to_string(ptr_tVecCam[2] + data_manager->get_shift_z()) );
+					std::to_string(ptr_rVecObj[0]) + ";" +
+					std::to_string(ptr_rVecObj[1]) + ";" +
+					std::to_string(ptr_rVecObj[2]) + ";" +
+					std::to_string(ptr_tVecObj[0] + data_manager->get_shift_x()) + ";" +
+					std::to_string(ptr_tVecObj[1] + data_manager->get_shift_y()) + ";" +
+					std::to_string(ptr_tVecObj[2] + data_manager->get_shift_z()) );
 			}
 
 			log_printer->append("\n" + TAG + "------------- extrinsics [m] -------------");
 			log_printer->append("\n" + TAG + out_extr);
-			std::cout << rVecCam << std::endl;
+			
 
 
 			// get standard deviations for intrinsics

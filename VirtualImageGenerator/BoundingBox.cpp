@@ -112,14 +112,6 @@ void BoundingBox::setAngles(float _azimuth, float _roll, float _pitch){
 	
 }
 
-void BoundingBox::calcRotM_XYZ(float* Rxyz) {
-
-	// Rxyz, performs 3 rotations in order of Rz (azi), Ry (roll) then Rx (pitch).
-	// determine left axis [x, pitch]	determine up axis [y, roll]		determine forward axis [z, Azimuth]	
-	Rxyz[0] = Cy*Cz;				Rxyz[3] = -Cy*Sz;				Rxyz[6] = Sy;
-	Rxyz[1] = Sx*Sy*Cz + Cx*Sz;		Rxyz[4] = -Sx*Sy*Sz + Cx*Cz;	Rxyz[7] = -Sx*Cy;
-	Rxyz[2] = -Cx*Sy*Cz + Sx*Sz;	Rxyz[5] = Cx*Sy*Sz + Sx*Cz;		Rxyz[8] = Cx*Cy;
-}
 
 // here we will calculate Rz (rotation around z-axis (Azimuth)) clockwise
 void BoundingBox::calc_Rz() {

@@ -329,7 +329,6 @@
     <ClInclude Include="Mathematics.h" />
     <ClInclude Include="Modell_OCV.h" />
     <ClInclude Include="nachbardaten.h" />
-    <ClInclude Include="opencv_includes.h" />
     <ClInclude Include="PerspectiveImage.h" />
     <ClInclude Include="PointLoader.h" />
     <ClInclude Include="stdafx.h" />
