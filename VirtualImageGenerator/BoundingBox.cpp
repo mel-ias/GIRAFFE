@@ -133,10 +133,10 @@ void BoundingBox::calc_Rz() {
 				R6			R7			R8*/
 
 	// Rzyx rotation order, see https://www.songho.ca/opengl/gl_anglestoaxes.html for details
-	Rz[0] = Cz * Cy;		Rz[3] = -Sz * Cx + Cz * Sy * Sx;		Rz[6] = Sz * Sx + Cz * Sy * Cx;
-	Rz[1] = Sz * Cy;		Rz[4] = Cz * Cx + Sz * Sy * Sx;			Rz[7] = -Cz * Sx + Sz * Sy * Cx;
-	Rz[2] = -Sy;			Rz[5] = Cy * Sx;						Rz[8] = Cy * Cx;
-
+	// apply rotation in this manner: 1. Azimuth (z), 2. Pitch (x), 3. Roll (y); i.e. Rzxy rotation
+	Rz[0] = Cz * Cy - Sz * Sx * Sy;		Rz[3] = -Sz * Cx;		Rz[6] = Cz * Sy + Sz * Sx * Cy;
+	Rz[1] = Sz * Cy + Cz * Sx * Sy;		Rz[4] = Cz * Cx;		Rz[7] = Sz * Sy - Cz * Sx * Cy;
+	Rz[2] = -Cx * Sy;					Rz[5] = Sx;				Rz[8] = Cx * Cy;
 
 
 	// workes, consideres rotation direction (north to east to south to north)
