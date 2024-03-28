@@ -132,10 +132,17 @@ void BoundingBox::calc_Rz() {
 				R3			R4			R5
 				R6			R7			R8*/
 
-	// workes but weird
-	Rz[0] = Cz;		Rz[1] = -Sz;	Rz[2] = 0.0;
+	// Rzyx rotation order, see https://www.songho.ca/opengl/gl_anglestoaxes.html for details
+	Rz[0] = Cz * Cy;		Rz[3] = -Sz * Cx + Cz * Sy * Sx;		Rz[6] = Sz * Sx + Cz * Sy * Cx;
+	Rz[1] = Sz * Cy;		Rz[4] = Cz * Cx + Sz * Sy * Sx;			Rz[7] = -Cz * Sx + Sz * Sy * Cx;
+	Rz[2] = -Sy;			Rz[5] = Cy * Sx;						Rz[8] = Cy * Cx;
+
+
+
+	// workes, consideres rotation direction (north to east to south to north)
+	/*Rz[0] = Cz;		Rz[1] = -Sz;	Rz[2] = 0.0;
 	Rz[3] = Sz;		Rz[4] = Cz;		Rz[5] = 0.0;
-	Rz[6] = 0.0;	Rz[7] = 0.0;	Rz[8] = 1.0;
+	Rz[6] = 0.0;	Rz[7] = 0.0;	Rz[8] = 1.0;*/
 
 	//// correct from Richards descripzion, necessary to rotate azi like a compass works (north to east to south to north)
 	//Rz[0] = Cz;	Rz[1] = Sz;		Rz[2] = 0.0;
