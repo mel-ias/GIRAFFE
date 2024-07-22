@@ -511,7 +511,7 @@ float Matching::enhanced_spatial_resection(std::vector<cv::Point3d> &in_matched_
  * @param 		  	shift_vector_y   	[input] shift vector y coordinate, shift re-aligne point clouds with large coordinates (UTM) back to roots
  */
 
-void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y, double shift_z, bool export_pcl) {
+void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y, double shift_z, bool export_pcl, std::string file_name_image_points) {
 
 	
 	
@@ -593,8 +593,8 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 
 	// Water line analysis & statistics
 	if (projected_waterline_3D_OCV.size() != 0) {
-		mLogFile->append(TAG + "---- start water line projection ----");
-		log_statistics << "OCV, projected " << projected_waterline_3D_OCV.size() << " water line points into object space" << std::endl << std::endl;
+		mLogFile->append(TAG + "---- start image point projection ----");
+		log_statistics << "OCV, projected " << projected_waterline_3D_OCV.size() << " image points into object space" << std::endl << std::endl;
 
 		// 3D plane fitting using SVD
 		std::vector<Eigen::Vector3d> points;
@@ -643,7 +643,7 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 
 		// ---- statistics ---- //
 		std::setprecision(6);
-		log_statistics << std::fixed << "---- statistics for waterline calculation, plane fit ----" << std::endl;
+		log_statistics << std::fixed << "---- statistics for image-to-geometry registration, plane fit ----" << std::endl;
 		log_statistics << std::fixed << "sq_mean: " << mean_sq_plane << std::endl;
 		log_statistics << std::fixed << "rms error: " << root_mean_sq_plane << std::endl << std::endl;
 		log_statistics << std::fixed << "count water level points that fullfil criterion: dist_plane < " << max_distance_from_line << ": " << optimized_waterline.size() << std::endl << std::endl;
@@ -661,16 +661,20 @@ void Matching::waterlineProjection(std::vector<cv::Point2d>& in_wl_pts_2D, std::
 
 		std::ofstream myfile;
 		std::ofstream myfile_ptids;
-		myfile.open(mWorkingDirectory + "waterlinepoints_projected.txt");
-		myfile_ptids.open(mWorkingDirectory + "waterlinepoints_projected_pt_IDs.txt");
+
+		std::string raw_file_name_image_points = file_name_image_points.substr(0, file_name_image_points.find_last_of("."));
+
+
+		myfile.open(mWorkingDirectory + raw_file_name_image_points + "_projected.txt");
+		myfile_ptids.open(mWorkingDirectory + raw_file_name_image_points + "_ID.txt");
 
 		// check if point id list has same size as projected water line 3D
 		if (projected_waterline_3D_OCV.size() != pt_ids.size()){
-			log_statistics << "size of waterline point id list and water line points projected list does not match! Retun." << std::endl << std::endl;
+			log_statistics << "size of image point ID / projected list does not match! Retun." << std::endl << std::endl;
 			return;
 		}
 		else {
-			log_statistics << "will save water line points and point ids: " << projected_waterline_3D_OCV.size() << "/" << pt_ids.size() << std::endl << std::endl;
+			log_statistics << "will save projected image points and corresponding point IDs: " << projected_waterline_3D_OCV.size() << "/" << pt_ids.size() << std::endl << std::endl;
 
 		}
 

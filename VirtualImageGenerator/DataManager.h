@@ -1030,6 +1030,10 @@ public:
 	std::string get_path_conda_env() { return path_conda_env; }
 	std::string get_name_conda_env() { return name_conda_env; }
 
+	// set/get file name of image points file (only file name with extension, not path!)
+	void set_file_name_image_points(std::string name) { file_name_water_line = name; }
+	std::string get_file_name_image_points() { return file_name_water_line; }
+
 
 private:
 
