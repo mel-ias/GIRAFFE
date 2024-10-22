@@ -339,3 +339,4 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 /VirtualImageGenerator/lightglue/myBatchLightglue.bat
+/VirtualImageGenerator/.venv
