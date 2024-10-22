@@ -66,9 +66,6 @@
     <ClInclude Include="Mathematics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="opencv_includes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DataManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
