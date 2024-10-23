@@ -567,13 +567,14 @@ void ImCalculator::fill_vectors() {
 	}
 
 	// Retrieve pixel coordinates from the coordinate image
-	std::vector<CoordinateImage::Coordinate*> pixelCoordinates = dataManager->get_coordinate_image()->getPixels();
+	std::vector<std::shared_ptr<CoordinateImage::Coordinate>> pixelCoordinates = dataManager->get_coordinate_image()->getPixels();
 	auto endIt = pixelCoordinates.cend();
+
 
 	// Iterate through each pixel coordinate
 	for (auto it = pixelCoordinates.cbegin(); it != endIt; ++it) {
 		// Check if the current pixel coordinate is not null
-		if (*it != nullptr) {
+		if (*it) { // Using the shared_ptr's conversion to bool
 			// Add 2D coordinates to the vector
 			synth2DCoordinates->emplace_back(Vek2d((*it)->xi, (*it)->yi));
 			// Add 3D coordinates to the vector
@@ -589,7 +590,6 @@ void ImCalculator::fill_vectors() {
 		}
 	}
 }
-
 
 
 
