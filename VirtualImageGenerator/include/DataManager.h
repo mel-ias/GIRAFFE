@@ -363,7 +363,7 @@ public:
 			view_angle_half_H = 30.0f;
 		if (view_angle_half_V > 30.0f)
 			view_angle_half_V = 30.0f;*/
-		boundingBox->setViewAngle(view_angle_half_H, view_angle_half_V); //update bounding box
+		boundingBox->set_view_angles(view_angle_half_H, view_angle_half_V); //update bounding box
 		log_readJson << "Update (half) view angles for BBox calculation: H: " << view_angle_half_H << " [°], V: " << view_angle_half_V << " [°]" << std::endl;
 
 
@@ -381,7 +381,7 @@ public:
 		//log_readJson << "Add height of hand-held smartphone to vertical compontent of projection centre. z_smartphone_height:" << z_smartphone_height << " [m]" << endl; 
 		boundingBox->set_X0_Cam_World(x0, y0, z0); //update bounding box projC
 
-		boundingBox->setAngles(azimuth, roll, pitch); //update bounding box rotP
+		boundingBox->calculate_rotation_matrix_rzxy(azimuth, roll, pitch); //update bounding box rotP
 		
 		
 
@@ -413,12 +413,12 @@ public:
 		log_readJson << "Set Euler angles (azimuth,roll,pitch) for BBox calculation: " << azimuth << ", " << roll << ", " << pitch << " [°]" << std::endl;
 
 
-		boundingBox->setDist(thresh_projPt_maxDepthPtCloud); //set max depth of point cloud to be projected
+		boundingBox->set_frustum_depth(thresh_projPt_maxDepthPtCloud); //set max depth of point cloud to be projected
 		log_readJson << "Set max depth for points to be projected from point cloud (thresh_projPt_maxDepthPtCloud) for BBox calculation: " << thresh_projPt_maxDepthPtCloud << " [m]" << std::endl;
 
 		// -----
 		// when finished parameter updates --> recalculate bounding box of point cloud to be projected
-		boundingBox->calcBoundingBox();
+		boundingBox->calculate_view_frustum();
 		
 		// print content of received json data
 		printLogfile_log_readJson();

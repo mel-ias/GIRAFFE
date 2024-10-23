@@ -513,7 +513,7 @@ int main(int argc, char** argv)
 		//tVecCam = -rMatCam * tVecObj;
 		data_manager->set_RotationMatrix(rMatObj);
 		data_manager->set_ProjectionCenter(tVecObj.at<double>(0), tVecObj.at<double>(1), tVecObj.at<double>(2));
-		data_manager->getBoundingBox()->calcBoundingBox();
+		data_manager->getBoundingBox()->calculate_view_frustum();
 
 		
 

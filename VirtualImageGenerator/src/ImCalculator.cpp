@@ -201,7 +201,7 @@ void ImCalculator::projectPoint(LaserPoint* lp) {
 			pixel->y = lp->color[1];
 			pixel->z = lp->color[0];
 				
-			dataManager->get_coordinate_image()->setPixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], pixel, column_float, row_float));
+			dataManager->get_coordinate_image()->set_pixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], pixel, column_float, row_float));
 
 			
 		
@@ -219,7 +219,7 @@ void ImCalculator::projectPoint(LaserPoint* lp) {
 		pixel->z = lp->color[0];
 		
 
-		dataManager->get_coordinate_image()->setPixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], pixel, column_float, row_float));
+		dataManager->get_coordinate_image()->set_pixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], pixel, column_float, row_float));
 
 		
 	
@@ -506,7 +506,7 @@ void ImCalculator::filter_image(float db) {
 								pixel->y = 255u;
 								pixel->z = 255u;
 								
-								dataManager->get_coordinate_image()->deletePixel(c, r);
+								dataManager->get_coordinate_image()->delete_pixel(c, r);
 							}
 						}
 					}

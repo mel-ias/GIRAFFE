@@ -7,101 +7,69 @@
 BoundingBox::BoundingBox(LogFile* logfile) {
 
 	logFilePrinter = logfile; // ptr for logging
-	logFilePrinter->append(""); // return one line
-	logFilePrinter->append(TAG + "---- initialisation bounding box ----"); // return one line
+	logFilePrinter->append("");
+	logFilePrinter->append(TAG + "Initialization of View Frustum"); 
 
-	// Init borders
+	// Initialize Frustum borders locally
 	xMin = yMin = zMin = 0.0f;
 	xMax = yMax = zMax = 0.0f;
 	d = 0.0f;
 
-	// Init Rotations- und Cos/Sin-Werte sicher mit 0 oder 1 initialisieren
-	Cx = Cy = Cz = 1.0f; // sinnvolle Initialwerte, da cos(0°) = 1
+	// Initialize rotation and Cos/Sin values to safe defaults
+	Cx = Cy = Cz = 1.0f; // cos(0°) = 1
 	Sx = Sy = Sz = 0.0f; // sin(0°) = 0
 
-	r = 20.0f; // GPS Rauschen 20 m
-	dh = 25.0f; // erzeugt 50m in der höhen Komponente des Bildes
-	tV = tH = 0.57735f; // tan(30°)
+	r = 20.0f; // frustum expansion - lateral
+	dh = 25.0f; // frustum expansion - height
+	tV = tH = 0.57735f; // view angles, vertical and horizontal, init with tan(30°)
 
-	// Init world borders
+	// Initialize Frustum borders in world space
 	xMax_world = yMax_world = zMax_world = 0.0f;
 	xMin_world = yMin_world = zMin_world = 0.0f;
 
-	// init Position and Rz
+	// Initialize camera position and Rz (rotation matrix)
 	X0_Cam_World = new double[3];
 	
-	// note! row major!
-	Rz = new float[9];
-	Rz[0] = 1.0f; Rz[1] = 0.0f; Rz[2] = 0.0f; 
-	Rz[3] = 0.0f; Rz[4] = 1.0f; Rz[5] = 0.0f;
-	Rz[6] = 0.0f; Rz[7] = 0.0f; Rz[8] = 1.0f;
-
-
+	// Initialize rotation matrix Rzxy (identity matrix by default), row-major
+	Rzxy = new float[9];
+	Rzxy[0] = 1.0f; Rzxy[1] = 0.0f; Rzxy[2] = 0.0f; 
+	Rzxy[3] = 0.0f; Rzxy[4] = 1.0f; Rzxy[5] = 0.0f;
+	Rzxy[6] = 0.0f; Rzxy[7] = 0.0f; Rzxy[8] = 1.0f;
 }
 
 
 BoundingBox::~BoundingBox()
 {
-
 	if (X0_Cam_World != nullptr){
 		delete[] X0_Cam_World;
 		X0_Cam_World = nullptr;
 	}
-	if (Rz != nullptr){
-		delete[] Rz;
-		Rz = nullptr;
-	}
-
-	
+	if (Rzxy != nullptr){
+		delete[] Rzxy;
+		Rzxy = nullptr;
+	}	
 }
 
 
-void BoundingBox::setViewAngle(float H, float V){
+void BoundingBox::set_view_angles(float H, float V){
 	if (H <= 0.0f || H >= 60.0f) return;
 	tH = static_cast<float>(tan(H* M_PI / 180.0f));
 	if (V <= 0.0f || V >= 60.0f) tV = tH;
 	else tV = static_cast<float>(tan(V* M_PI / 180.0f));
 }
 
-/* For the Bounding Box.
-This sets the camera position (X0) and calc the new bounding box, if recalcBB is true.
-The new bounding box will be translate by x0, y0 and z0.
-*/
+
 void BoundingBox::set_X0_Cam_World(double x0, double y0, double z0){
 
 	X0_Cam_World[0] = x0;
-	logFilePrinter->append(TAG + "BBox, set x0: " + std::to_string(X0_Cam_World[0]));
 	X0_Cam_World[1] = y0;
-	logFilePrinter->append(TAG + "BBox, set y0: " + std::to_string(X0_Cam_World[1]));
 	X0_Cam_World[2] = z0;
-	logFilePrinter->append(TAG + "BBox, set z0: " + std::to_string(X0_Cam_World[2]));
-	// we have translate the bounding Box
+	logFilePrinter->append(TAG + "set X0 (XYZ) [m]: " + std::to_string(X0_Cam_World[0]) + "," + std::to_string(X0_Cam_World[1]) + "," + std::to_string(X0_Cam_World[2]));
 }
 
 
-/* For the Bounding Box.
-This sets the new depth of the bounding box and calc the new one, if recalcBB is true.
-The new bounding Box will have the depth of distance.
-So that all points with a distance to the camera < "distance" will be inside the bounding box.
-*/
-void BoundingBox::setDist(float distance){
-	d = distance;
-	// we have change one dimension from the Bounding Box
-}
-
-
-/* For the Bounding Box.
-This sets the camera orientation (azimuth) and calc the new bounding box, if recalcBB is true.
-The new bounding box will be rotate by azimuth.
-CAUTION: azimuth must be in degrees!! And descripe an angle from the y axis to the view axis from the camera.
-*/
-
-//http://www.songho.ca/opengl/gl_anglestoaxes.html
-
-// azimuth dreht um z achse, roll dreht um y Achse, pitch dreht um x Achse
-void BoundingBox::setAngles(float _azimuth, float _roll, float _pitch){
-
-	// all column major!
+void BoundingBox::calculate_rotation_matrix_rzxy(float _azimuth, float _roll, float _pitch){
+	// All column-major!
 
 	Cz = static_cast<float>(cos(_azimuth * M_PI / 180.0f));
 	Sz = static_cast<float>(sin(_azimuth *M_PI / 180.0f));
@@ -112,114 +80,61 @@ void BoundingBox::setAngles(float _azimuth, float _roll, float _pitch){
 	Cx = static_cast<float>(cos(_pitch * M_PI / 180.0f));
 	Sx = static_cast<float>(sin(_pitch * M_PI / 180.0f));
 
-	// Rzyx rotation order, see https://www.songho.ca/opengl/gl_anglestoaxes.html for details
-	// apply rotation in this manner: 1. Azimuth (z), 2. Pitch (x), 3. Roll (y); i.e. Rzxy rotation
-	Rz[0] = Cz * Cy - Sz * Sx * Sy;		Rz[3] = -Sz * Cx;		Rz[6] = Cz * Sy + Sz * Sx * Cy;
-	Rz[1] = Sz * Cy + Cz * Sx * Sy;		Rz[4] = Cz * Cx;		Rz[7] = Sz * Sy - Cz * Sx * Cy;
-	Rz[2] = -Cx * Sy;					Rz[5] = Sx;				Rz[8] = Cx * Cy;
+	// Rzxy rotation order (ZXY rotation)
+	Rzxy[0] = Cz * Cy - Sz * Sx * Sy;		Rzxy[3] = -Sz * Cx;		Rzxy[6] = Cz * Sy + Sz * Sx * Cy;
+	Rzxy[1] = Sz * Cy + Cz * Sx * Sy;		Rzxy[4] = Cz * Cx;		Rzxy[7] = Sz * Sy - Cz * Sx * Cy;
+	Rzxy[2] = -Cx * Sy;						Rzxy[5] = Sx;			Rzxy[8] = Cx * Cy;
+}
 
+
+void BoundingBox::calculate_view_frustum(){
+
+	logFilePrinter->append(TAG + "Calculate View Frustum");
 	
-}
-
-
-
-
-void BoundingBox::setSpace(double x0, double y0, double z0, float azimuth, float roll, float pitch, float distance){
-	set_X0_Cam_World(x0, y0, z0);
-	setDist(distance);
-	setAngles(azimuth, roll, pitch); // in degrees
-	calcBoundingBox();
-}
-
-
-/*recalc the bounding box with current values of
-X0,
-azimuth ( stored in Rz),
-d,
-dh, r , tan(V) and tan(H).
-*/
-void BoundingBox::calcBoundingBox(){
-
-	logFilePrinter->append(TAG + "calc bounding box");
-	// simpliest: h defines zMin and zMax and grows with d*tan(V)
+	// Simplest case: zMin and zMax grow with d*tan(V)
 	zMin = -dh - d*tV;
 	zMax = dh + d*tV;
 
-	// now xmin, xmax, ymin and ymax
-	// for that we calc the 4 points of the bounding box in the horizontal plane
-
-	// this are the edges of the bounding box in the lokal camera system 
-	// to check global points, the global points will be transformed to the camerasystem (Rz*(x-x0))
+	// Calculate xmin, xmax, ymin, ymax using the 4 points of the frustum box in the vertical plane (orthodirectional to optical axis)
 	xMin = -r - d*tH;
-	xMax = -xMin; //r + d*tH
+	xMax = -xMin; // equivalent to r + d*tH
 	yMin = 0;
 	yMax = d;
 	
-	
-	// use Rz only
-	// P1 and P2 are the border near to the camera
-	// zeilenbasiert multiplizeren. nicht elementweise!
-	// Rz*(-r,0,0) // mit erster Zeile für P1x und 2. für P1y multiplizieren
-	float P1[2] = { 
-		-r*Rz[0] + 0*Rz[3] + 0*Rz[6], 
-		-r*Rz[1] + 0*Rz[4] + 0*Rz[7] }; 
-	
-	// Rz*(r,0,0)
-	float P2[2] = { // mit erster Zeile für P2x und 2. für P2y multiplizieren
-		r*Rz[0] + 0 * Rz[3] + 0 * Rz[6],
-		r*Rz[1] + 0 * Rz[4] + 0 * Rz[7] };
-	
-	// P3 and P4 are the border far from the camera 
-	// calculate as Rz*(xMin,d,0) 	
-	float P3[2] = { 
-		xMin*Rz[0] + d*Rz[3] + 0*Rz[6], 
-		xMin*Rz[1] + d*Rz[4] + 0*Rz[7] };
-	
-	// calculate as Rz*(xMax,d,0) 	
-	float P4[2] = { 
-		xMax*Rz[0] + d*Rz[3] + 0*Rz[6], 
-		xMax*Rz[1] + d*Rz[4] + 0*Rz[7] }; 
-	
-	
+	// Calculate rotated points of the view frustum
+	float P1[2] = {-r * Rzxy[0], -r * Rzxy[1]};  // Rz * (-r,0,0)
+	float P2[2] = {r * Rzxy[0], r * Rzxy[1]}; // Rz * (r,0,0)
+	float P3[2] = { xMin * Rzxy[0] + d * Rzxy[3], xMin * Rzxy[1] + d * Rzxy[4] }; // Rz * (xMin,d,0)
+	float P4[2] = { xMax * Rzxy[0] + d * Rzxy[3], xMax * Rzxy[1] + d * Rzxy[4] }; // Rz * (xMax,d,0)
 
-	// calc the world coordinates of these edges. (for point searching)
-	// the extrema from x and y and z are the extrema from this 4 points
 
-	// rotationsmatrix zxy! 
+	// Find the extrema for x and y 
 	xMin_world = fminf(fminf(P1[0], P2[0]), fminf(P3[0], P4[0]));
 	xMax_world = fmaxf(fmaxf(P1[0], P2[0]), fmaxf(P3[0], P4[0]));
-
 	yMin_world = fminf(fminf(P1[1], P2[1]), fminf(P3[1], P4[1]));
 	yMax_world = fmaxf(fmaxf(P1[1], P2[1]), fmaxf(P3[1], P4[1]));
 
-	// now add the translation to the boundingbox
+	// Translate to world coordinates
 	xMin_world += X0_Cam_World[0]; 
 	xMax_world += X0_Cam_World[0];
-	
 	yMin_world += X0_Cam_World[1]; 
 	yMax_world += X0_Cam_World[1];
-
 	zMin_world = zMin + X0_Cam_World[2];
 	zMax_world = zMax + X0_Cam_World[2];
 
-	logFilePrinter->append(TAG + "defined bounding box (local camera system): ");
-	logFilePrinter->append(TAG 
-		+ "P1: (" + std::to_string(P1[0]) + "," + std::to_string(P1[1]) 
-		+ "), P2: (" + std::to_string(P2[0]) + "," + std::to_string(P2[1]) 
-		+ "), P3: (" + std::to_string(P3[0]) + "," + std::to_string(P3[1]) 
-		+ "), P4: (" + std::to_string(P4[0]) + "," + std::to_string(P4[1]) + ")");
-	logFilePrinter->append(TAG + "defined bounding box (global system): ");
+	// Log frustum information
+	logFilePrinter->append(TAG	+ "Defined View Frustum (camera system): ");
+	logFilePrinter->append(TAG	+ "P1: (" + std::to_string(P1[0]) + "," + std::to_string(P1[1]) 
+								+ "), P2: (" + std::to_string(P2[0]) + "," + std::to_string(P2[1]) 
+								+ "), P3: (" + std::to_string(P3[0]) + "," + std::to_string(P3[1]) 
+								+ "), P4: (" + std::to_string(P4[0]) + "," + std::to_string(P4[1]) + ")");
+	logFilePrinter->append(TAG + "Defined View Frusum (world system): ");
 	logFilePrinter->append(TAG + "(xmin,ymin,zmin): (" + std::to_string(xMin_world) + "," + std::to_string(yMin_world) + "," + std::to_string(zMin_world) + ")");
 	logFilePrinter->append(TAG + "(xmax,ymax,zmax): (" + std::to_string(xMax_world) + "," + std::to_string(yMax_world) + "," + std::to_string(zMax_world) + ")");
 
 	logFilePrinter->append(TAG + "Rz:");
-	logFilePrinter->append("\t\t" + std::to_string(Rz[0]) + " " + std::to_string(Rz[3]) + " " + std::to_string(Rz[6]), 4);
-	logFilePrinter->append("\t\t" + std::to_string(Rz[1]) + " " + std::to_string(Rz[4]) + " " + std::to_string(Rz[7]), 4);
-	logFilePrinter->append("\t\t" + std::to_string(Rz[2]) + " " + std::to_string(Rz[5]) + " " + std::to_string(Rz[8]), 4);
+	logFilePrinter->append("\t\t" + std::to_string(Rzxy[0]) + " " + std::to_string(Rzxy[3]) + " " + std::to_string(Rzxy[6]), 4);
+	logFilePrinter->append("\t\t" + std::to_string(Rzxy[1]) + " " + std::to_string(Rzxy[4]) + " " + std::to_string(Rzxy[7]), 4);
+	logFilePrinter->append("\t\t" + std::to_string(Rzxy[2]) + " " + std::to_string(Rzxy[5]) + " " + std::to_string(Rzxy[8]), 4);
 	logFilePrinter->append("");
-	
-	/*if (logFilePrinter != nullptr)
-		logFilePrinter->logfile_all << logfile.str() << std::endl;
-	*/
-
 }

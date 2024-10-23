@@ -7,7 +7,6 @@
 #include"LaserPoint.h"
 #include"CoordinateImage.hpp"
 #include"BoundingBox.hpp"
-#include"Modell.h"
 #include"LogfilePrinter.h"
 #include"DataManager.h"
 

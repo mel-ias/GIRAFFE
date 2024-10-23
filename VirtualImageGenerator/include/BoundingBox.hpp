@@ -8,91 +8,130 @@
 # define _CRT_SECURE_NO_WARNINGS
 #endif
 
-/* sets the visible Space.
-The Pointfile will be searched for Points inside the bounding box, which is descriped by the space.
-You can set the camera position with x0, y0 and z0.
-The camera Orientation is descriped by azimuth.
-And 3rd dimesnion of the bounding box will set with distance. This defines the distance from points to the camera.
-OPTIONAL: dh and r.
-dh set the accuracy for the height measurment. This defines the height from the bounding box at the camera to 2*dh.
-r sets the accuracy from the position measurement (GNSS) and defines the width of the bounding Box at the camera to 2*r.
-H,V descripes the View-angle in the horizontal and vertical plane. ( both must be in degrees !!)
-CAUTION:
-azimuth must be in degrees and is an angle from the y-axis to the camera view-axis.
-*/
+
 class BoundingBox
 {
 public:
+
+	/**
+	 * @brief Constructor for the ViewFrustum class.
+	 * Initializes the view frustum parameters and logs the initialization steps.
+	 *
+	 * @param logfile Pointer to a LogFile object for logging messages.
+	*/
 	BoundingBox(LogFile* logfile);
+
+	/**
+	 * @brief Destructor for the ViewFrustum class.
+	 * Cleans up allocated memory for camera position and rotation matrix.
+	 */
 	~BoundingBox();
 
-	/* For the Bounding Box.
-	This change the camera position (X0), orientation and depth from the bounding box  and calc the new bounding box.
-	Its similar to:
-	setX0(x0,y0,z0);
-	setDist(distance);
-	setAzi(azimuth);
-	For more detail, look at the documentation from this methods.
-	CAUTION: azimuth must be in degrees!! ( see setAzi() )
-	*/
-	void setSpace(double x0, double y0, double z0, float azimuth, float roll, float pitch, float distance);
+	/**
+	 * @brief Set the camera's orientation based on azimuth, roll, and pitch angles.
+	 *
+	 * This function computes the rotation matrix (Rzxy) using the provided azimuth, roll,
+	 * and pitch angles. The rotation follows a ZXY rotation order:
+	 * 1. Azimuth (z-axis)
+	 * 2. Pitch (x-axis)
+	 * 3. Roll (y-axis)
+	 * http://www.songho.ca/opengl/gl_anglestoaxes.html
+	 *
+	 * The rotation matrix is column-major, and the function updates the class member Rz.
+	 *
+	 * @param _azimuth The azimuth angle (in degrees).
+	 * @param _roll The roll angle (in degrees).
+	 * @param _pitch The pitch angle (in degrees).
+	 */
+	void calculate_rotation_matrix_rzxy(float azimuth, float roll, float pitch);
 
-	/* For the Bounding Box.
-	This sets the camera position (X0) and calc the new bounding box, if recalcBB is true.
-	The new bounding box will be translate by x0, y0 and z0.
-	*/
+
+	/**
+	 * @brief Recalculate the view frustum based on the current camera parameters.
+	 *
+	 * This function recalculates the view frustum dimensions using the camera's position,
+	 * azimuth, distance, and other geometric properties. It updates the view frustum's
+	 * world and local coordinates, as well as the min/max values in the x, y, and z directions.
+	 *
+	 * The view frustum is computed in the local camera coordinate system and then transformed
+	 * to the global world space using the rotation matrix Rz and translation by X0_Cam_World.
+	 */
+	void calculate_view_frustum();
+
+	/**
+	 * @brief Define the camera's world position for view frustum calculation.
+	 *
+	 * This function sets the camera position in the world coordinates.
+	 * The view frustum is then translated by the provided position.
+	 *
+	 * @param x0 X coordinate of the camera in world coordinates.
+	 * @param y0 Y coordinate of the camera in world coordinates.
+	 * @param z0 Z coordinate of the camera in world coordinates.
+	 */
 	void set_X0_Cam_World(double x0, double y0, double z0);
-
-	/* For the Bounding Box.
-	This sets the camera orientation (azimuth) and calc the new bounding box, if recalcBB is true.
-	The new bounding box will be rotate by azimuth.
-	CAUTION: azimuth must be in degrees!! And descripe an angle from the y axis to the view axis of the camera.
-	*/
-	void setAngles(float azimuth, float roll, float pitch);
-
-	/* For the Bounding Box.
-	This sets the new depth of the bounding box and calc the new one, if recalcBB is true.
-	The new bounding Box will have the depth of distance.
-	So that all points with a distance to the camera < "distance" will be inside the bounding box.
-	*/
-	void setDist(float distance);
-
-	////////////////////////////
-	// accuracy paras
-
-	/*This set the accuracy from the GNSS Sensor.
-	The width of the bounding box at the camera will be 2*accGPS.
-	After this method the bounding Box isn't recalculated. So use this method before
-	setting X0, Azimuth or distance!*/
-	void set_r(float accGPS) { r = accGPS; }
-
-	/*Like set_r just for the height.
-	The height of the bounding box at the camera will be 2*dh.
-	The Bounding Box isn't recalculated here. Set this Parameter before setting X0, azimuth or distance.
-	*/
-	void set_dh(float h) { dh = h; }
-
-	/*
-	This sets the view Angle in the horizontal and vertical plane (must be in degrees!!)
-	This dosn't recalc the boundingbox, so you must call this function before changing x0,dist or azimuth.
-	If V isn't set (0.0f) it gets the same value as H.
-	Values >= 60 degrees or <= 0 degrees are senseless or generate a to big image Plane. In this case the angles are not changed.
-	*/
-	void setViewAngle(float H, float V = 0.0f);
-
-
-	// get Rz ( this stores the current orientation from the bounding Box
-	float* _Rz() const { return Rz; }
-	//float* _Ry() const { return Ry; }
-	//float* _Rx() const { return Rx; }
-	//float* _Rxyz() const { return Rxyz; }
-	void set_Rz (float* _Rz) {
-		Rz = _Rz;
+	
+	/**
+	 * @brief Set the depth of the view frustum.
+	 *
+	 * This function sets the depth of the view frustum to the given distance from the camera.
+	 * All points within the specified distance from the camera will be inside the view frustum.
+	 *
+	 * @param distance The distance from the camera, defining the new depth of the view frustum.
+	 */
+	void set_frustum_depth(float distance) {
+		d = distance;
 	}
 
-	
-	// get X0 (stores the current position from the camera)
-	double* get_X0_Cam_World()const { return X0_Cam_World; }
+	/**
+	 * @brief Set the horizontal half-width of the bounding box.
+	 *
+	 * This function sets the horizontal half-width `half_width`, which represents half of the width
+	 * of the bounding box close to the camera's projection center, corresponding to the horizontal
+	 * extent of the bounding box or frustum in the horizontal plane.
+	 *
+	 * @param half width The horizontal half-width, typically derived from GPS accuracy or frustum width.
+	 */
+	void set_r(float half_width) {
+		r = half_width;
+	}
+
+	/**
+	 * @brief Set the vertical half-height of the bounding box.
+	 *
+	 * This function sets the vertical half-height `half_height`, which defines half the vertical extent
+	 * of the bounding box close to the camera's projection center, corresponding to the vertical extent of the
+	 * frustum.
+	 *
+	 * @param half_height The vertical half-height, representing half the vertical extent of the bounding box.
+	 */
+	void set_dh(float half_height) {
+		dh = half_height;
+	}
+
+	/**
+	 * @brief Set the camera's view angle.
+	 *
+	 * This function sets the horizontal and vertical angles of view for the view frustum.
+	 *
+	 * @param H Horizontal angle in degrees (must be between 0 and 60 degrees).
+	 * @param V Vertical angle in degrees (must be between 0 and 60 degrees, defaulted to H if invalid).
+	 */
+	void set_view_angles(float H, float V = 0.0f);
+
+	/**
+	 * @brief Set the 3x3 rotation matrix in ZXY order.
+	 *
+	 * This function sets the rotation matrix `Rzxy`, which defines the transformation for the bounding box.
+	 * The rotation matrix is applied using the ZXY order of rotations: first around the Z-axis (azimuth),
+	 * followed by the X-axis (pitch), and finally the Y-axis (roll).
+	 *
+	 * The matrix is expected to be in column-major order, and the transformation is used to rotate
+	 * the bounding box from the world coordinates to the local camera coordinates.
+	 *
+	 * @param _Rz A pointer to a 3x3 rotation matrix in column-major order, representing ZXY rotations.
+	 */
+	void set_Rzxy(float* Rz) { Rzxy = Rz; }
+
 
 	float get_xMin()const { return xMin; }
 	float get_xMax()const { return xMax; }
@@ -107,57 +146,44 @@ public:
 	double get_xmax_World()const { return xMax_world; }
 	double get_ymax_World()const { return yMax_world; }
 	double get_zmax_World()const { return zMax_world; }
-
-	float get_dist() { return d; }
-
-	/*Return r/tan(H) this correction should be use to project all points with a bigger distance to the camera.
-	Its usefull, because some points can be very very near, and this will result in a unaccesable image Plane.
-	This returns only the correction in the Horizontal Plane, if H != V there will be different Corrections.
-	But we use only this one, because in vertical plane are not so much points. */
-	float get_Correction_backward()const { return r / tH; }
-
-	void calcBoundingBox();
-
 	
+	float get_dist() { return d; }
+	float get_Correction_backward()const { return r / tH; }
+	
+	float* get_Rzxy() const { return Rzxy; }
+	double* get_X0_Cam_World()const { return X0_Cam_World; }
 
 private:
 
+	// logger + TAG
 	LogFile* logFilePrinter;
+	const std::string TAG = "View Frustum:\t";
 
-	const std::string TAG = "BoundingBox:\t";
-
-	/*
-	borders that determine the visible space.
-	Only points inside this space will be loaded.
-	*/
-	double xMin_world, xMax_world, yMin_world, yMax_world, zMin_world, zMax_world;
-
-	/*The coordinates of the edges from the bounding box in it's sytsem.
-	These are used f.e. to calc the image plane.*/
-	float xMin, yMin, zMin, xMax, yMax, zMax;
-
-
-
-	//https://robotics.stackexchange.com/a/19616
-	float* Rz;
+	// Rotation matrix in ZXY order (column-major)
+	float* Rzxy;
 	
-	// Tiefe (3. Dimension der Bounding Box)
-	float d;
-
-	// Position der Kamera in Welt koordinaten (GNSS Messung)
+	// Translation vector (camera origin in world coordinates)
 	double* X0_Cam_World;
 
-	// accuracy Parameter
-	float r, dh;
+	// Frustum extents in world coordinates
+	double xMin_world, xMax_world;
+	double yMin_world, yMax_world;
+	double zMin_world, zMax_world;
 
-	// view angle in horizontal and vertical plane (save as tan(A) )
-	float tH, tV;
+	// Frustum parameters
+	float r;      // Radius (half-width) in local camera system
+	float dh;     // Half-height in local camera system
+	float d;      // Distance from the camera
+	float tV, tH; // Tangent of vertical and horizontal field of view angles to calculate frustum from bounding box
+	float zMin, zMax; // Min and max z values in local camera system
+	float xMin, xMax; // Min and max x values in local camera system
+	float yMin, yMax; // Min and max y values in local camera system
 
-	float Cz, Sz, Cy, Sy, Cx, Sx; // cos & sin derivations for correpsonding angles arround x,y,z axis
-
+	// Trigonometric values for rotation angles
+	float Cz, Sz; // Cosine and sine of azimuth
+	float Cx, Sx; // Cosine and sine of pitch
+	float Cy, Sy; // Cosine and sine of roll
 };
-
-
 
 #endif /* BOUNDINGBOX_H */
 
