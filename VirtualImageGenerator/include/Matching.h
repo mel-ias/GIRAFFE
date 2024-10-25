@@ -5,7 +5,7 @@
 
 #include "ImCalculator.hpp"
 #include "LogfilePrinter.h"
-#include "Modell_OCV.h"
+#include "Model.h"
 #include "DataManager.h"
 #include "Utils.h"
 #include "vek.h"
@@ -15,6 +15,7 @@
 #include <vector>
 #include <cassert>
 #include <string>
+#include <utility>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
@@ -59,8 +60,7 @@ public:
 		double shift_vector_y,
 		double shift_vector_z, 
 		bool print_pcl, 
-		std::string file_name_image_points, 
-		double tolerance_distortion_px = 5.0);
+		std::string file_name_image_points);
 
 	void loadMatches(
 		std::string in_path_matching_output,
@@ -91,6 +91,14 @@ public:
 
 private:
 
+	struct FilteredData
+	{
+	public:
+		std::vector<cv::Point2d> image_data;
+		std::vector<cv::Point3d> image_data_3D;
+		std::vector<int> image_data_3D_idx;
+	};
+
 	// internal functions
 	void calculate_nn_synth_key___pts_image_pts(
 		const std::vector<Vek2d>& in_synth_pts_float,//punkte
@@ -111,6 +119,46 @@ private:
 		double confidence = 0.95, 
 		double distance = 8.0,
 		bool refineF = false);
+
+	// Function to calculate the Euclidean distance between two cv::Point2d points
+	double euclideanDistance(const cv::Point2d& p1, const cv::Point2d& p2) {
+		return std::sqrt(std::pow(p1.x - p2.x, 2) + std::pow(p1.y - p2.y, 2));
+	}
+
+	// Filter function returning a pair
+	FilteredData filterPointsByDistance(
+	const std::vector<cv::Point2d>& list1,
+	const std::vector<cv::Point2d>& list2,
+	const std::vector<cv::Point3d>& list2_3d,
+	const std::vector<int> list2_3d_idx,
+	double distanceThreshold = 2.0)
+	{
+		std::vector<cv::Point2d> filteredList;
+		std::vector<cv::Point3d> filteredValues;
+		std::vector<int> filteredIdx;
+
+		for (size_t i = 0; i < list2.size(); ++i) {
+			const auto& point2 = list2[i];
+			bool hasClosePoint = false;
+
+			for (const auto& point1 : list1) {
+				if (euclideanDistance(point1, point2) < distanceThreshold) {
+					hasClosePoint = true;
+					break;
+				}
+			}
+
+			if (hasClosePoint) {
+				filteredList.push_back(point2);
+				filteredValues.push_back(list2_3d[i]);
+				filteredIdx.push_back(list2_3d_idx[i]);
+			}
+		}
+
+		return FilteredData{filteredList, filteredValues, filteredIdx};
+	}
+
+
 
 
 	// Output functions

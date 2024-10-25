@@ -65,7 +65,7 @@
     <ClInclude Include="include\LaserPoint.h" />
     <ClInclude Include="include\LogfilePrinter.h" />
     <ClInclude Include="include\Matching.h" />
-    <ClInclude Include="include\Modell_OCV.h" />
+    <ClInclude Include="include\Model.h" />
     <ClInclude Include="include\PerspectiveImage.h" />
     <ClInclude Include="include\PointLoader.h" />
     <ClInclude Include="include\stdafx.h" />
@@ -78,7 +78,7 @@
     <ClCompile Include="src\CoordinateImage.cpp" />
     <ClCompile Include="src\ImCalculator.cpp" />
     <ClCompile Include="src\Matching.cpp" />
-    <ClCompile Include="src\Modell_OCV.cpp" />
+    <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\PerspectiveImage.cpp" />
     <ClCompile Include="src\PointLoader.cpp" />
     <ClCompile Include="src\stdafx.cpp" />

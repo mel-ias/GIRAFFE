@@ -1,45 +1,20 @@
-#include "Modell_OCV.h"
+#include "Model.h"
 
 
 // C'tor
-Modell_OCV::Modell_OCV(LogFile* _logfile) {
+Model::Model(LogFile* _logfile) {
 	logfile = _logfile;
 	logfile->append("");
-	logfile->append(TAG + "---- initialisation open computer vision modell ----");
+	logfile->append(TAG + "Initialisation of Model");
 }
 
 // D'tor
-Modell_OCV::~Modell_OCV() {
+Model::~Model() {
 }
 
 
-/**
- * @brief Projects a point cloud onto an image and retrieves colors from the image.
- *
- * This function projects 3D points from a given point cloud into 2D image coordinates
- * using the provided camera parameters. It then extracts the color values from the
- * specified image for the projected points and associates them with a list of
- * waterline points.
- *
- * @param point_cloud A vector of 3D points representing the point cloud.
- * @param image_for_color The image from which color values will be extracted.
- * @param point_cloud_colors A reference to a vector where the colors corresponding
- *        to the projected points will be stored.
- * @param image_coords_colors A reference to a vector where the valid image
- *        coordinates of the projected points will be stored.
- * @param fix_aspect_ratio A boolean flag indicating whether to maintain the aspect
- *        ratio during the projection.
- * @param cameraMatrix The intrinsic camera matrix used for projecting the points.
- * @param distCoeffs The distortion coefficients for correcting the image.
- * @param rvec The rotation vector for the camera pose.
- * @param tvec The translation vector for the camera pose.
- * @param image_points A vector of 2D points representing the image points
- *        to be matched with the projected points.
- *
- * @return A vector of pairs, where each pair contains a projected 3D point and
- *         the index of the corresponding image point.
- */
-std::vector<std::pair<cv::Point3d, int>> Modell_OCV::getColorFor(std::vector<cv::Point3d>& point_cloud,
+
+std::vector<std::pair<cv::Point3d, int>> Model::getColorFor(std::vector<cv::Point3d>& point_cloud,
 	cv::Mat& image_for_color,
 	std::vector<cv::Vec3b>& point_cloud_colors,
 	std::vector<cv::Point2d>& image_coords_colors,
@@ -115,26 +90,7 @@ std::vector<std::pair<cv::Point3d, int>> Modell_OCV::getColorFor(std::vector<cv:
 
 
 
-/**
- * @brief Exports a recolored point cloud to a text file with optional coordinate shifting.
- *
- * This function saves the 3D points of a point cloud along with their associated colors
- * and image coordinates to a text file. The coordinates can be shifted by specified
- * amounts along the X, Y, and Z axes. Only points with non-zero colors are included in
- * the output.
- *
- * @param workingDirectory The directory where the output file will be saved.
- * @param wD_name The base name for the output file (without extension).
- * @param point_cloud A vector of 3D points representing the point cloud.
- * @param point_cloud_colors A vector of colors corresponding to each point in the
- *        point cloud (in BGR format).
- * @param image_coords_colors A vector of 2D image coordinates corresponding to each
- *        point in the point cloud.
- * @param shifter_x The amount to shift the X coordinates of the points.
- * @param shifter_y The amount to shift the Y coordinates of the points.
- * @param shifter_z The amount to shift the Z coordinates of the points.
- */
-void Modell_OCV::export_point_cloud_recolored(
+void Model::export_point_cloud_recolored(
 	const std::string& workingDirectory,
 	const std::string& wD_name,
 	const std::vector<cv::Point3d>& point_cloud,

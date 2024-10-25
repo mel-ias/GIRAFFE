@@ -547,43 +547,29 @@ cv::Mat Matching::ransac_test(std::vector<cv::Point2d>& _points1, std::vector<cv
 
 
 
-void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& in_wl_pts_2D, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y, double shift_z, bool export_pcl, std::string file_name_image_points, double tolerance_distortion_px) {
+void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image_points, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y, double shift_z, bool export_pcl, std::string file_name_image_points) {
 
 	std::stringstream log_statistics;
 
 	// undistort water line points and push back into image coordinate system
-	std::vector<cv::Point2d> wl_pts_2D_undistort_normalized_coordinates;
-	std::vector<cv::Point2d> wl_pts_2D_undistort_image_coordinates;
-	std::vector<cv::Point2d> water_line_points_reduced_by_dist;
+	std::vector<cv::Point2d> img_pts_2D_undistort_normalized_coordinates;
+	std::vector<cv::Point2d> img_pts_2D_undistort_image_coordinates;
 
-	Modell_OCV modell_ocv = Modell_OCV(mLogFile);
+	Model model = Model(mLogFile);
 	std::vector<cv::Vec3b> point_cloud_color;
 	std::vector<cv::Point2d> image_coordinates_color;
+	double distance_threshold_img_to_proj_img = 2.0; // pixels
 
-	if (in_wl_pts_2D.size() != 0) {
+	if (input_image_points.size() != 0) {
 		// undistort 2D image points of water line
-		cv::undistortPoints(in_wl_pts_2D, wl_pts_2D_undistort_normalized_coordinates, camera_matrix, dist_coeffs);
+		cv::undistortPoints(input_image_points, img_pts_2D_undistort_normalized_coordinates, camera_matrix, dist_coeffs);
 
 		// conversion to image coordinates
-		for (cv::Point2d p : wl_pts_2D_undistort_normalized_coordinates) {
-			wl_pts_2D_undistort_image_coordinates.push_back(cv::Point2d(
+		for (cv::Point2d p : img_pts_2D_undistort_normalized_coordinates) {
+			img_pts_2D_undistort_image_coordinates.push_back(cv::Point2d(
 				camera_matrix.at<double>(0, 0) * p.x + camera_matrix.at<double>(0, 2),
 				camera_matrix.at<double>(1, 1) * p.y + camera_matrix.at<double>(1, 2)));
 		}
-
-		// compute distance between distorted and undistorted points, push back valid points
-		for (int i = 0; i < in_wl_pts_2D.size(); i++) {
-			cv::Point2d p_distorted = in_wl_pts_2D.at(i);
-			cv::Point2d p_undistorted = wl_pts_2D_undistort_image_coordinates.at(i);
-			double distance_undistortion = cv::norm(p_distorted - p_undistorted);
-
-			if (distance_undistortion < tolerance_distortion_px) {
-				water_line_points_reduced_by_dist.push_back(p_undistorted); // keep undistorted points
-			}
-		}
-
-		mLogFile->append(TAG + "count 2D image points regarding image distortion (reduced/original): "
-			+ std::to_string(water_line_points_reduced_by_dist.size()) + "/" + std::to_string(in_wl_pts_2D.size()));
 	}
 	else {
 		mLogFile->append(TAG + "no image points to reference provided, will only color point cloud");
@@ -597,13 +583,13 @@ void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& in_wl_pts_2
 
 	// Get color and project 2D waterline points to object space using OpenCV's projectPoints
 	//std::vector<cv::Point3d> projected_image_points_3D_OCV, int idx 
-	std::vector<std::pair<cv::Point3d, int>> projected_points  = modell_ocv.getColorFor(synth_pts_3D_cv, in_image_4_color, point_cloud_color, image_coordinates_color, 1.0, camera_matrix, dist_coeffs, rvec_cc_orig_copy, tvec_cc_orig_copy, water_line_points_reduced_by_dist);
+	std::vector<std::pair<cv::Point3d, int>> projected_points  = model.getColorFor(synth_pts_3D_cv, in_image_4_color, point_cloud_color, image_coordinates_color, 1.0, camera_matrix, dist_coeffs, rvec_cc_orig_copy, tvec_cc_orig_copy, input_image_points);
 
-	std::vector<cv::Point3d> projected_image_points_3D_OCV;
+	std::vector<cv::Point3d> backprojected_3D_image_points;
 	std::vector<int> idx;
 	// Output the results
 	for (const auto& pair : projected_points) {
-		projected_image_points_3D_OCV.push_back(pair.first);
+		backprojected_3D_image_points.push_back(pair.first);
 		idx.push_back(pair.second);
 	}
 
@@ -611,46 +597,58 @@ void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& in_wl_pts_2
 	// Print point cloud if required
 	if (export_pcl) {
 		mLogFile->append(TAG + "---- export 3D point cloud ----");
-		modell_ocv.export_point_cloud_recolored(mWorkingDirectory, mDataManager->get_name_working_directory(), synth_pts_3D_cv, point_cloud_color, image_coordinates_color, shift_x, shift_y, shift_z);
+		model.export_point_cloud_recolored(mWorkingDirectory, mDataManager->get_name_working_directory(), synth_pts_3D_cv, point_cloud_color, image_coordinates_color, shift_x, shift_y, shift_z);
 	}
 
 	// If projection succeeded, log statistics and export results
-	if (!projected_image_points_3D_OCV.empty()) {
+	if (!backprojected_3D_image_points.empty()) {
 		
+
+		// Backprojection for outlier filtering 
+		std::vector<cv::Point2d> projected_image_points;
+		cv::projectPoints(backprojected_3D_image_points, rvec_cc_orig_copy, tvec_cc_orig_copy, camera_matrix, dist_coeffs, projected_image_points);
+
+		// outlier removal 
+		FilteredData filtered_data = filterPointsByDistance(input_image_points, projected_image_points, backprojected_3D_image_points, idx, distance_threshold_img_to_proj_img);
+		// projected_image_points/ backprojected_3D_image_points now contains only points from input_image_points that are within 2 units from a point in input_image_points
+		projected_image_points = filtered_data.image_data;
+		backprojected_3D_image_points = filtered_data.image_data_3D;
+		idx = filtered_data.image_data_3D_idx;
+
+
+		cv::Mat copy_masterimage = in_image_4_color.clone();
+
+		// Draw original image points
+		for (cv::Point2d p : input_image_points) {
+			cv::circle(copy_masterimage, p, 5, cv::Scalar(255, 255, 0), -1);
+		}
+
+		// Draw projected image points
+		for (cv::Point2d p : projected_image_points) {
+			cv::circle(copy_masterimage, p, 4, cv::Scalar(255, 0, 255), -1);
+		}
+
+		cv::imwrite(mWorkingDirectory + "projected_original_image_points.png", copy_masterimage);
+
 
 		// Write projected points and IDs to files
 		std::ofstream myfile(mWorkingDirectory + file_name_image_points + "_projected.txt");
 		std::ofstream myfile_ptids(mWorkingDirectory + file_name_image_points + "_ID.txt");
 
-		for (int i = 0; i < projected_image_points_3D_OCV.size(); i++) {
+		for (int i = 0; i < backprojected_3D_image_points.size(); i++) {
 			myfile_ptids << idx[i] << "\n";
 			myfile << std::fixed << std::setprecision(4)
-				<< projected_image_points_3D_OCV[i].x + shift_x << ","
-				<< projected_image_points_3D_OCV[i].y + shift_y << ","
-				<< projected_image_points_3D_OCV[i].z + shift_z << "\n";
+				<< backprojected_3D_image_points[i].x + shift_x << ","
+				<< backprojected_3D_image_points[i].y + shift_y << ","
+				<< backprojected_3D_image_points[i].z + shift_z << "\n";
 		}
 
 		myfile_ptids.close();
 		myfile.close();
+		mLogFile->append(TAG + "count referenced image points: " + std::to_string(backprojected_3D_image_points.size()));
 
-		// Backprojection for visualization
-		std::vector<cv::Point2d> imagePoints;
-		cv::projectPoints(projected_image_points_3D_OCV, rvec_cc_orig_copy, tvec_cc_orig_copy, camera_matrix, dist_coeffs, imagePoints);
 
-		cv::Mat copy_masterimage = in_image_4_color.clone();
-
-		// Draw original waterline
-		for (cv::Point2d p : water_line_points_reduced_by_dist) {
-			cv::circle(copy_masterimage, p, 5, cv::Scalar(255, 255, 0), -1);
-		}
-
-		// Draw reprojected waterline
-		for (cv::Point2d p : imagePoints) {
-			cv::circle(copy_masterimage, p, 4, cv::Scalar(255, 0, 255), -1);
-		}
-
-		cv::imwrite(mWorkingDirectory + "reprojected_waterline.png", copy_masterimage);
-		mLogFile->append(TAG + "visualization: apply cv::projectPoints, draw waterline reprojected");
+		
 	}
 	else {
 		mLogFile->append(TAG + "no water level detected");

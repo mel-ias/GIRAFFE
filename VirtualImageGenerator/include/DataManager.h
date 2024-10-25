@@ -9,12 +9,17 @@
 #include <cstring>
 #include <iostream>
 #include <sstream>
-#include"opencv2\opencv.hpp"
-#include "json.hpp"
 #include <windows.h>
+
+#include "opencv2\opencv.hpp"
+
+//#include "BoundingBox.hpp"
+//#include "CoordinateImage.hpp"
+#include "json.hpp"
 #include "LogfilePrinter.h"
 #include "Utils.h"
 #include "vek.h"
+
 
 #ifdef _WIN64
 #include <direct.h>
@@ -109,6 +114,8 @@ public:
 		// INSTANTIATE OBJECTS
 		// -------------------
 		boundingBox = new BoundingBox(logFile); // Instantiate BoundingBox to select point cloud part to be projected, provide pointer to logfile
+		coord_img = new CoordinateImage(100,100); // Instantiate CoordinateImage with random width / height
+		
 		pts_synth_2D_double = new std::vector<Vek2d>;
 		pts_synth_3D_double = new std::vector<Vek3d>;
 		pts_color_RGB_int = new std::vector<Vek3i>;
@@ -121,6 +128,11 @@ public:
 		Rxyz[0] = 1.0f; Rxyz[3] = 0.0f; Rxyz[6] = 0.0f;
 		Rxyz[1] = 0.0f; Rxyz[4] = 1.0f; Rxyz[7] = 0.0f;
 		Rxyz[2] = 0.0f; Rxyz[5] = 0.0f; Rxyz[8] = 1.0f;
+
+		projCenter_Corr = cv::Point3d();
+		eulerAngles_Corr = cv::Vec3f();
+		focal_length_Corr = 0.0f;
+		principle_point_Corr = cv::Point2d();
 
 
 		// bools
