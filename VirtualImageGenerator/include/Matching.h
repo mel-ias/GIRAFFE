@@ -94,9 +94,11 @@ private:
 	struct FilteredData
 	{
 	public:
-		std::vector<cv::Point2d> image_data;
+		std::vector<int> image_data_original_idx;
+		std::vector<cv::Point2d> image_data_original;
+		std::vector<cv::Point2d> image_data_projected;
 		std::vector<cv::Point3d> image_data_3D;
-		std::vector<int> image_data_3D_idx;
+		
 	};
 
 	// internal functions
@@ -130,32 +132,29 @@ private:
 	const std::vector<cv::Point2d>& list1,
 	const std::vector<cv::Point2d>& list2,
 	const std::vector<cv::Point3d>& list2_3d,
-	const std::vector<int> list2_3d_idx,
 	double distanceThreshold = 2.0)
 	{
-		std::vector<cv::Point2d> filteredList;
-		std::vector<cv::Point3d> filteredValues;
-		std::vector<int> filteredIdx;
+		std::vector<cv::Point2d> filtered_list1;
+		std::vector<cv::Point2d> filtered_list2;
+		std::vector<cv::Point3d> filtered_list2_3d;
+		std::vector<int> filtered_idx;
+		int counter = 0;
 
-		for (size_t i = 0; i < list2.size(); ++i) {
+		for (size_t i = 0; i < list1.size(); ++i) {
+			const auto& point1 = list1[i];
 			const auto& point2 = list2[i];
-			bool hasClosePoint = false;
+			const auto& point2_3D = list2_3d[i];
 
-			for (const auto& point1 : list1) {
-				if (euclideanDistance(point1, point2) < distanceThreshold) {
-					hasClosePoint = true;
-					break;
-				}
+			if (euclideanDistance(point1, point2) < distanceThreshold) {
+				filtered_idx.push_back(counter);
+				filtered_list1.push_back(point1);
+				filtered_list2.push_back(point2);
+				filtered_list2_3d.push_back(point2_3D);
 			}
-
-			if (hasClosePoint) {
-				filteredList.push_back(point2);
-				filteredValues.push_back(list2_3d[i]);
-				filteredIdx.push_back(list2_3d_idx[i]);
-			}
+			
+			counter++;
 		}
-
-		return FilteredData{filteredList, filteredValues, filteredIdx};
+		return FilteredData{filtered_idx, filtered_list1, filtered_list2, filtered_list2_3d};
 	}
 
 

@@ -582,17 +582,8 @@ void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image
 	}
 
 	// Get color and project 2D waterline points to object space using OpenCV's projectPoints
-	//std::vector<cv::Point3d> projected_image_points_3D_OCV, int idx 
-	std::vector<std::pair<cv::Point3d, int>> projected_points  = model.getColorFor(synth_pts_3D_cv, in_image_4_color, point_cloud_color, image_coordinates_color, 1.0, camera_matrix, dist_coeffs, rvec_cc_orig_copy, tvec_cc_orig_copy, input_image_points);
-
-	std::vector<cv::Point3d> backprojected_3D_image_points;
-	std::vector<int> idx;
-	// Output the results
-	for (const auto& pair : projected_points) {
-		backprojected_3D_image_points.push_back(pair.first);
-		idx.push_back(pair.second);
-	}
-
+	Model::ReferencedPoints referenced_points = model.getColorFor(synth_pts_3D_cv, in_image_4_color, point_cloud_color, image_coordinates_color, 1.0, camera_matrix, dist_coeffs, rvec_cc_orig_copy, tvec_cc_orig_copy, input_image_points);
+	
 
 	// Print point cloud if required
 	if (export_pcl) {
@@ -601,51 +592,33 @@ void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image
 	}
 
 	// If projection succeeded, log statistics and export results
-	if (!backprojected_3D_image_points.empty()) {
+	if (!referenced_points.corresponding_3D_image_pts_from_point_cloud.empty()) {
 		
-
-		// Backprojection for outlier filtering 
-		std::vector<cv::Point2d> projected_image_points;
-		cv::projectPoints(backprojected_3D_image_points, rvec_cc_orig_copy, tvec_cc_orig_copy, camera_matrix, dist_coeffs, projected_image_points);
-
 		// outlier removal 
-		FilteredData filtered_data = filterPointsByDistance(input_image_points, projected_image_points, backprojected_3D_image_points, idx, distance_threshold_img_to_proj_img);
-		// projected_image_points/ backprojected_3D_image_points now contains only points from input_image_points that are within 2 units from a point in input_image_points
-		projected_image_points = filtered_data.image_data;
-		backprojected_3D_image_points = filtered_data.image_data_3D;
-		idx = filtered_data.image_data_3D_idx;
-
-
+		FilteredData filtered_data = filterPointsByDistance(input_image_points, referenced_points.corresponding_2D_image_pts_from_point_cloud, referenced_points.corresponding_3D_image_pts_from_point_cloud, distance_threshold_img_to_proj_img);
+		
 		cv::Mat copy_masterimage = in_image_4_color.clone();
-
 		// Draw original image points
 		for (cv::Point2d p : input_image_points) {
 			cv::circle(copy_masterimage, p, 5, cv::Scalar(255, 255, 0), -1);
 		}
-
 		// Draw projected image points
-		for (cv::Point2d p : projected_image_points) {
+		for (cv::Point2d p : filtered_data.image_data_projected) {
 			cv::circle(copy_masterimage, p, 4, cv::Scalar(255, 0, 255), -1);
 		}
-
 		cv::imwrite(mWorkingDirectory + "projected_original_image_points.png", copy_masterimage);
 
-
 		// Write projected points and IDs to files
-		std::ofstream myfile(mWorkingDirectory + file_name_image_points + "_projected.txt");
-		std::ofstream myfile_ptids(mWorkingDirectory + file_name_image_points + "_ID.txt");
-
-		for (int i = 0; i < backprojected_3D_image_points.size(); i++) {
-			myfile_ptids << idx[i] << "\n";
+		std::ofstream myfile(mWorkingDirectory + file_name_image_points + "_projected.txt");	
+		for (int i = 0; i < filtered_data.image_data_3D.size(); i++) {
 			myfile << std::fixed << std::setprecision(4)
-				<< backprojected_3D_image_points[i].x + shift_x << ","
-				<< backprojected_3D_image_points[i].y + shift_y << ","
-				<< backprojected_3D_image_points[i].z + shift_z << "\n";
+				<< filtered_data.image_data_original_idx[i] << ","
+				<< filtered_data.image_data_3D[i].x + shift_x << ","
+				<< filtered_data.image_data_3D[i].y + shift_y << ","
+				<< filtered_data.image_data_3D[i].z + shift_z << "\n";
 		}
-
-		myfile_ptids.close();
 		myfile.close();
-		mLogFile->append(TAG + "count referenced image points: " + std::to_string(backprojected_3D_image_points.size()));
+		mLogFile->append(TAG + "count referenced image points: " + std::to_string(filtered_data.image_data_3D.size()));
 
 
 		

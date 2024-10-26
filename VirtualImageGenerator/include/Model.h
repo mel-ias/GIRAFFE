@@ -23,6 +23,50 @@ public:
 
 	~Model();
 
+	struct ReferencedPoints {   // Structure declaration
+		std::vector<cv::Point2d> original_2D_image_pts; 
+		std::vector<cv::Point2d> corresponding_2D_image_pts_from_point_cloud;
+		std::vector<cv::Point3d> corresponding_3D_image_pts_from_point_cloud;
+	}; // End the structure with a semicolon
+
+
+
+	std::vector<int> findNearestNeighbors(
+		const std::vector<cv::Point2d>& image_points,
+		const std::vector<cv::Point2d>& image_pixels) {
+
+		// Output array of matching indices
+		std::vector<int> indices(image_points.size());
+
+		// Prepare data for KD-tree by converting image_pixels to a single-channel Mat (type CV_32F)
+		cv::Mat image_pixels_mat(image_pixels.size(), 2, CV_32F);
+		for (size_t i = 0; i < image_pixels.size(); ++i) {
+			image_pixels_mat.at<float>(i, 0) = static_cast<float>(image_pixels[i].x);
+			image_pixels_mat.at<float>(i, 1) = static_cast<float>(image_pixels[i].y);
+		}
+
+		// Create KD-tree using FLANN with 2D points
+		cv::flann::KDTreeIndexParams indexParams;
+		cv::flann::Index kdtree(image_pixels_mat, indexParams);
+
+		// Query KD-tree for each image_point
+		for (size_t i = 0; i < image_points.size(); ++i) {
+			std::vector<float> query = { static_cast<float>(image_points[i].x), static_cast<float>(image_points[i].y) };
+			std::vector<int> knn_indices(1);
+			std::vector<float> knn_dists(1);
+
+			// Perform knnSearch with k=1 (find the nearest neighbor)
+			kdtree.knnSearch(query, knn_indices, knn_dists, 1);
+
+			// Save the index of the nearest neighbor
+			indices[i] = knn_indices[0];
+		}
+
+		return indices;
+	}
+
+
+	
 	/**
 	 * @brief Projects a point cloud onto an image and retrieves colors from the image.
 	 *
@@ -49,7 +93,7 @@ public:
 	 * @return A vector of pairs, where each pair contains a projected 3D point and
 	 *         the index of the corresponding image point.
 	 */
-	std::vector<std::pair<cv::Point3d, int>> getColorFor(std::vector<cv::Point3d>& point_cloud,
+	ReferencedPoints getColorFor(std::vector<cv::Point3d>& point_cloud,
 		cv::Mat& image_for_color,
 		std::vector<cv::Vec3b>& point_cloud_colors,
 		std::vector<cv::Point2d>& image_coords_colors,

@@ -14,7 +14,7 @@ Model::~Model() {
 
 
 
-std::vector<std::pair<cv::Point3d, int>> Model::getColorFor(std::vector<cv::Point3d>& point_cloud,
+Model::ReferencedPoints Model::getColorFor(std::vector<cv::Point3d>& point_cloud,
 	cv::Mat& image_for_color,
 	std::vector<cv::Vec3b>& point_cloud_colors,
 	std::vector<cv::Point2d>& image_coords_colors,
@@ -31,6 +31,8 @@ std::vector<std::pair<cv::Point3d, int>> Model::getColorFor(std::vector<cv::Poin
 
 	// Project the point cloud into the image space
 	cv::projectPoints(point_cloud, rvec, tvec, cameraMatrix, distCoeffs, image_pixels, cv::noArray(), fix_aspect_ratio);
+
+	std::cout << "number of pcl points: " << point_cloud.size() << ", number of projected pts: " << image_pixels.size() << std::endl;
 
 	// Iterate through all pixel coordinates and get the color from the image
 	for (size_t i = 0; i < image_pixels.size(); ++i) {
@@ -49,43 +51,28 @@ std::vector<std::pair<cv::Point3d, int>> Model::getColorFor(std::vector<cv::Poin
 		}
 	}
 
+	Model::ReferencedPoints referenced_pts;
 	// If no waterline points are provided, return immediately
 	if (image_points.empty()) {
-		return image_points_projected;
+		return referenced_pts;
 	}
 
-	// Prepare to find nearest neighbors using FLANN for the waterline points
-	std::vector<cv::Point2f> image_points_to_search(image_pixels.begin(), image_pixels.end());
-	cv::flann::KDTreeIndexParams indexParams;
-	cv::flann::Index kdtree(cv::Mat(image_points_to_search).reshape(1), indexParams);
+	// image_pixels -> projeceted points from point cloud
+	// image_points -> original 2D points
+	// Find nearest neighbors
+	std::vector<int> indices = findNearestNeighbors(image_points, image_pixels);
 
-	// Search nearest neighbors for each waterline point
-	for (size_t wl_index = 0; wl_index < image_points.size(); ++wl_index) {
-		const auto& p_wl = image_points[wl_index];
-		std::vector<float> query = { static_cast<float>(p_wl.x), static_cast<float>(p_wl.y) };
-		std::vector<int> indices;
-		std::vector<float> dists;
-
-		// Find the nearest neighbor in the image pixels
-		kdtree.knnSearch(query, indices, dists, 1);
-
-		if (!indices.empty()) {
-			const auto& projected_point = point_cloud[indices[0]];
-
-			// Create a unique identifier for the point
-			std::string unique_key = std::to_string(projected_point.x) + "_" +
-				std::to_string(projected_point.y) + "_" +
-				std::to_string(projected_point.z);
-
-			// Check if the point has already been added
-			if (unique_points.find(unique_key) == unique_points.end()) {
-				// If not, add the point to the set and the output vector
-				unique_points.insert(unique_key);
-				image_points_projected.emplace_back(projected_point, wl_index); // Store the projected point and the corresponding image point index
-			}
-		}
+	// Print results
+	int img_pts_counter = 0;
+	for (int ind : indices) {
+		std::cout << ind << std::endl;
+		//image_points_projected.emplace_back(point_cloud.at(ind), ind);
+		referenced_pts.original_2D_image_pts.push_back(image_points[img_pts_counter]);
+		referenced_pts.corresponding_3D_image_pts_from_point_cloud.push_back(point_cloud[ind]);
+		referenced_pts.corresponding_2D_image_pts_from_point_cloud.push_back(image_pixels[ind]);
+		img_pts_counter++;	
 	}
-	return image_points_projected;
+	return referenced_pts;
 }
 
 
