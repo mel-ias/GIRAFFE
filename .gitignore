@@ -341,3 +341,4 @@ healthchecksdb
 /VirtualImageGenerator/lightglue/myBatchLightglue.bat
 /VirtualImageGenerator/.venv
 /VirtualImageGenerator/Result/synthImg
+/VirtualImageGenerator/build
