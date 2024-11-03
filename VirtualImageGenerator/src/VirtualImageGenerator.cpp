@@ -70,8 +70,6 @@ int terminate_program(std::string error_message) {
 		delete data_manager;
 	if (matching != nullptr)
 		delete matching;
-	if (pim != nullptr)
-		delete pim;
 
 	log_printer->append(ERROR_TAG + error_message);
 
@@ -176,16 +174,6 @@ void read_init_file() {
 			data_manager->set_path_conda_env(path_conda_env); // 5. set and read json. using dataManager for reading and storage
 			log_printer->append(TAG + " Set path to lightglue venv");
 		}
-
-
-
-
-
-
-		std::cout << "here" << std::endl;
-
-		
-
 		
 
 	}

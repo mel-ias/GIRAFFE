@@ -49,9 +49,7 @@ class ImCalculator
 public:
 
 	// Ctor
-	ImCalculator() {
-
-	};
+	ImCalculator();
 
 	void init(DataManager* _dataManager);
 	
@@ -154,7 +152,7 @@ private:
 
 	float* rot_xyz;
 
-	float image_plane[4];
+	float* image_plane;
 
 	BoundingBox* bb;
 

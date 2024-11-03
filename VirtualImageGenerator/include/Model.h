@@ -14,14 +14,14 @@
 #include <string>
 
 
-
 class Model
 {
 
 public:
 	Model(LogFile* _logfile);
 
-	~Model();
+	~Model() = default;  // Destruktor muss jetzt nichts manuell freigeben
+
 
 	struct ReferencedPoints {   // Structure declaration
 		std::vector<cv::Point2d> original_2D_image_pts; 
@@ -30,40 +30,9 @@ public:
 	}; // End the structure with a semicolon
 
 
-
 	std::vector<int> findNearestNeighbors(
 		const std::vector<cv::Point2d>& image_points,
-		const std::vector<cv::Point2d>& image_pixels) {
-
-		// Output array of matching indices
-		std::vector<int> indices(image_points.size());
-
-		// Prepare data for KD-tree by converting image_pixels to a single-channel Mat (type CV_32F)
-		cv::Mat image_pixels_mat(image_pixels.size(), 2, CV_32F);
-		for (size_t i = 0; i < image_pixels.size(); ++i) {
-			image_pixels_mat.at<float>(i, 0) = static_cast<float>(image_pixels[i].x);
-			image_pixels_mat.at<float>(i, 1) = static_cast<float>(image_pixels[i].y);
-		}
-
-		// Create KD-tree using FLANN with 2D points
-		cv::flann::KDTreeIndexParams indexParams;
-		cv::flann::Index kdtree(image_pixels_mat, indexParams);
-
-		// Query KD-tree for each image_point
-		for (size_t i = 0; i < image_points.size(); ++i) {
-			std::vector<float> query = { static_cast<float>(image_points[i].x), static_cast<float>(image_points[i].y) };
-			std::vector<int> knn_indices(1);
-			std::vector<float> knn_dists(1);
-
-			// Perform knnSearch with k=1 (find the nearest neighbor)
-			kdtree.knnSearch(query, knn_indices, knn_dists, 1);
-
-			// Save the index of the nearest neighbor
-			indices[i] = knn_indices[0];
-		}
-
-		return indices;
-	}
+		const std::vector<cv::Point2d>& image_pixels);
 
 
 	
@@ -94,15 +63,15 @@ public:
 	 *         the index of the corresponding image point.
 	 */
 	ReferencedPoints getColorFor(std::vector<cv::Point3d>& point_cloud,
-		cv::Mat& image_for_color,
+		const cv::Mat& image_for_color,
 		std::vector<cv::Vec3b>& point_cloud_colors,
 		std::vector<cv::Point2d>& image_coords_colors,
-		bool fix_aspect_ratio,
-		cv::Mat& cameraMatrix,
-		cv::Mat& distCoeffs,
-		cv::Mat& rvec,
-		cv::Mat& tvec,
-		std::vector<cv::Point2d>& waterlinePoints);
+		const bool fix_aspect_ratio,
+		const cv::Mat& cameraMatrix,
+		const cv::Mat& distCoeffs,
+		const cv::Mat& rvec,
+		const cv::Mat& tvec,
+		const std::vector<cv::Point2d>& image_points);
 	
 
 	/**
@@ -130,9 +99,9 @@ public:
 		const std::vector<cv::Point3d>& point_cloud,
 		const std::vector<cv::Vec3b>& point_cloud_colors,
 		const std::vector<cv::Point2d>& image_coords_colors,
-		double shifter_x,
-		double shifter_y,
-		double shifter_z);
+		const double shifter_x,
+		const double shifter_y,
+		const double shifter_z);
 private:
 	LogFile* logfile;
 	const std::string TAG = "Modell_OCV:\t\t";

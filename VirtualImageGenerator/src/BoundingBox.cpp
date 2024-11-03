@@ -132,9 +132,9 @@ void BoundingBox::calculate_view_frustum(){
 	logFilePrinter->append(TAG + "(xmin,ymin,zmin): (" + std::to_string(xMin_world) + "," + std::to_string(yMin_world) + "," + std::to_string(zMin_world) + ")");
 	logFilePrinter->append(TAG + "(xmax,ymax,zmax): (" + std::to_string(xMax_world) + "," + std::to_string(yMax_world) + "," + std::to_string(zMax_world) + ")");
 
-	logFilePrinter->append(TAG + "Rz:");
-	logFilePrinter->append("\t\t" + std::to_string(Rzxy[0]) + " " + std::to_string(Rzxy[3]) + " " + std::to_string(Rzxy[6]), 4);
-	logFilePrinter->append("\t\t" + std::to_string(Rzxy[1]) + " " + std::to_string(Rzxy[4]) + " " + std::to_string(Rzxy[7]), 4);
-	logFilePrinter->append("\t\t" + std::to_string(Rzxy[2]) + " " + std::to_string(Rzxy[5]) + " " + std::to_string(Rzxy[8]), 4);
-	logFilePrinter->append("");
+	//logFilePrinter->append(TAG + "Rz:");
+	//logFilePrinter->append("\t\t" + std::to_string(Rzxy[0]) + " " + std::to_string(Rzxy[3]) + " " + std::to_string(Rzxy[6]), 4);
+	//logFilePrinter->append("\t\t" + std::to_string(Rzxy[1]) + " " + std::to_string(Rzxy[4]) + " " + std::to_string(Rzxy[7]), 4);
+	//logFilePrinter->append("\t\t" + std::to_string(Rzxy[2]) + " " + std::to_string(Rzxy[5]) + " " + std::to_string(Rzxy[8]), 4);
+	//logFilePrinter->append("");
 }

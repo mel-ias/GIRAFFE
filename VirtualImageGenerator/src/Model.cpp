@@ -7,23 +7,58 @@ Model::Model(LogFile* _logfile) {
 	logfile->append("");
 	logfile->append(TAG + "Initialisation of Model");
 }
+	
 
-// D'tor
-Model::~Model() {
+
+
+std::vector<int> Model::findNearestNeighbors(
+	const std::vector<cv::Point2d>& image_points,
+	const std::vector<cv::Point2d>& image_pixels) {
+
+	// Output array of matching indices
+	std::vector<int> indices(image_points.size());
+
+	// Prepare data for KD-tree by converting image_pixels to a single-channel Mat (type CV_32F)
+	cv::Mat image_pixels_mat(image_pixels.size(), 2, CV_32F);
+	for (size_t i = 0; i < image_pixels.size(); ++i) {
+		image_pixels_mat.at<float>(i, 0) = static_cast<float>(image_pixels[i].x);
+		image_pixels_mat.at<float>(i, 1) = static_cast<float>(image_pixels[i].y);
+	}
+
+	// Create KD-tree using FLANN with 2D points
+	cv::flann::KDTreeIndexParams indexParams;
+	cv::flann::Index kdtree(image_pixels_mat, indexParams);
+
+	// Query KD-tree for each image_point
+	for (size_t i = 0; i < image_points.size(); ++i) {
+		std::vector<float> query = { static_cast<float>(image_points[i].x), static_cast<float>(image_points[i].y) };
+		std::vector<int> knn_indices(1);
+		std::vector<float> knn_dists(1);
+
+		// Perform knnSearch with k=1 (find the nearest neighbor)
+		kdtree.knnSearch(query, knn_indices, knn_dists, 1);
+
+		// Save the index of the nearest neighbor
+		indices[i] = knn_indices[0];
+	}
+
+	return indices;
 }
 
 
 
+
+
 Model::ReferencedPoints Model::getColorFor(std::vector<cv::Point3d>& point_cloud,
-	cv::Mat& image_for_color,
+	const cv::Mat& image_for_color,
 	std::vector<cv::Vec3b>& point_cloud_colors,
 	std::vector<cv::Point2d>& image_coords_colors,
-	bool fix_aspect_ratio,
-	cv::Mat& cameraMatrix,
-	cv::Mat& distCoeffs,
-	cv::Mat& rvec,
-	cv::Mat& tvec,
-	std::vector<cv::Point2d>& image_points) {
+	const bool fix_aspect_ratio,
+	const cv::Mat& cameraMatrix,
+	const cv::Mat& distCoeffs,
+	const cv::Mat& rvec,
+	const cv::Mat& tvec,
+	const std::vector<cv::Point2d>& image_points) {
 
 	std::vector<cv::Point2d> image_pixels;
 	std::vector<std::pair<cv::Point3d, int>> image_points_projected; // Vector to store pairs of projected points and their indices
@@ -65,8 +100,6 @@ Model::ReferencedPoints Model::getColorFor(std::vector<cv::Point3d>& point_cloud
 	// Print results
 	int img_pts_counter = 0;
 	for (int ind : indices) {
-		std::cout << ind << std::endl;
-		//image_points_projected.emplace_back(point_cloud.at(ind), ind);
 		referenced_pts.original_2D_image_pts.push_back(image_points[img_pts_counter]);
 		referenced_pts.corresponding_3D_image_pts_from_point_cloud.push_back(point_cloud[ind]);
 		referenced_pts.corresponding_2D_image_pts_from_point_cloud.push_back(image_pixels[ind]);
@@ -83,9 +116,9 @@ void Model::export_point_cloud_recolored(
 	const std::vector<cv::Point3d>& point_cloud,
 	const std::vector<cv::Vec3b>& point_cloud_colors,
 	const std::vector<cv::Point2d>& image_coords_colors,
-	double shifter_x,
-	double shifter_y,
-	double shifter_z) {
+	const double shifter_x,
+	const double shifter_y,
+	const double shifter_z) {
 
 	// Open output file stream
 	std::ofstream outStream(workingDirectory + wD_name + "_pcl.txt");

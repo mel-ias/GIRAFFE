@@ -4,6 +4,29 @@
 #include "DataManager.h"
 
 
+ImCalculator::ImCalculator() {
+	_pixSize = 0.0f;
+	_image = nullptr;
+	_mask = nullptr;
+	_distImage = nullptr;
+	_pixSize = 0.0f;
+	_ck = 0.0f;
+	bb = nullptr;
+	columns = 0;
+	rows = 0;
+	logfile = nullptr;
+	rot_xyz = new float [9];
+	image_plane = new float [4];
+	distMin = 0.0f;
+	distMax = 0.0f;
+	dataManager = nullptr;
+
+
+
+
+
+}
+
 
 void ImCalculator::init(DataManager* _dataManager) {
 
@@ -89,21 +112,7 @@ void ImCalculator::saveImages() {
 			cv::imwrite(path_directory_ImCalculator + name.c_str(), *next_dists[i]);
 		}
 	}
-
-	// create CoordinateImage with CimHeader h 
-	// use CoordinateImage to store corresponding points (3D point coordinates <-> 2D image coordinates of projected virtual image) 
-	CoordinateImage::CimHeader h;
-
-	// width and height will be set by the coordinate image itself
-	h.ps = _pixSize;
-
-	// camera projection center in world coordinates corrected by backwardcorrection with x0 = x0 + -k*ke
-	h.x0 = bb->get_X0_Cam_World()[0] - bb->get_Correction_backward()* rot_xyz[2];
-	h.y0 = bb->get_X0_Cam_World()[1] - bb->get_Correction_backward()* rot_xyz[5];
-	h.z0 = bb->get_X0_Cam_World()[2] - bb->get_Correction_backward()* rot_xyz[8];
-
-	// rotation matrix: ie = around x, je = around y, ke = around z
-	h.r = rot_xyz;
+	
 
 	// save _image if it's already a color image
 	if (_image->depth() == CV_8U) {
@@ -591,29 +600,20 @@ void ImCalculator::fill_vectors() {
 	}
 }
 
-
-
 void ImCalculator::fill_image(int radius_mask_fill) {
-
 	logfile->append(TAG + "Fill Images RGB ...");
 
-	
 	// Initialize the mask with zeros (black)
 	_maske_8UC1 = cv::Mat::zeros(_image->size(), CV_8UC1);
-
-	// Loop through each pixel to populate the mask
 	for (int r = 0; r < _image->rows; r++) {
 		for (int c = 0; c < _image->cols; c++) {
-			// Check if the pixel is not white
 			if (_image->at<cv::Vec3b>(r, c) != cv::Vec3b(255, 255, 255)) {
 				cv::circle(_maske_8UC1, cv::Point(c, r), radius_mask_fill, cv::Scalar(255), -1);
 			}
 		}
 	}
 
-	// Save the mask to file for verification
 	cv::imwrite(path_directory_ImCalculator + "maskefill.png", _maske_8UC1);
-
 
 	assert(!punkte.empty());
 	assert(farbenPunkte.size() == punkte.size());
@@ -622,93 +622,78 @@ void ImCalculator::fill_image(int radius_mask_fill) {
 	assert(bild.rows == maske.rows && bild.cols == maske.cols);
 	assert(maske.channels() == 1);
 
-	// Schritt 1: Die Punktefarben direkt ins Bild einfügen (parallelisiert)
-	cv::Mat tempBild = (*_image).clone();
-	cv::Mat fillMask = cv::Mat::zeros(_maske_8UC1.size(), CV_8U);  // Neue Maske für Interpolation
+	cv::Mat tempBild = _image->clone();
+	cv::Mat fillMask = cv::Mat::zeros(_maske_8UC1.size(), CV_8U);
 
-#pragma omp parallel for
-	for (int i = 0; i < (*dataManager->get_pts_synth_2D_double()).size(); ++i) {
-		int x = static_cast<int>((*dataManager->get_pts_synth_2D_double())[i].x());
-		int y = static_cast<int>((*dataManager->get_pts_synth_2D_double())[i].y());
+	// set colors and update fillMask
+	for (int i = 0; i < dataManager->get_pts_synth_2D_double()->size(); ++i) {
+		int x = static_cast<int>(dataManager->get_pts_synth_2D_double()->at(i).x());
+		int y = static_cast<int>(dataManager->get_pts_synth_2D_double()->at(i).y());
 
 		if (x >= 0 && x < tempBild.cols && y >= 0 && y < tempBild.rows) {
-			cv::Vec3b& pixel = tempBild.at<cv::Vec3b>(y, x);
-			pixel[0] = static_cast<uchar>((*dataManager->get_pts_color_RGB_int())[i][0]);
-			pixel[1] = static_cast<uchar>((*dataManager->get_pts_color_RGB_int())[i][1]);
-			pixel[2] = static_cast<uchar>((*dataManager->get_pts_color_RGB_int())[i][2]);
+			cv::Vec3b color{
+				static_cast<uchar>(dataManager->get_pts_color_RGB_int()->at(i)[0]),
+				static_cast<uchar>(dataManager->get_pts_color_RGB_int()->at(i)[1]),
+				static_cast<uchar>(dataManager->get_pts_color_RGB_int()->at(i)[2])
+			};
 
-#pragma omp critical  // Da mehrere Threads hier auf die Maske zugreifen
+
 			{
-				fillMask.at<uchar>(y, x) = 255;  // Diese Punkte als gefüllt markieren
+				tempBild.at<cv::Vec3b>(y, x) = color;
+				fillMask.at<uchar>(y, x) = 255;
 			}
 		}
 	}
 
-	// Schritt 2: Lücken füllen mit bilinearer Interpolation oder Region Growing (parallelisiert)
-#pragma omp parallel for collapse(2)
-	for (int row = 0; row < (*_image).rows; ++row) {
-		for (int col = 0; col < (*_image).cols; ++col) {
+	// Fill gaps in filled mask using interpolation
+	for (int row = 0; row < _image->rows; ++row) {
+		for (int col = 0; col < _image->cols; ++col) {
 			if (_maske_8UC1.at<uchar>(row, col) > 0 && fillMask.at<uchar>(row, col) == 0) {
-				// Hole benachbarte Pixel und führe eine bilineare Interpolation durch
 				cv::Vec3f interpolierteFarbe = cv::Vec3f(0, 0, 0);
 				int nCount = 0;
 
-				// Nachbarn betrachten (Region Growing Ansatz)
 				for (int yOff = -1; yOff <= 1; ++yOff) {
 					for (int xOff = -1; xOff <= 1; ++xOff) {
 						int ny = row + yOff;
 						int nx = col + xOff;
 
-						if (ny >= 0 && ny < (*_image).rows && nx >= 0 && nx < (*_image).cols &&
+						if (ny >= 0 && ny < _image->rows && nx >= 0 && nx < _image->cols &&
 							fillMask.at<uchar>(ny, nx) == 255) {
-							// Gewichtete Interpolation basierend auf der Entfernung
-							cv::Vec3b nachbarFarbe = tempBild.at<cv::Vec3b>(ny, nx);
-							interpolierteFarbe += cv::Vec3f(nachbarFarbe[0], nachbarFarbe[1], nachbarFarbe[2]);
+							cv::Vec3b neighborColor = tempBild.at<cv::Vec3b>(ny, nx);
+							interpolierteFarbe += cv::Vec3f(neighborColor[0], neighborColor[1], neighborColor[2]);
 							nCount++;
 						}
 					}
 				}
 
 				if (nCount > 0) {
-					interpolierteFarbe /= nCount;  // Durchschnitt der Farben der Nachbarn
-
-					// Setze die Farbe im Bild
+					interpolierteFarbe /= nCount;
 					tempBild.at<cv::Vec3b>(row, col) = cv::Vec3b(
 						cv::saturate_cast<uchar>(interpolierteFarbe[0]),
 						cv::saturate_cast<uchar>(interpolierteFarbe[1]),
 						cv::saturate_cast<uchar>(interpolierteFarbe[2])
 					);
-
-#pragma omp critical  // Da mehrere Threads auf fillMask zugreifen
-					{
-						// Markiere diesen Pixel als gefüllt
-						fillMask.at<uchar>(row, col) = 255;
-					}
+					fillMask.at<uchar>(row, col) = 255;
 				}
 			}
 		}
 	}
 
-	// Schritt 3: Setze nicht gefüllte Bereiche auf Schwarz
-#pragma omp parallel for collapse(2)
-	for (int row = 0; row < (*_image).rows; ++row) {
-		for (int col = 0; col < (*_image).cols; ++col) {
+	// unfilled areas -> black
+	for (int row = 0; row < _image->rows; ++row) {
+		for (int col = 0; col < _image->cols; ++col) {
 			if (_maske_8UC1.at<uchar>(row, col) > 0 && fillMask.at<uchar>(row, col) == 0) {
-				// Setze den Pixel auf Schwarz
 				tempBild.at<cv::Vec3b>(row, col) = cv::Vec3b(0, 0, 0);
 			}
 		}
 	}
 
-	// Schritt 4: Apply Erosion to filled image
+	// erosion to filled image to refine edges
 	cv::Mat erodeElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(radius_mask_fill, radius_mask_fill));
 	cv::erode(_maske_8UC1, _maske_8UC1, erodeElement);
 	tempBild.setTo(cv::Scalar(0, 0, 0), _maske_8UC1 == 0);
 
-	// Schritt 5: Gefülltes Bild zurück ins ursprüngliche Bild kopieren
 	tempBild.copyTo(*_image);
-
-	// Save the filled image to file
 	cv::imwrite(path_directory_ImCalculator + "filled_image.png", *_image);
 	logfile->append(TAG + "write filled_image.png");
 }

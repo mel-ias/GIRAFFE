@@ -17,25 +17,6 @@ class CoordinateImage
 {
 public:
 
-#pragma pack(push, 1)
-    /**
-     * @brief Packed header structure for image metadata.
-     *
-     * Contains the image dimensions and additional metadata such as origin (x0, y0, z0)
-     * and pixel size (ps).
-     */
-    struct CimHeader
-    {
-        uint32_t width;    ///< Width of the image.
-        uint32_t height;   ///< Height of the image.
-        double x0;         ///< X-coordinate of the origin.
-        double y0;         ///< Y-coordinate of the origin.
-        double z0;         ///< Z-coordinate of the origin.
-        float ps;          ///< Pixel size.
-        float* r;          ///< Additional data (not defined in this scope).
-    };
-#pragma pack(pop)
-
     /**
      * @brief Structure representing a pixel with 3D coordinates and color information.
      */

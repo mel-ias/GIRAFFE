@@ -147,7 +147,7 @@ public:
 	double get_ymax_World()const { return yMax_world; }
 	double get_zmax_World()const { return zMax_world; }
 	
-	float get_dist() { return d; }
+	float get_dist() const { return d; }
 	float get_Correction_backward()const { return r / tH; }
 	
 	float* get_Rzxy() const { return Rzxy; }

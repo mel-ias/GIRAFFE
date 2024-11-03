@@ -30,22 +30,19 @@ public:
 
 	// overloaded appending
 	void append(const std::stringstream& logfile, int precision = 3) {
-		std::setprecision(precision);
-		logfile_all << logfile.str() << std::endl;
+		logfile_all << std::setprecision(precision) << logfile.str() << std::endl;
 		
 		std::cout << std::fixed << logfile.str() << std::endl; //plot content that was appended
 	}
 	
 	void append(const std::string& logfile, int precision = 3) {
-		std::setprecision(precision);
-		logfile_all << logfile << std::endl;
+		logfile_all << std::setprecision(precision) << logfile << std::endl;
 	
 		std::cout << std::fixed << logfile << std::endl; //plot content that was appended
 	}
 
 	void append(const char* logfile, int precision = 3) {
-		std::setprecision(precision);
-		logfile_all << std::string(logfile) << std::endl;
+		logfile_all << std::setprecision(precision) << std::string(logfile) << std::endl;
 		
 		std::cout << std::fixed << std::string(logfile) << std::endl; //plot content that was appended
 	}
