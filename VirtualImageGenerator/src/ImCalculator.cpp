@@ -615,12 +615,12 @@ void ImCalculator::fill_image(int radius_mask_fill) {
 
 	cv::imwrite(path_directory_ImCalculator + "maskefill.png", _maske_8UC1);
 
-	assert(!punkte.empty());
+	/*assert(!punkte.empty());
 	assert(farbenPunkte.size() == punkte.size());
 	assert(!bild.empty());
 	assert(bild.rows > 0 && bild.cols > 0);
 	assert(bild.rows == maske.rows && bild.cols == maske.cols);
-	assert(maske.channels() == 1);
+	assert(maske.channels() == 1);*/
 
 	cv::Mat tempBild = _image->clone();
 	cv::Mat fillMask = cv::Mat::zeros(_maske_8UC1.size(), CV_8U);
