@@ -342,3 +342,5 @@ healthchecksdb
 /VirtualImageGenerator/.venv
 /VirtualImageGenerator/Result/synthImg
 /VirtualImageGenerator/build
+/VirtualImageGenerator/copy_to_release
+/VirtualImageGenerator/how_to_build.txt
