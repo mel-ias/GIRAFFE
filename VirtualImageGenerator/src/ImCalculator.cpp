@@ -557,7 +557,7 @@ void ImCalculator::calc_distPyramids(float d_min, float d_diff) {
 void ImCalculator::fill_vectors() {
 	// Retrieve vectors from the data manager
 	std::vector<cv::Point2d>* synth2DCoordinates = dataManager->get_pts_synth_2D_double();
-	std::vector<Vek3i>* synth3DColors = dataManager->get_pts_color_RGB_int();
+	std::vector<cv::Scalar>* synth3DColors = dataManager->get_pts_color_RGB_int();
 	std::vector<cv::Point3d>* synth3DCoordinates = dataManager->get_pts_synth_3D_double();
 
 	// Check if vectors have been initialized; if not, exit the function
@@ -588,7 +588,7 @@ void ImCalculator::fill_vectors() {
 			synth3DCoordinates->emplace_back(cv::Point3d((*it)->x, (*it)->y, (*it)->z));
 			// Add RGB color to the vector
 			synth3DColors->emplace_back(
-				Vek3i(
+				cv::Scalar(
 					static_cast<unsigned int>((*it)->color[0]),
 					static_cast<unsigned int>((*it)->color[1]),
 					static_cast<unsigned int>((*it)->color[2])

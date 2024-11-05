@@ -16,7 +16,6 @@
 #include "json.hpp"
 #include "LogfilePrinter.h"
 #include "Utils.h"
-#include "vek.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -109,7 +108,7 @@ public:
 		
 		pts_synth_2D_double = new std::vector<cv::Point2d>;
 		pts_synth_3D_double = new std::vector<cv::Point3d>;
-		pts_color_RGB_int = new std::vector<Vek3i>;
+		pts_color_RGB_int = new std::vector<cv::Scalar>;
 		pointCloud_recolored = new std::vector<Recolored_Point_Cloud>;
 		pts_image_points_2D = new std::vector<cv::Point2d>;
 
@@ -518,7 +517,7 @@ public:
 	// getter point cloud / projected points
 	std::vector<cv::Point2d>* get_pts_synth_2D_double() { return pts_synth_2D_double; }
 	std::vector<cv::Point3d>* get_pts_synth_3D_double() { return pts_synth_3D_double; }
-	std::vector<Vek3i>* get_pts_color_RGB_int() { return pts_color_RGB_int; }
+	std::vector<cv::Scalar>* get_pts_color_RGB_int() { return pts_color_RGB_int; }
 	std::vector<Recolored_Point_Cloud>* get_point_cloud_recolored() { return pointCloud_recolored; }
 
 	// getter/setter utm shift
@@ -645,7 +644,7 @@ private:
 	// -----------------
 	std::vector<cv::Point2d>* pts_synth_2D_double; // for matching
 	std::vector<cv::Point3d>* pts_synth_3D_double; // for matching
-	std::vector<Vek3i>* pts_color_RGB_int; 	// for matching
+	std::vector<cv::Scalar>* pts_color_RGB_int; 	// for matching
 	std::vector<cv::Point2d>* pts_image_points_2D; // water line
 	std::vector<Recolored_Point_Cloud>* pointCloud_recolored; // point cloud colored
 

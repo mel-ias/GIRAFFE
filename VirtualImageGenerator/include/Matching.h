@@ -8,7 +8,6 @@
 #include "Model.h"
 #include "DataManager.h"
 #include "Utils.h"
-#include "vek.h"
 
 #include <algorithm>
 #include <thread>

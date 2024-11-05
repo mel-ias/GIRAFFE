@@ -22,7 +22,6 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
-#include "vek.h"
 #include <omp.h>
 
 #endif
