@@ -2,6 +2,10 @@
 #define BOUNDINGBOX_H
 
 #include <sstream>
+#include <iostream>
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include "LogFilePrinter.h"
 
 #ifndef _CRT_SECURE_NO_WARNINGS
@@ -43,7 +47,7 @@ public:
 	 * @param _roll The roll angle (in degrees).
 	 * @param _pitch The pitch angle (in degrees).
 	 */
-	void calculate_rotation_matrix_rzxy(float azimuth, float roll, float pitch);
+	void calculate_rotation_matrix_rzxy(double azimuth, double roll, double pitch);
 
 
 	/**
@@ -78,7 +82,7 @@ public:
 	 *
 	 * @param distance The distance from the camera, defining the new depth of the view frustum.
 	 */
-	void set_frustum_depth(float distance) {
+	void set_frustum_depth(double distance) {
 		d = distance;
 	}
 
@@ -91,7 +95,7 @@ public:
 	 *
 	 * @param half width The horizontal half-width, typically derived from GPS accuracy or frustum width.
 	 */
-	void set_r(float half_width) {
+	void set_r(double half_width) {
 		r = half_width;
 	}
 
@@ -104,7 +108,7 @@ public:
 	 *
 	 * @param half_height The vertical half-height, representing half the vertical extent of the bounding box.
 	 */
-	void set_dh(float half_height) {
+	void set_dh(double half_height) {
 		dh = half_height;
 	}
 
@@ -116,7 +120,7 @@ public:
 	 * @param H Horizontal angle in degrees (must be between 0 and 60 degrees).
 	 * @param V Vertical angle in degrees (must be between 0 and 60 degrees, defaulted to H if invalid).
 	 */
-	void set_view_angles(float H, float V = 0.0f);
+	void set_view_angles(double H, double V = 0.0f);
 
 	/**
 	 * @brief Set the 3x3 rotation matrix in ZXY order.
@@ -130,15 +134,15 @@ public:
 	 *
 	 * @param _Rz A pointer to a 3x3 rotation matrix in column-major order, representing ZXY rotations.
 	 */
-	void set_Rzxy(float* Rz) { Rzxy = Rz; }
+	void set_Rzxy(double* Rz) { Rzxy = Rz; }
 
 
-	float get_xMin()const { return xMin; }
-	float get_xMax()const { return xMax; }
-	float get_yMin()const { return yMin; }
-	float get_yMax()const { return yMax; }
-	float get_zMax()const { return zMax; }
-	float get_zMin()const { return zMin; }
+	double get_xMin()const { return xMin; }
+	double get_xMax()const { return xMax; }
+	double get_yMin()const { return yMin; }
+	double get_yMax()const { return yMax; }
+	double get_zMax()const { return zMax; }
+	double get_zMin()const { return zMin; }
 
 	double get_xmin_World()const { return xMin_world; }
 	double get_ymin_World()const { return yMin_world; }
@@ -147,10 +151,10 @@ public:
 	double get_ymax_World()const { return yMax_world; }
 	double get_zmax_World()const { return zMax_world; }
 	
-	float get_dist() const { return d; }
-	float get_Correction_backward()const { return r / tH; }
+	double get_dist() const { return d; }
+	double get_Correction_backward()const { return r / tH; }
 	
-	float* get_Rzxy() const { return Rzxy; }
+	double* get_Rzxy() const { return Rzxy; }
 	double* get_X0_Cam_World()const { return X0_Cam_World; }
 
 private:
@@ -160,7 +164,7 @@ private:
 	const std::string TAG = "View Frustum:\t";
 
 	// Rotation matrix in ZXY order (column-major)
-	float* Rzxy;
+	double* Rzxy;
 	
 	// Translation vector (camera origin in world coordinates)
 	double* X0_Cam_World;
@@ -171,18 +175,18 @@ private:
 	double zMin_world, zMax_world;
 
 	// Frustum parameters
-	float r;      // Radius (half-width) in local camera system
-	float dh;     // Half-height in local camera system
-	float d;      // Distance from the camera
-	float tV, tH; // Tangent of vertical and horizontal field of view angles to calculate frustum from bounding box
-	float zMin, zMax; // Min and max z values in local camera system
-	float xMin, xMax; // Min and max x values in local camera system
-	float yMin, yMax; // Min and max y values in local camera system
+	double r;      // Radius (half-width) in local camera system
+	double dh;     // Half-height in local camera system
+	double d;      // Distance from the camera
+	double tV, tH; // Tangent of vertical and horizontal field of view angles to calculate frustum from bounding box
+	double zMin, zMax; // Min and max z values in local camera system
+	double xMin, xMax; // Min and max x values in local camera system
+	double yMin, yMax; // Min and max y values in local camera system
 
 	// Trigonometric values for rotation angles
-	float Cz, Sz; // Cosine and sine of azimuth
-	float Cx, Sx; // Cosine and sine of pitch
-	float Cy, Sy; // Cosine and sine of roll
+	double Cz, Sz; // Cosine and sine of azimuth
+	double Cx, Sx; // Cosine and sine of pitch
+	double Cy, Sy; // Cosine and sine of roll
 };
 
 #endif /* BOUNDINGBOX_H */

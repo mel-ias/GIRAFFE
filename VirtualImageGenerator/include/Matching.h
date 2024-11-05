@@ -75,7 +75,7 @@ public:
 		float neighbour_distance_allowed_pointcloud = 2.5); // neighbour distance in pixels
 	
 
-	float space_resection(
+	double space_resection(
 		std::vector<cv::Point3d> &in_matched_object_points, 
 		std::vector<cv::Point2d>& in_matched_image_points_real, 
 		cv::Mat& real_canvas, 

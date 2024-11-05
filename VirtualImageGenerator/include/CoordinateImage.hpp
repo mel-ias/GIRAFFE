@@ -24,7 +24,7 @@ public:
     {
         double x, y, z;    ///< 3D coordinates of the pixel.
         unsigned char color[3]; ///< RGB color values.
-        float xi, yi;      ///< Additional coordinates for image alignment.
+        double xi, yi;      ///< Additional coordinates for image alignment.
 
         /**
          * @brief Default constructor initializing all values to 0.
@@ -47,7 +47,7 @@ public:
          * @param xic Additional coordinate.
          * @param yic Additional coordinate.
          */
-        Coordinate(double xc, double yc, double zc, cv::Point3_<uchar>* colorc, float xic, float yic)
+        Coordinate(double xc, double yc, double zc, cv::Point3_<uchar>* colorc, double xic, double yic)
             : x(xc), y(yc), z(zc), xi(xic), yi(yic)
         {
             color[0] = colorc->x;

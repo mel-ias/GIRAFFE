@@ -13,13 +13,13 @@
 
 #include "opencv2\opencv.hpp"
 
-//#include "BoundingBox.hpp"
-//#include "CoordinateImage.hpp"
 #include "json.hpp"
 #include "LogfilePrinter.h"
 #include "Utils.h"
 #include "vek.h"
 
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #ifdef _WIN64
 #include <direct.h>
@@ -45,15 +45,6 @@ struct Recolored_Point_Cloud {
 		point = in_point;
 		color = in_color;
 	}
-
-	cv::Point3d getPoint3d() {
-		return point;
-	}
-
-	cv::Vec3b getColor() {
-		return color;
-	}
-
 };
 
 class DataManager {
@@ -93,18 +84,18 @@ public:
 		view_angle_half_V = 30.0f;
 		
 		// parameters for EOP
-		x0 = 0.0f, y0 = 0.0f, z0 = 0.0f; // translation params: projC
-		shift_x = 0.0f, shift_y = 0.0f, shift_z = 0.0; // shift utm values for better handling
+		_x0 = 0.0f, _y0 = 0.0f, _z0 = 0.0f; // translation params: projC
+		_shift_x = 0.0f, _shift_y = 0.0f, _shift_z = 0.0; // shift utm values for better handling
 		//z_smartphone_height = 1.50; // add height of hand-held smartphone // TODO read this from smartphone application and transfer parameter via json
 		
-		azimuth = roll = pitch = 0.0f; //rotation params: Euler angles
+		_azimuth = _roll = _pitch = 0.0f; //rotation params: Euler angles
 	
 		
 		// thresholds / uncertainity values for point cloud projection
-		thresh_projtPt_distanceToProjC = 2.0f;// 1.0f;
-		thresh_projPt_maxDepthPtCloud = 200.0f;
-		dh = 20.0f;
-		r = 20.0f;
+		_min_dist_to_X0 = 2.0;// 1.0f;
+		_max_dist_to_X0 = 200.0;
+		dh = 20.0;
+		r = 20.0;
 		
 		// --- others ---		
 		filter_matches_ransac_fisheye = 200.0f; // run solvepnoransac to find good image-to-object matches before running spatial resection -> fisheye thresh (should be high cause OCVs solvepnp does not support fisheye cams)
@@ -120,20 +111,14 @@ public:
 		pts_synth_3D_double = new std::vector<cv::Point3d>;
 		pts_color_RGB_int = new std::vector<Vek3i>;
 		pointCloud_recolored = new std::vector<Recolored_Point_Cloud>;
-		pts_waterLine_2D_double = new std::vector<cv::Point2d>;
+		pts_image_points_2D = new std::vector<cv::Point2d>;
 
 		coord_img = nullptr;
 
-		Rxyz = new float[9]; // use only one instance for rotation matrix. for filling, just reference it
-		Rxyz[0] = 1.0f; Rxyz[3] = 0.0f; Rxyz[6] = 0.0f;
-		Rxyz[1] = 0.0f; Rxyz[4] = 1.0f; Rxyz[7] = 0.0f;
-		Rxyz[2] = 0.0f; Rxyz[5] = 0.0f; Rxyz[8] = 1.0f;
-
-		projCenter_Corr = cv::Point3d();
-		eulerAngles_Corr = cv::Vec3f();
-		focal_length_Corr = 0.0f;
-		principle_point_Corr = cv::Point2d();
-
+		_rotM = new double[9]; // use only one instance for rotation matrix. for filling, just reference it
+		_rotM[0] = 1.0f; _rotM[3] = 0.0f; _rotM[6] = 0.0f;
+		_rotM[1] = 0.0f; _rotM[4] = 1.0f; _rotM[7] = 0.0f;
+		_rotM[2] = 0.0f; _rotM[5] = 0.0f; _rotM[8] = 1.0f;
 
 		// bools
 		well_distributed_object_points_3D_space = false; // check if distribution of object points is sufficient to refine cameras intrinsics
@@ -144,12 +129,12 @@ public:
 	// D'tor
 	~DataManager() {
 		if (pointCloud_recolored != nullptr) { delete pointCloud_recolored; }
-		if (pts_waterLine_2D_double != nullptr) { delete pts_waterLine_2D_double; }
+		if (pts_image_points_2D != nullptr) { delete pts_image_points_2D; }
 		if (coord_img != nullptr) { delete coord_img; }
 		if (pts_synth_2D_double != nullptr) { delete pts_synth_2D_double; }
 		if (pts_synth_3D_double != nullptr) { delete pts_synth_3D_double; }
 		if (pts_color_RGB_int != nullptr) { delete pts_color_RGB_int; }
-		if (Rxyz != nullptr) { delete Rxyz; }
+		if (_rotM != nullptr) { delete _rotM; }
 
 		if (boundingBox != nullptr) { delete boundingBox; }	
 	}
@@ -206,88 +191,26 @@ public:
 			log_readJson << "No information about view angle horizontal and/or vertical of camera available" << std::endl;
 
 
-		// get EOP (if exterior orientation is determined and EOP (both, rvec angles and tvec coordinates) are provided in json file)
-		// note: not approximations! final precise values!
-		if (j["rvec"] != nullptr && j["tvec"] != nullptr) {
-			std::string rvec_string = j.at("rvec").get<std::string>();
-			std::string tvec_string = j.at("tvec").get<std::string>();
-
-			double rvec_prev_temp[3], tvec_prev_temp[3];
-			int i = 0;
-			while (i < rvec_string.size()) {
-				if (rvec_string[i] == '[' || rvec_string[i] == ']') {
-					rvec_string.erase(i, 1);
-				}
-				else {
-					i++;
-				}
-			}
-
-			i = 0;
-			while (i < tvec_string.size()) {
-				if (tvec_string[i] == '[' || tvec_string[i] == ']') {
-					tvec_string.erase(i, 1);
-				}
-				else {
-					i++;
-				}
-			}
-
-			std::stringstream rvec_strs(rvec_string), tvec_strs(tvec_string);
-			i = -1;
-			while (rvec_strs.good()) {
-				i++;
-				std::string substr;
-				getline(rvec_strs, substr, ',');
-				rvec_prev_temp[i] = std::stod(substr);
-			}
-
-			i = -1;
-			while (tvec_strs.good()) {
-				i++;
-				std::string substr;
-				getline(tvec_strs, substr, ',');
-				tvec_prev_temp[i] = std::stod(substr);
-			}
-
-			rvecs_prev = cv::Mat::zeros(3, 1, CV_64FC1); // convert to opencv array
-			tvecs_prev = cv::Mat::zeros(3, 1, CV_64FC1); // convert to opencv array
-
-			int element_counter = 0;
-			for (int rows = 0; rows < 3; rows++) { // loop over indexes and assign values
-					rvecs_prev.at<double>(rows, 0) = rvec_prev_temp[element_counter];
-					tvecs_prev.at<double>(rows, 0) = tvec_prev_temp[element_counter];
-					element_counter++;
-			}
-
-			log_readJson << "Set 'rvec' of EOP: " << rvecs_prev << std::endl;
-			log_readJson << "Set 'tvec' of EOP: " << tvecs_prev << std::endl;
-		} 
-		else
-			log_readJson << "No value for 'rvec' & 'tvec' in json." << std::endl;
-
-
 		// read approximate EOP
 		// set projection center + height of hand-held camera position
 		if (j["location_UTM_easting"] != nullptr && j["location_UTM_northing"] != nullptr && j["height"] != nullptr) {
-			x0 = std::stod(j.at("location_UTM_easting").get<std::string>());
-			y0 = std::stod(j.at("location_UTM_northing").get<std::string>());
-			z0 = std::stod(j.at("height").get<std::string>()); 
+			_x0 = std::stod(j.at("location_UTM_easting").get<std::string>());
+			_y0 = std::stod(j.at("location_UTM_northing").get<std::string>());
+			_z0 = std::stod(j.at("height").get<std::string>()); 
 
-			log_readJson << "Set approx. translation val's: 'location_UTM_easting', 'location_UTM_northing', 'height': " << x0 << " [m], " << y0 << " [m], " << z0 << " [m]" << std::endl;
+			log_readJson << "Set approx. translation val's: 'location_UTM_easting', 'location_UTM_northing', 'height': " << _x0 << " [m], " << _y0 << " [m], " << _z0 << " [m]" << std::endl;
 		} 
 		else
 			log_readJson << "No value for 'location_UTM_easting', 'location_UTM_northing', 'height' in json." << std::endl;
 
 
-
 		// set orientation by angles
 		if (j["azimuth"] != nullptr && j["pitch"] != nullptr && j["roll"] != nullptr) {
-			azimuth = std::stof(j.at("azimuth").get<std::string>());
-			pitch = std::stof(j.at("pitch").get<std::string>());
-			roll = std::stof(j.at("roll").get<std::string>());			
+			_azimuth = std::stod(j.at("azimuth").get<std::string>());
+			_pitch = std::stod(j.at("pitch").get<std::string>());
+			_roll = std::stod(j.at("roll").get<std::string>());			
 			
-			log_readJson << "Set approx. rotation val's (Euler angles): 'azimuth': " << azimuth << " [°], 'pitch': " << pitch << " [°], 'roll': " << roll << " [°]" << std::endl;
+			log_readJson << "Set approx. rotation val's (Euler angles): 'azimuth': " << _azimuth << " [°], 'pitch': " << _pitch << " [°], 'roll': " << _roll << " [°]" << std::endl;
 		} 
 		else
 			log_readJson << "No value for 'azimuth', 'pitch', 'roll' in json." << std::endl;
@@ -295,7 +218,7 @@ public:
 	
 		// set pix size /--> use size of smart phone sensor
 		if (j["pixel_size_mm_mean"] != nullptr) {
-			pix_size = std::stof(j.at("pixel_size_mm_mean").get<std::string>()); 
+			pix_size = std::stod(j.at("pixel_size_mm_mean").get<std::string>()); 
 			log_readJson << "Set 'pixel_size_mm_mean': " << pix_size << " [mm]" << std::endl;
 		} 
 		else {
@@ -320,21 +243,21 @@ public:
 
 		// set depth of point cloud. for real not used because of hard definition d = 200 m.
 		if (j["distance"] != nullptr) {
-			thresh_projPt_maxDepthPtCloud = std::stof(j.at("distance").get<std::string>());
-			log_readJson << "Set 'thresh_projPt_maxDepthPtCloud': " << thresh_projPt_maxDepthPtCloud << " [m]" << std::endl;
+			_max_dist_to_X0 = std::stod(j.at("distance").get<std::string>());
+			log_readJson << "Set 'thresh_projPt_maxDepthPtCloud': " << _max_dist_to_X0 << " [m]" << std::endl;
 		}
 		else {
-			log_readJson << "No value for 'distance' in json, set default 'thresh_projPt_maxDepthPtCloud': " << thresh_projPt_maxDepthPtCloud << " [m]" << std::endl;
+			log_readJson << "No value for 'distance' in json, set default 'thresh_projPt_maxDepthPtCloud': " << _max_dist_to_X0 << " [m]" << std::endl;
 		}
 
 
 		// set tolerance value to project points just in a defined area away from the user to avoid e.g. railings or others to be reprojected in the image
 		if (j["tolerance_depth"] != nullptr) {
-			thresh_projtPt_distanceToProjC = std::stof(j.at("tolerance_depth").get<std::string>());	
-			log_readJson << "Set 'thresh_projtPt_distanceToProjC': " << thresh_projtPt_distanceToProjC << " [m]" << std::endl;
+			_min_dist_to_X0 = std::stof(j.at("tolerance_depth").get<std::string>());	
+			log_readJson << "Set 'thresh_projtPt_distanceToProjC': " << _min_dist_to_X0 << " [m]" << std::endl;
 		}
 		else {
-			log_readJson << "No value for 'tolerance depth' in json, Set default 'thresh_projtPt_distanceToProjC': " << thresh_projtPt_distanceToProjC << " [m]" << std::endl;
+			log_readJson << "No value for 'tolerance depth' in json, Set default 'thresh_projtPt_distanceToProjC': " << _min_dist_to_X0 << " [m]" << std::endl;
 		}
 
 
@@ -357,8 +280,8 @@ public:
 			double x, y, z; // z=0
 			char sep;
 			while (inputStream >> x >> sep >> y >> sep >> z)
-				pts_waterLine_2D_double->push_back(cv::Point2d(x, y));
-			log_readJson << "Get 2D water line from path. Number of image points: " << pts_waterLine_2D_double->size() << std::endl;
+				pts_image_points_2D->push_back(cv::Point2d(x, y));
+			log_readJson << "Get 2D water line from path. Number of image points: " << pts_image_points_2D->size() << std::endl;
 		}
 		else {
 			log_readJson << "No waterline given" << std::endl;
@@ -381,52 +304,52 @@ public:
 
 		// shift the horizontal component of projection centre to x0 = 0 and y = 0 to work with smaller coordinates (more efficient than using UTM values)
 		// save shift values (must be applied to point cloud as well and later to restore original coordinates of 3D water levels) 
-		shift_x = x0;
-		shift_y = y0; 
-		shift_z = z0;
-		x0 -= shift_x;
-		y0 -= shift_y;
-		z0 -= shift_z;
+		_shift_x = _x0;
+		_shift_y = _y0; 
+		_shift_z = _z0;
+		_x0 -= _shift_x;
+		_y0 -= _shift_y;
+		_z0 -= _shift_z;
 		//z0 += z_smartphone_height; // add of camera when smartphone is held by human (default: 1.50 m)
 		
-		log_readJson << "Apply shift_x/shift_y/shift_z to 3D projection centre. Save shift_x/shift_y/shift_z for point cloud translation. shift_x: " << std::fixed << shift_x << " [m], shift_y: " << shift_y << " [m], shift_z: " << shift_z << " [m]" << std::endl; //Use std::fixed floating-point notation for formatting
+		log_readJson << "Apply shift_x/shift_y/shift_z to 3D projection centre. Save shift_x/shift_y/shift_z for point cloud translation. shift_x: " << std::fixed << _shift_x << " [m], shift_y: " << _shift_y << " [m], shift_z: " << _shift_z << " [m]" << std::endl; //Use std::fixed floating-point notation for formatting
 		//log_readJson << "Add height of hand-held smartphone to vertical compontent of projection centre. z_smartphone_height:" << z_smartphone_height << " [m]" << endl; 
-		boundingBox->set_X0_Cam_World(x0, y0, z0); //update bounding box projC
+		boundingBox->set_X0_Cam_World(_x0, _y0, _z0); //update bounding box projC
 
-		boundingBox->calculate_rotation_matrix_rzxy(azimuth, roll, pitch); //update bounding box rotP
+		boundingBox->calculate_rotation_matrix_rzxy(_azimuth, _roll, _pitch); //update bounding box rotP
 		
 		
 
-		const float M_PI = 3.14159265358979323846;   // pi
-		float Cz = static_cast<float>(cos(azimuth * M_PI / 180.0f));
-		float Sz = static_cast<float>(sin(azimuth * M_PI / 180.0f));
 
-		float Cy = static_cast<float>(cos(roll * M_PI / 180.0f));
-		float Sy = static_cast<float>(sin(roll * M_PI / 180.0f));
+		float Cz = static_cast<float>(cos(_azimuth * M_PI / 180.0f));
+		float Sz = static_cast<float>(sin(_azimuth * M_PI / 180.0f));
 
-		float Cx = static_cast<float>(cos(pitch * M_PI / 180.0f));
-		float Sx = static_cast<float>(sin(pitch * M_PI / 180.0f));
+		float Cy = static_cast<float>(cos(_roll * M_PI / 180.0f));
+		float Sy = static_cast<float>(sin(_roll * M_PI / 180.0f));
+
+		float Cx = static_cast<float>(cos(_pitch * M_PI / 180.0f));
+		float Sx = static_cast<float>(sin(_pitch * M_PI / 180.0f));
 
 		// Rxyz, performs 3 rotations in order of Rz (azi), Ry (roll) then Rx (pitch).
 		// determine left axis [x, pitch]	determine up axis [y, roll]		determine forward axis [z, Azimuth]	
-		Rxyz[0] = Cy * Cz;						Rxyz[3] = -Cy * Sz;					Rxyz[6] = Sy;
-		Rxyz[1] = Sx * Sy * Cz + Cx * Sz;		Rxyz[4] = -Sx * Sy * Sz + Cx * Cz;	Rxyz[7] = -Sx * Cy;
-		Rxyz[2] = -Cx * Sy * Cz + Sx * Sz;		Rxyz[5] = Cx * Sy * Sz + Sx * Cz;	Rxyz[8] = Cx * Cy;
+		_rotM[0] = Cy * Cz;						_rotM[3] = -Cy * Sz;					_rotM[6] = Sy;
+		_rotM[1] = Sx * Sy * Cz + Cx * Sz;		_rotM[4] = -Sx * Sy * Sz + Cx * Cz;	_rotM[7] = -Sx * Cy;
+		_rotM[2] = -Cx * Sy * Cz + Sx * Sz;		_rotM[5] = Cx * Sy * Sz + Sx * Cz;	_rotM[8] = Cx * Cy;
 
 		logFilePrinter->append(TAG + "DM, RotM:");
-		logFilePrinter->append("\t\t" + std::to_string(Rxyz[0]) + " " + std::to_string(Rxyz[3]) + " " + std::to_string(Rxyz[6]), 4);
-		logFilePrinter->append("\t\t" + std::to_string(Rxyz[1]) + " " + std::to_string(Rxyz[4]) + " " + std::to_string(Rxyz[7]), 4);
-		logFilePrinter->append("\t\t" + std::to_string(Rxyz[2]) + " " + std::to_string(Rxyz[5]) + " " + std::to_string(Rxyz[8]), 4);
+		logFilePrinter->append("\t\t" + std::to_string(_rotM[0]) + " " + std::to_string(_rotM[3]) + " " + std::to_string(_rotM[6]), 4);
+		logFilePrinter->append("\t\t" + std::to_string(_rotM[1]) + " " + std::to_string(_rotM[4]) + " " + std::to_string(_rotM[7]), 4);
+		logFilePrinter->append("\t\t" + std::to_string(_rotM[2]) + " " + std::to_string(_rotM[5]) + " " + std::to_string(_rotM[8]), 4);
 		logFilePrinter->append("");
 		
 			
 
-		log_readJson << "Set projection centre (x0,y0,z0) for BBox calculation: " << x0 << ", " << y0 << ", " << z0 << " [m]" << std::endl;
-		log_readJson << "Set Euler angles (azimuth,roll,pitch) for BBox calculation: " << azimuth << ", " << roll << ", " << pitch << " [°]" << std::endl;
+		log_readJson << "Set projection centre (x0,y0,z0) for BBox calculation: " << _x0 << ", " << _y0 << ", " << _z0 << " [m]" << std::endl;
+		log_readJson << "Set Euler angles (azimuth,roll,pitch) for BBox calculation: " << _azimuth << ", " << _roll << ", " << _pitch << " [°]" << std::endl;
 
 
-		boundingBox->set_frustum_depth(thresh_projPt_maxDepthPtCloud); //set max depth of point cloud to be projected
-		log_readJson << "Set max depth for points to be projected from point cloud (thresh_projPt_maxDepthPtCloud) for BBox calculation: " << thresh_projPt_maxDepthPtCloud << " [m]" << std::endl;
+		boundingBox->set_frustum_depth(_max_dist_to_X0); //set max depth of point cloud to be projected
+		log_readJson << "Set max depth for points to be projected from point cloud (thresh_projPt_maxDepthPtCloud) for BBox calculation: " << _max_dist_to_X0 << " [m]" << std::endl;
 
 		// -----
 		// when finished parameter updates --> recalculate bounding box of point cloud to be projected
@@ -591,7 +514,6 @@ public:
 	void set_coordinate_image(int column, int row) { coord_img = new CoordinateImage(column, row); }	// set coordinate image of projected point cloud
 	
 
-
 	// POINT CLOUD MANAGEMENT
 	// getter point cloud / projected points
 	std::vector<cv::Point2d>* get_pts_synth_2D_double() { return pts_synth_2D_double; }
@@ -600,75 +522,41 @@ public:
 	std::vector<Recolored_Point_Cloud>* get_point_cloud_recolored() { return pointCloud_recolored; }
 
 	// getter/setter utm shift
-	double get_shift_x() { return shift_x; }
-	double get_shift_y() { return shift_y; }
-	double get_shift_z() { return shift_z; }
-	void set_shift_x(double x) { shift_x = x; }
-	void set_shift_y(double y) { shift_y = y; }
-	void set_shift_z(double z) { shift_z = z; }
+	double get_shift_x() { return _shift_x; }
+	double get_shift_y() { return _shift_y; }
+	double get_shift_z() { return _shift_z; }
 
 	// getter BoundingBox 
 	BoundingBox* getBoundingBox() { return boundingBox; }
 
-
-	// PARAMETERS	
-
-	std::vector<cv::Point2d>* get_water_line_image_points_2D_ptr() { return pts_waterLine_2D_double; } // get pointer to 2D water line
+	std::vector<cv::Point2d>* get_image_points_2D_ptr() { return pts_image_points_2D; } // get pointer to 2D water line
 
 	// get camera attributes
-	float& get_pixel_size() { return pix_size; }
-	float& getOpeningAngleHorizontal() { return view_angle_half_H; }
-	float& getOpeningAngleVertical() { return view_angle_half_V; }
-	float& getFocalLength() { return principal_distance; }
+	double& get_pixel_size() { return pix_size; }
+	double& getFocalLength() { return principal_distance; }
+	double& getThresholdForPointProjection() { return _min_dist_to_X0; }
 	
-	
-		
-	// get information about projection settings
-	float& getDistance() { return thresh_projPt_maxDepthPtCloud; }
-	float& getDistanceNoise() { return dh; }
-	float& getWidenessNoise() { return r; }
-	float& getThresholdForPointProjection() { return thresh_projtPt_distanceToProjC; }
-	
-	// translation / rotation parameters
-	cv::Mat get_tvecs_prior() {
-		std::stringstream tvec_string; tvec_string << tvecs_prev;
-		logFilePrinter->append(TAG + "Deliver tvecs prior: " + tvec_string.str());
-		return tvecs_prev;
-	}
-	cv::Mat get_rvecs_prior() {
-		std::stringstream rvec_string; rvec_string << rvecs_prev;
-		logFilePrinter->append(TAG + "Deliver rvecs prior: " + rvec_string.str());
-		return rvecs_prev;
-	}
 
-	cv::Point3d getProjectionCenter() { return cv::Point3d(x0, y0, z0); }
+	cv::Point3d getProjectionCenter() { return cv::Point3d(_x0, _y0, _z0); }
 
 	void set_ProjectionCenter(double _x0, double _y0, double _z0) {
-		x0 = _x0;
-		y0 = _y0;
-		z0 = _z0;
-
-		boundingBox->set_X0_Cam_World(x0, y0, z0);
+		_x0 = _x0;
+		_y0 = _y0;
+		_z0 = _z0;
+		boundingBox->set_X0_Cam_World(_x0, _y0, _z0);
 	}
 
-	// get orientation angles
-	float& getAzimuth() { return azimuth; }
-	float& getRoll() { return roll; }
-	float& getPitch() { return pitch; }
-
 	// get rotation matrix
-	float* getRotationMatrix() { return Rxyz; } 
+	double* getRotationMatrix() { return _rotM; } 
 
 	// set rotation matrix [row-major]
 	void set_RotationMatrix(cv::Mat rotM) {
-		Rxyz[0] = rotM.at<double>(0, 0); Rxyz[3] = rotM.at<double>(0, 1); Rxyz[6] = rotM.at<double>(0, 2);
-		Rxyz[1] = rotM.at<double>(1, 0); Rxyz[4] = rotM.at<double>(1, 1); Rxyz[7] = rotM.at<double>(1, 2);
-		Rxyz[2] = rotM.at<double>(2, 0); Rxyz[5] = rotM.at<double>(2, 1); Rxyz[8] = rotM.at<double>(2, 2);
+		_rotM[0] = rotM.at<double>(0, 0); _rotM[3] = rotM.at<double>(0, 1); _rotM[6] = rotM.at<double>(0, 2);
+		_rotM[1] = rotM.at<double>(1, 0); _rotM[4] = rotM.at<double>(1, 1); _rotM[7] = rotM.at<double>(1, 2);
+		_rotM[2] = rotM.at<double>(2, 0); _rotM[5] = rotM.at<double>(2, 1); _rotM[8] = rotM.at<double>(2, 2);
 	}
 
-
-	
-	void set_filter_matches_ransac_fisheye(float val) {
+	void set_filter_matches_ransac_fisheye(double val) {
 		if (val > 0.0) {
 			filter_matches_ransac_fisheye = val;
 		}
@@ -677,9 +565,9 @@ public:
 			filter_matches_ransac_fisheye = 200.0f;
 		}
 	}
-	float get_filter_matches_ransac_fisheye() { return filter_matches_ransac_fisheye; }
+	double get_filter_matches_ransac_fisheye() { return filter_matches_ransac_fisheye; }
 
-	void set_filter_matches_ransac_pinhole(float val) {
+	void set_filter_matches_ransac_pinhole(double val) {
 		if (val > 0.0) {
 			filter_matches_ransac_pinhole = val;
 		}
@@ -688,15 +576,8 @@ public:
 			filter_matches_ransac_pinhole = 8.0f;
 		}
 	}
-	float get_filter_matches_ransac_pinhole() { return filter_matches_ransac_pinhole; }
+	double get_filter_matches_ransac_pinhole() { return filter_matches_ransac_pinhole; }
 
-
-
-	// get/set infos about object point distribution & IO refinement (if or if not!)
-	void set_well_distributed_object_points_3D_space(bool val) { well_distributed_object_points_3D_space = val; }
-	bool get_well_distributed_object_points_3D_space() { return well_distributed_object_points_3D_space; }
-	void set_well_distributed_object_points_image_space(bool val) { well_distributed_object_points_image_space = val; }
-	bool get_well_distributed_object_points_image_space() { return well_distributed_object_points_image_space; }
 	
 	// set path/name to conda env
 	void set_path_conda_env(std::string path) { path_conda_env = path; }
@@ -714,14 +595,7 @@ private:
 	// constants 
 	// ---------
 	const std::string TAG = "DataManager:\t";
-	// D2Net
-	const uint max_edge = 1600; // set local parameters max_edge and max_sum_edges
-	const uint max_sum_edges = 2400; // 2800; // caution! definition from d2net, do better not change (otherwise it will require a lot of VRAM on GPU or the calculation will take a lot of time!)
-
-	// SUPERGLUE
-	const uint max_img_size = 960;
 	
-
 	// paths to directories or files
 	// -----------------------------
 	std::string path_working_directory;
@@ -749,21 +623,18 @@ private:
 
 	// parameters
 	// ----------
-	float pix_size, dh, r, view_angle_half_H, view_angle_half_V, principal_distance; // for IOP
+	double pix_size, dh, r, view_angle_half_H, view_angle_half_V, principal_distance; // for IOP
+	double _x0, _y0, _z0; // for EOP
+	double _shift_x, _shift_y, _shift_z; // enable shift of georeferenced point clouds (utm values very large numbers) 
+	
+	double _azimuth, _roll, _pitch; 
+	double* _rotM;
 
+	double _min_dist_to_X0; // for projection; check if point to be projected is to close to projection centre. use 1 m distance by default 
+	double _max_dist_to_X0; // max depth of point cloud to be projected starting from projection cnetre. use 200 m distance by default
 
-	double x0, y0, z0; // , z_smartphone_height; //for EOP
-	double shift_x, shift_y, shift_z; // enable shift of georeferenced point clouds (utm values very large numbers) 
-	cv::Mat tvecs_prev, rvecs_prev; // in case of previous done exterior orientation determination
-	float azimuth, roll, pitch; 
-	float* Rxyz;
-
-
-	float thresh_projtPt_distanceToProjC; // for projection; check if point to be projected is to close to projection centre. use 1 m distance by default 
-	float thresh_projPt_maxDepthPtCloud; // max depth of point cloud to be projected starting from projection cnetre. use 200 m distance by default
-
-	float filter_matches_ransac_fisheye;
-	float filter_matches_ransac_pinhole;
+	double filter_matches_ransac_fisheye;
+	double filter_matches_ransac_pinhole;
 
 	// objects
 	// -------
@@ -775,21 +646,11 @@ private:
 	std::vector<cv::Point2d>* pts_synth_2D_double; // for matching
 	std::vector<cv::Point3d>* pts_synth_3D_double; // for matching
 	std::vector<Vek3i>* pts_color_RGB_int; 	// for matching
-	std::vector<cv::Point2d>* pts_waterLine_2D_double; // water line
+	std::vector<cv::Point2d>* pts_image_points_2D; // water line
 	std::vector<Recolored_Point_Cloud>* pointCloud_recolored; // point cloud colored
-
-	// calculated IOP and EOP after space resection (solve PnP adjustment)
-	cv::Point3d projCenter_Corr;
-	cv::Vec3f eulerAngles_Corr;
-	double focal_length_Corr;
-	cv::Point2d principle_point_Corr;
 
 	// bools
 	// -----
 	bool well_distributed_object_points_3D_space; // check if distribution of object points is sufficient to refine cameras intrinsics
 	bool well_distributed_object_points_image_space;  // well distributed means: in each quadric of image are matched image points
-
-
 };
-
-

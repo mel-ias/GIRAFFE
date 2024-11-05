@@ -15,7 +15,7 @@ ImCalculator::ImCalculator() {
 	columns = 0;
 	rows = 0;
 	logfile = nullptr;
-	rot_xyz = new float [9];
+	rot_xyz = new double [9];
 	image_plane = new float [4];
 	distMin = 0.0f;
 	distMax = 0.0f;
@@ -63,8 +63,6 @@ void ImCalculator::init(DataManager* _dataManager) {
 	path_directory_ImCalculator = (dataManager->get_path_working_directory() + "\\ImCalculator\\");
 	CreateDirectoryA(LPCSTR(path_directory_ImCalculator.c_str()), NULL);
 	logfile->append(TAG + "created ImCalculator directory: " + path_directory_ImCalculator);
-
-	
 };
 
 
@@ -156,23 +154,23 @@ void ImCalculator::projectPoint(LaserPoint* lp) {
 
 	
 	
-	float dx = lp->_xyz[0]- bb->get_X0_Cam_World()[0]; 
-	float dy = lp->_xyz[1]- bb->get_X0_Cam_World()[1]; 
-	float dz = lp->_xyz[2]- bb->get_X0_Cam_World()[2]; 
-	float x = rot_xyz[0] * dx + rot_xyz[3] * dy + rot_xyz[6] * dz; 
-	float y = rot_xyz[1] * dx + rot_xyz[4] * dy + rot_xyz[7] * dz; 
-	float z = rot_xyz[2] * dx + rot_xyz[5] * dy + rot_xyz[8] * dz; 
+	double dx = lp->_xyz[0]- bb->get_X0_Cam_World()[0]; 
+	double dy = lp->_xyz[1]- bb->get_X0_Cam_World()[1];
+	double dz = lp->_xyz[2]- bb->get_X0_Cam_World()[2];
+	double x = rot_xyz[0] * dx + rot_xyz[3] * dy + rot_xyz[6] * dz;
+	double y = rot_xyz[1] * dx + rot_xyz[4] * dy + rot_xyz[7] * dz;
+	double z = rot_xyz[2] * dx + rot_xyz[5] * dy + rot_xyz[8] * dz;
 
 	
 	// check near and far
 	if (z < dataManager->getThresholdForPointProjection() || z > bb->get_dist()) return;
 	
 	// _ck in mm, Hauptpunkt als Abweichung von ittelpunkt!
-	float u = _ck  * x / z;
-	float v = _ck * y / z;
+	double u = _ck  * x / z;
+	double v = _ck * y / z;
 
-	float column_float = (u - image_plane[0]) / _pixSize;
-	float row_float = (v - image_plane[2]) / _pixSize;
+	double column_float = (u - image_plane[0]) / _pixSize;
+	double row_float = (v - image_plane[2]) / _pixSize;
 	
 	// calc to column and row
 	int column = static_cast<int>(floor(column_float)); // column

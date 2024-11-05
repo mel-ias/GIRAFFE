@@ -367,7 +367,7 @@ int main(int argc, char** argv)
 		tVecObj.push_back(data_manager->getProjectionCenter().y);
 		tVecObj.push_back(data_manager->getProjectionCenter().z);
 
-		float* rotM_ptr = data_manager->getRotationMatrix();		// receive pointer rotation matrix, 9 elements; (row, column)
+		double* rotM_ptr = data_manager->getRotationMatrix();		// receive pointer rotation matrix, 9 elements; (row, column)
 		rMatObj.at<double>(0, 0) = rotM_ptr[0]; rMatObj.at<double>(0, 1) = rotM_ptr[3]; rMatObj.at<double>(0, 2) = rotM_ptr[6];
 		rMatObj.at<double>(1, 0) = rotM_ptr[1]; rMatObj.at<double>(1, 1) = rotM_ptr[4]; rMatObj.at<double>(1, 2) = rotM_ptr[7];
 		rMatObj.at<double>(2, 0) = rotM_ptr[2]; rMatObj.at<double>(2, 1) = rotM_ptr[5]; rMatObj.at<double>(2, 2) = rotM_ptr[8];
@@ -422,7 +422,7 @@ int main(int argc, char** argv)
 					path_matching_out,
 					data_manager->get_true_image(),
 					data_manager->get_synth_image(),
-					*data_manager->get_water_line_image_points_2D_ptr(),
+					*data_manager->get_image_points_2D_ptr(),
 					*data_manager->get_pts_synth_2D_double(),
 					*data_manager->get_pts_synth_3D_double(),
 					matched_object_points,
@@ -667,9 +667,9 @@ int main(int argc, char** argv)
 
 	// 10. projection water line into object space
 	log_printer->append(TAG + "Object_points_size: " + std::to_string((*data_manager->get_pts_synth_3D_double()).size()));
-	log_printer->append(TAG + "Image_points_size: " + std::to_string((*data_manager->get_water_line_image_points_2D_ptr()).size()));
+	log_printer->append(TAG + "Image_points_size: " + std::to_string((*data_manager->get_image_points_2D_ptr()).size()));
 
-	matching->image_points_3D_referencing(*data_manager->get_water_line_image_points_2D_ptr(), *data_manager->get_pts_synth_3D_double(), data_manager->get_true_image(), camera_matrix, dist_coeffs, rMatObj, tVecObj, data_manager->get_shift_x(), data_manager->get_shift_y(), data_manager->get_shift_z(), output_pointcloud, data_manager->get_file_name_image_points());
+	matching->image_points_3D_referencing(*data_manager->get_image_points_2D_ptr(), *data_manager->get_pts_synth_3D_double(), data_manager->get_true_image(), camera_matrix, dist_coeffs, rMatObj, tVecObj, data_manager->get_shift_x(), data_manager->get_shift_y(), data_manager->get_shift_z(), output_pointcloud, data_manager->get_file_name_image_points());
 
 	log_printer->print_content_disk(path + "\\logfile.txt");
 

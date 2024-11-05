@@ -260,7 +260,7 @@ void Matching::loadMatches(
  *
  * @return The reprojection error after calibration or -1 if an error occurs.
  */
- float Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_points,
+ double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_points,
 	 std::vector<cv::Point2d>& in_matched_image_points_real,
 	 cv::Mat& true_image,
 	 double in_pix_size,
@@ -294,7 +294,7 @@ void Matching::loadMatches(
 		 mDataManager->get_filter_matches_ransac_pinhole();
 
 	 std::vector<int> inliers;
-	 float repro_error = -1.0f;
+	 double repro_error = -1.0;
 
 	 // Optional: Set a deterministic random seed to make RANSAC reproducible
 	 cv::theRNG().state = 42;
@@ -379,7 +379,7 @@ void Matching::loadMatches(
 	 for (size_t i = 0; i < image_points_real_ransac.size(); ++i) {
 		 repro_error += cv::norm(image_points_real_ransac[i] - reprojected_points[i]);
 	 }
-	 repro_error /= static_cast<float>(object_points_ransac.size());
+	 repro_error /= object_points_ransac.size();
 
 	 // 10. Ensure rvec and tvec are single-channel
 	 if (rvec.channels() == 3 || tvec.channels() == 3) {
