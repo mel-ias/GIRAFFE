@@ -558,9 +558,9 @@ void ImCalculator::calc_distPyramids(float d_min, float d_diff) {
 
 void ImCalculator::fill_vectors() {
 	// Retrieve vectors from the data manager
-	std::vector<Vek2d>* synth2DCoordinates = dataManager->get_pts_synth_2D_double();
+	std::vector<cv::Point2d>* synth2DCoordinates = dataManager->get_pts_synth_2D_double();
 	std::vector<Vek3i>* synth3DColors = dataManager->get_pts_color_RGB_int();
-	std::vector<Vek3d>* synth3DCoordinates = dataManager->get_pts_synth_3D_double();
+	std::vector<cv::Point3d>* synth3DCoordinates = dataManager->get_pts_synth_3D_double();
 
 	// Check if vectors have been initialized; if not, exit the function
 	if (synth2DCoordinates == nullptr || synth3DColors == nullptr || synth3DCoordinates == nullptr) {
@@ -585,9 +585,9 @@ void ImCalculator::fill_vectors() {
 		// Check if the current pixel coordinate is not null
 		if (*it) { // Using the shared_ptr's conversion to bool
 			// Add 2D coordinates to the vector
-			synth2DCoordinates->emplace_back(Vek2d((*it)->xi, (*it)->yi));
+			synth2DCoordinates->emplace_back(cv::Point2d((*it)->xi, (*it)->yi));
 			// Add 3D coordinates to the vector
-			synth3DCoordinates->emplace_back(Vek3d((*it)->x, (*it)->y, (*it)->z));
+			synth3DCoordinates->emplace_back(cv::Point3d((*it)->x, (*it)->y, (*it)->z));
 			// Add RGB color to the vector
 			synth3DColors->emplace_back(
 				Vek3i(
@@ -627,8 +627,8 @@ void ImCalculator::fill_image(int radius_mask_fill) {
 
 	// set colors and update fillMask
 	for (int i = 0; i < dataManager->get_pts_synth_2D_double()->size(); ++i) {
-		int x = static_cast<int>(dataManager->get_pts_synth_2D_double()->at(i).x());
-		int y = static_cast<int>(dataManager->get_pts_synth_2D_double()->at(i).y());
+		int x = static_cast<int>(dataManager->get_pts_synth_2D_double()->at(i).x);
+		int y = static_cast<int>(dataManager->get_pts_synth_2D_double()->at(i).y);
 
 		if (x >= 0 && x < tempBild.cols && y >= 0 && y < tempBild.rows) {
 			cv::Vec3b color{

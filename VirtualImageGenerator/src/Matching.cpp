@@ -48,10 +48,10 @@ void Matching::init(DataManager* _dataManager) {
  * @param in_neighbour_distance The distance threshold for matching (in pixels).
  */
 void Matching::calculate_nn_synth_key___pts_image_pts(
-        const std::vector<Vek2d>& in_synth_pts_float, // 2D points
-        const std::vector<Vek3d>& in_synth_pts_3D_float, // 3D points
-        const std::vector<Vek2d>& in_synth_keypoints_float,
-        const std::vector<Vek2d>& in_real_keypoints_float,
+        const std::vector<cv::Point2d>& in_synth_pts_float, // 2D points
+        const std::vector<cv::Point3d>& in_synth_pts_3D_float, // 3D points
+        const std::vector<cv::Point2d>& in_synth_keypoints_float,
+        const std::vector<cv::Point2d>& in_real_keypoints_float,
         const cv::Mat& in_real_image,
         const cv::Mat& in_synth_image,
         std::vector<cv::Point2d>& out_matched_image_points_real,
@@ -76,8 +76,8 @@ void Matching::calculate_nn_synth_key___pts_image_pts(
         // Create cv::Mat for the 2D points
         cv::Mat in_synth_pts_mat(in_synth_pts_float.size(), 2, CV_32F);
         for (size_t i = 0; i < in_synth_pts_float.size(); ++i) {
-            in_synth_pts_mat.at<float>(i, 0) = static_cast<float>(in_synth_pts_float[i].x()); // x-coordinate
-            in_synth_pts_mat.at<float>(i, 1) = static_cast<float>(in_synth_pts_float[i].y()); // y-coordinate
+            in_synth_pts_mat.at<float>(i, 0) = static_cast<float>(in_synth_pts_float[i].x); // x-coordinate
+            in_synth_pts_mat.at<float>(i, 1) = static_cast<float>(in_synth_pts_float[i].y); // y-coordinate
         }
 
         // Prepare for KNN search
@@ -92,8 +92,8 @@ void Matching::calculate_nn_synth_key___pts_image_pts(
         for (const auto& p : in_synth_keypoints_float) {
             // Convert 2D keypoint to a format suitable for knnSearch (a row matrix)
             cv::Mat query_point(1, 2, CV_32F);
-            query_point.at<float>(0, 0) = static_cast<float>(p.x());
-            query_point.at<float>(0, 1) = static_cast<float>(p.y());
+            query_point.at<float>(0, 0) = static_cast<float>(p.x);
+            query_point.at<float>(0, 1) = static_cast<float>(p.y);
 
             // Perform KNN search
             std::vector<int> indices(1); // For storing the index of the nearest neighbor
@@ -107,22 +107,22 @@ void Matching::calculate_nn_synth_key___pts_image_pts(
             }
 
             // Push back corresponding synth 2D, real 2D (image points) and synth 3D (object points)
-            out_matched_image_points_synth.push_back(cv::Point2d(in_synth_pts_float[indices[0]].x(), in_synth_pts_float[indices[0]].y()));
-            out_matched_image_points_real.push_back(cv::Point2d(in_real_keypoints_float[counter].x(), in_real_keypoints_float[counter].y()));
-            out_matched_object_points.push_back(cv::Point3d(in_synth_pts_3D_float[indices[0]].x(), in_synth_pts_3D_float[indices[0]].y(), in_synth_pts_3D_float[indices[0]].z()));
+            out_matched_image_points_synth.push_back(cv::Point2d(in_synth_pts_float[indices[0]].x, in_synth_pts_float[indices[0]].y));
+            out_matched_image_points_real.push_back(cv::Point2d(in_real_keypoints_float[counter].x, in_real_keypoints_float[counter].y));
+            out_matched_object_points.push_back(cv::Point3d(in_synth_pts_3D_float[indices[0]].x, in_synth_pts_3D_float[indices[0]].y, in_synth_pts_3D_float[indices[0]].z));
 
             // Output
-            cv::circle(draw_canvas_synth, cv::Point(in_synth_pts_float[indices[0]].x(), in_synth_pts_float[indices[0]].y()), 5, cv::Scalar(0, 0, 255), -1);
-            cv::circle(draw_canvas_synth, cv::Point(p.x(), p.y()), 1, cv::Scalar(0, 255, 0), 3);
-            cv::circle(draw_canvas_real, cv::Point(in_real_keypoints_float[counter].x(), in_real_keypoints_float[counter].y()), 1, cv::Scalar(0, 255, 0), 3);
+            cv::circle(draw_canvas_synth, cv::Point(in_synth_pts_float[indices[0]].x, in_synth_pts_float[indices[0]].y), 5, cv::Scalar(0, 0, 255), -1);
+            cv::circle(draw_canvas_synth, cv::Point(p.x, p.y), 1, cv::Scalar(0, 255, 0), 3);
+            cv::circle(draw_canvas_real, cv::Point(in_real_keypoints_float[counter].x, in_real_keypoints_float[counter].y), 1, cv::Scalar(0, 255, 0), 3);
 
             std::string counterTxt = std::to_string(counter) + "," +
-                std::to_string(in_synth_pts_3D_float[indices[0]].x()) + "," +
-                std::to_string(in_synth_pts_3D_float[indices[0]].y()) + "," +
-                std::to_string(in_synth_pts_3D_float[indices[0]].z());
+                std::to_string(in_synth_pts_3D_float[indices[0]].x) + "," +
+                std::to_string(in_synth_pts_3D_float[indices[0]].y) + "," +
+                std::to_string(in_synth_pts_3D_float[indices[0]].z);
 
-            cv::putText(draw_canvas_real, std::to_string(counter), cv::Point(in_real_keypoints_float[counter].x(), in_real_keypoints_float[counter].y()), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
-            cv::putText(draw_canvas_synth, std::to_string(counter), cv::Point(in_synth_pts_float[indices[0]].x(), in_synth_pts_float[indices[0]].y()), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255));
+            cv::putText(draw_canvas_real, std::to_string(counter), cv::Point(in_real_keypoints_float[counter].x, in_real_keypoints_float[counter].y), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
+            cv::putText(draw_canvas_synth, std::to_string(counter), cv::Point(in_synth_pts_float[indices[0]].x, in_synth_pts_float[indices[0]].y), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255));
 
             counter++; // Increment counter in each case
         }
@@ -144,7 +144,7 @@ void Matching::calculate_nn_synth_key___pts_image_pts(
 
 
 /**
- * @fn	void Matching::loadMatches( std::string in_path_FMatrixOutput, cv::Mat&amp; in_real_image, cv::Mat&amp; in_synth_image, std::vector&lt;cv::Point2d&gt;&amp; in_wl_pts_2D, std::vector&lt;Vek2d&gt;&amp; in_synth_pts_2D, std::vector&lt;Vek3d&gt;&amp; in_synth_pts_3D, std::vector&lt;cv::Point3d&gt;&amp; out_matched_object_points, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_real, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_synth)
+ * @fn	void Matching::loadMatches( std::string in_path_FMatrixOutput, cv::Mat&amp; in_real_image, cv::Mat&amp; in_synth_image, std::vector&lt;cv::Point2d&gt;&amp; in_wl_pts_2D, std::vector&lt;cv::Point2d&gt;&amp; in_synth_pts_2D, std::vector&lt;cv::Point3d&gt;&amp; in_synth_pts_3D, std::vector&lt;cv::Point3d&gt;&amp; out_matched_object_points, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_real, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_synth)
  *
  * @summary	public function read f-inlier matches from SiftGPU (included in Visual SFM console
  * 			application)
@@ -164,8 +164,8 @@ void Matching::loadMatches(
 	cv::Mat& in_real_image,
 	cv::Mat& in_synth_image,
 	std::vector<cv::Point2d>& in_wl_pts_2D,
-	std::vector<Vek2d>& in_synth_pts_2D,
-	std::vector<Vek3d>& in_synth_pts_3D,
+	std::vector<cv::Point2d>& in_synth_pts_2D,
+	std::vector<cv::Point3d>& in_synth_pts_3D,
 	std::vector<cv::Point3d>& out_matched_object_points,
 	std::vector<cv::Point2d>& out_matched_image_points_real,
 	std::vector<cv::Point2d>& out_matched_image_points_synth,
@@ -208,17 +208,12 @@ void Matching::loadMatches(
 
 
 	// data conversion for image matching
-	std::vector<Vek2d> real_matched_pts_Vek2d, synth_matched_pts_Vek2d;
-	for (cv::Point p : real_matched_pts)
-		real_matched_pts_Vek2d.push_back(Vek2d(p.x, p.y));
-
-	for (cv::Point p : synth_matched_pts)
-		synth_matched_pts_Vek2d.push_back(Vek2d(p.x, p.y));
+	
 
 	// --- receive 3D coordinates for all image points 
 	// vectors for matching results in declaration
 	calculate_nn_synth_key___pts_image_pts(
-		in_synth_pts_2D, in_synth_pts_3D, synth_matched_pts_Vek2d, real_matched_pts_Vek2d,
+		in_synth_pts_2D, in_synth_pts_3D, synth_matched_pts, real_matched_pts,
 		in_real_image, in_synth_image,
 		out_matched_image_points_real, out_matched_image_points_synth, out_matched_object_points,
 		neighbour_distance_allowed_pointcloud);
@@ -234,16 +229,10 @@ void Matching::loadMatches(
 	write_corresponding_points_to_file(out_matched_object_points, out_matched_image_points_real, out_matched_image_points_synth);
 
 	// draw matches
-	write_visualization_matches(in_real_image, in_synth_image, real_matched_pts_Vek2d, synth_matched_pts_Vek2d, "matches_2D");
+	write_visualization_matches(in_real_image, in_synth_image, real_matched_pts, synth_matched_pts, "matches_2D");
 
 	// update 02.07.22 because function above do not print inlier matches alone!
-	std::vector<Vek2d> out_matched_image_points_real_Vek2d, out_matched_image_points_synth_Vek2d;
-	for (cv::Point p : out_matched_image_points_real)
-		out_matched_image_points_real_Vek2d.push_back(Vek2d(p.x, p.y));
-
-	for (cv::Point p : out_matched_image_points_synth)
-		out_matched_image_points_synth_Vek2d.push_back(Vek2d(p.x, p.y));
-	write_visualization_matches(in_real_image, in_synth_image, out_matched_image_points_real_Vek2d, out_matched_image_points_synth_Vek2d, "matches_with_3D_val");
+	write_visualization_matches(in_real_image, in_synth_image, out_matched_image_points_real, out_matched_image_points_synth, "matches_with_3D_val");
 
 }
 
@@ -558,7 +547,7 @@ cv::Mat Matching::ransac_test(std::vector<cv::Point2d>& _points1, std::vector<cv
 
 
 
-void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image_points, std::vector<Vek3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y, double shift_z, bool export_pcl, std::string file_name_image_points) {
+void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image_points, std::vector<cv::Point3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y, double shift_z, bool export_pcl, std::string file_name_image_points) {
 
 	std::stringstream log_statistics;
 
@@ -586,20 +575,15 @@ void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image
 		mLogFile->append(TAG + "no image points to reference provided, will only color point cloud");
 	}
 
-	// convert synth_pts_3D to cv::Point3d
-	std::vector<cv::Point3d> synth_pts_3D_cv;
-	for (Vek3d vec : synth_pts_3D) {
-		synth_pts_3D_cv.push_back(cv::Point3d(vec.x(), vec.y(), vec.z()));
-	}
 
 	// Get color and project 2D waterline points to object space using OpenCV's projectPoints
-	Model::ReferencedPoints referenced_points = model.getColorFor(synth_pts_3D_cv, in_image_4_color, point_cloud_color, image_coordinates_color, 1.0, camera_matrix, dist_coeffs, rvec_cc_orig_copy, tvec_cc_orig_copy, input_image_points);
+	Model::ReferencedPoints referenced_points = model.getColorFor(synth_pts_3D, in_image_4_color, point_cloud_color, image_coordinates_color, 1.0, camera_matrix, dist_coeffs, rvec_cc_orig_copy, tvec_cc_orig_copy, input_image_points);
 	
 
 	// Print point cloud if required
 	if (export_pcl) {
 		mLogFile->append(TAG + "---- export 3D point cloud ----");
-		model.export_point_cloud_recolored(mWorkingDirectory, mDataManager->get_name_working_directory(), synth_pts_3D_cv, point_cloud_color, image_coordinates_color, shift_x, shift_y, shift_z);
+		model.export_point_cloud_recolored(mWorkingDirectory, mDataManager->get_name_working_directory(), synth_pts_3D, point_cloud_color, image_coordinates_color, shift_x, shift_y, shift_z);
 	}
 
 	// If projection succeeded, log statistics and export results
@@ -659,7 +643,7 @@ void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image
  * @param[in] in_synth_matches_draw A vector of 2D keypoints from the synthetic image.
  * @param[in] fileName The name of the output file (without extension) where the result will be saved.
  */
-void Matching::write_visualization_matches(cv::Mat& in_real_image, cv::Mat& in_synth_image, std::vector<Vek2d>& in_real_matches_draw, std::vector<Vek2d>& in_synth_matches_draw, std::string fileName) {
+void Matching::write_visualization_matches(cv::Mat& in_real_image, cv::Mat& in_synth_image, std::vector<cv::Point2d>& in_real_matches_draw, std::vector<cv::Point2d>& in_synth_matches_draw, std::string fileName) {
 
 	#ifdef max
 	#undef max
@@ -697,8 +681,8 @@ void Matching::write_visualization_matches(cv::Mat& in_real_image, cv::Mat& in_s
 		cv::Scalar matchColor(0, 0, 255);
 
 		// Extract keypoints from the real and synthetic images
-		cv::Point2d point_real = cv::Point2d(in_real_matches_draw[i].x(), in_real_matches_draw[i].y());
-		cv::Point2d point_synth = cv::Point2d(in_synth_matches_draw[i].x(), in_synth_matches_draw[i].y());
+		cv::Point2d point_real = cv::Point2d(in_real_matches_draw[i].x, in_real_matches_draw[i].y);
+		cv::Point2d point_synth = cv::Point2d(in_synth_matches_draw[i].x, in_synth_matches_draw[i].y);
 		point_synth.x += in_real_image.cols; // Shift synthetic points by real image width for correct positioning
 
 		// Draw circles around the keypoints

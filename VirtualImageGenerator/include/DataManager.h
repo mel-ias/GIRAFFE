@@ -116,8 +116,8 @@ public:
 		boundingBox = new BoundingBox(logFile); // Instantiate BoundingBox to select point cloud part to be projected, provide pointer to logfile
 		coord_img = new CoordinateImage(100,100); // Instantiate CoordinateImage with random width / height
 		
-		pts_synth_2D_double = new std::vector<Vek2d>;
-		pts_synth_3D_double = new std::vector<Vek3d>;
+		pts_synth_2D_double = new std::vector<cv::Point2d>;
+		pts_synth_3D_double = new std::vector<cv::Point3d>;
 		pts_color_RGB_int = new std::vector<Vek3i>;
 		pointCloud_recolored = new std::vector<Recolored_Point_Cloud>;
 		pts_waterLine_2D_double = new std::vector<cv::Point2d>;
@@ -594,8 +594,8 @@ public:
 
 	// POINT CLOUD MANAGEMENT
 	// getter point cloud / projected points
-	std::vector<Vek2d>* get_pts_synth_2D_double() { return pts_synth_2D_double; }
-	std::vector<Vek3d>* get_pts_synth_3D_double() { return pts_synth_3D_double; }
+	std::vector<cv::Point2d>* get_pts_synth_2D_double() { return pts_synth_2D_double; }
+	std::vector<cv::Point3d>* get_pts_synth_3D_double() { return pts_synth_3D_double; }
 	std::vector<Vek3i>* get_pts_color_RGB_int() { return pts_color_RGB_int; }
 	std::vector<Recolored_Point_Cloud>* get_point_cloud_recolored() { return pointCloud_recolored; }
 
@@ -772,8 +772,8 @@ private:
 
 	// vectors with data 
 	// -----------------
-	std::vector<Vek2d>* pts_synth_2D_double; // for matching
-	std::vector<Vek3d>* pts_synth_3D_double; // for matching
+	std::vector<cv::Point2d>* pts_synth_2D_double; // for matching
+	std::vector<cv::Point3d>* pts_synth_3D_double; // for matching
 	std::vector<Vek3i>* pts_color_RGB_int; 	// for matching
 	std::vector<cv::Point2d>* pts_waterLine_2D_double; // water line
 	std::vector<Recolored_Point_Cloud>* pointCloud_recolored; // point cloud colored

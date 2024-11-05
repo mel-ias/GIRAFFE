@@ -13,110 +13,83 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\KDtree_fillImages">
-      <UniqueIdentifier>{8d296379-1f29-46e2-9445-96a56b59f13f}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LaserPoint.h">
+    <ClInclude Include="include\BoundingBox.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PerspectiveImage.h">
+    <ClInclude Include="include\CoordinateImage.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PointLoader.h">
+    <ClInclude Include="include\DataManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ImCalculator.hpp">
+    <ClInclude Include="include\ImCalculator.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BoundingBox.hpp">
+    <ClInclude Include="include\json.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CoordinateImage.hpp">
+    <ClInclude Include="include\LaserPoint.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vek.h">
-      <Filter>Header Files\KDtree_fillImages</Filter>
-    </ClInclude>
-    <ClInclude Include="aabb.h">
-      <Filter>Header Files\KDtree_fillImages</Filter>
-    </ClInclude>
-    <ClInclude Include="tree.h">
-      <Filter>Header Files\KDtree_fillImages</Filter>
-    </ClInclude>
-    <ClInclude Include="kdtree.h">
-      <Filter>Header Files\KDtree_fillImages</Filter>
-    </ClInclude>
-    <ClInclude Include="kdtreeknoten.h">
-      <Filter>Header Files\KDtree_fillImages</Filter>
-    </ClInclude>
-    <ClInclude Include="nachbardaten.h">
-      <Filter>Header Files\KDtree_fillImages</Filter>
-    </ClInclude>
-    <ClInclude Include="fillImages.hpp">
-      <Filter>Header Files\KDtree_fillImages</Filter>
-    </ClInclude>
-    <ClInclude Include="Matching.h">
+    <ClInclude Include="include\LogfilePrinter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Mathematics.h">
+    <ClInclude Include="include\Matching.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DataManager.h">
+    <ClInclude Include="include\Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="json.hpp">
+    <ClInclude Include="include\PerspectiveImage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="stdafx.h">
+    <ClInclude Include="include\PointLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="targetver.h">
+    <ClInclude Include="include\stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LogfilePrinter.h">
+    <ClInclude Include="include\targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Modell_OCV.h">
+    <ClInclude Include="include\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.h">
+    <ClInclude Include="include\vek.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
+    <ClCompile Include="src\BoundingBox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VirtualImageGenerator.cpp">
+    <ClCompile Include="src\CoordinateImage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LaserPoint.cpp">
+    <ClCompile Include="src\ImCalculator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PerspectiveImage.cpp">
+    <ClCompile Include="src\Matching.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PointLoader.cpp">
+    <ClCompile Include="src\Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ImCalculator.cpp">
+    <ClCompile Include="src\PerspectiveImage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BoundingBox.cpp">
+    <ClCompile Include="src\PointLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CoordinateImage.cpp">
+    <ClCompile Include="src\stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Matching.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Modell_OCV.cpp">
+    <ClCompile Include="src\VirtualImageGenerator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
