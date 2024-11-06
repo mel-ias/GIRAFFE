@@ -9,6 +9,10 @@
 #include <cstring>
 #include <iostream>
 #include <sstream>
+#include <cstdlib>
+#include <string>
+
+
 #include <windows.h>
 
 #include "opencv2\opencv.hpp"
@@ -63,22 +67,18 @@ public:
 		logFilePrinter = logFile;
 		path_file_point_cloud = "noPointCloud.bin"; // causes a "not a pw" error
 		path_working_directory = "noDir";
-		name_working_directory = "unknown";
 		path_directory_feature_matching_tool = "noDir";
-		path_file_output_D2Net_matches = "noDir";
-		path_file_output_superglue_matches = "noDir";
 		path_file_output_lightglue_matches = "noDir";
-		path_file_batch_call_jarEllipsoid = "noDir";
-		path_file_batch_call_lightglue = "noDir";
 		path_file_point_cloud = "noFile";
+		path_python_script_lightglue = "noFile";
 
 		// --- from json ---
 		file_name_true_image = "noFileName";
-		file_name_water_line = "noFileName";		
+		_file_name_image_points = "noFileName";		
 
 		// parameters for IOP / about camera
 		principal_distance = 1.0f;
-		pix_size = 0.00089f;
+		_pix_size = 0.00089f;
 		view_angle_half_H = 30.0f;
 		view_angle_half_V = 30.0f;
 		
@@ -119,9 +119,6 @@ public:
 		_rotM[1] = 0.0f; _rotM[4] = 1.0f; _rotM[7] = 0.0f;
 		_rotM[2] = 0.0f; _rotM[5] = 0.0f; _rotM[8] = 1.0f;
 
-		// bools
-		well_distributed_object_points_3D_space = false; // check if distribution of object points is sufficient to refine cameras intrinsics
-		well_distributed_object_points_image_space = false; // well distributed means: in each quadric of image are matched image points
 		
 	}
 
@@ -162,8 +159,8 @@ public:
 	
 		// get file name of water line
 		if (j["waterline_file_name"] != nullptr) {
-			file_name_water_line = j.at("waterline_file_name").get<std::string>();
-			log_readJson << "Set 'file_name' of true image: " << file_name_water_line << std::endl;
+			_file_name_image_points = j.at("waterline_file_name").get<std::string>();
+			log_readJson << "Set 'file_name' of true image: " << _file_name_image_points << std::endl;
 		}
 		else
 			log_readJson << "No value for 'waterline_file_name' in json." << std::endl;
@@ -217,11 +214,11 @@ public:
 	
 		// set pix size /--> use size of smart phone sensor
 		if (j["pixel_size_mm_mean"] != nullptr) {
-			pix_size = std::stod(j.at("pixel_size_mm_mean").get<std::string>()); 
-			log_readJson << "Set 'pixel_size_mm_mean': " << pix_size << " [mm]" << std::endl;
+			_pix_size = std::stod(j.at("pixel_size_mm_mean").get<std::string>()); 
+			log_readJson << "Set 'pixel_size_mm_mean': " << _pix_size << " [mm]" << std::endl;
 		} 
 		else {
-			log_readJson << "No value for 'pixel_size_mm_mean depth' in json, Set default 'pixel_size_mm_mean " << pix_size << " [mm]"  << std::endl;
+			log_readJson << "No value for 'pixel_size_mm_mean depth' in json, Set default 'pixel_size_mm_mean " << _pix_size << " [mm]"  << std::endl;
 		}
 
 		
@@ -273,8 +270,8 @@ public:
 
 
 		// read water line if given
-		if (file_name_water_line != "noFileName") {
-			std::string path_water_line = path_file_json.substr(0, path_file_json.find_last_of("\\/")) + "\\" + file_name_water_line;
+		if (_file_name_image_points != "noFileName") {
+			std::string path_water_line = path_file_json.substr(0, path_file_json.find_last_of("\\/")) + "\\" + _file_name_image_points;
 			std::ifstream inputStream(path_water_line);
 			double x, y, z; // z=0
 			char sep;
@@ -361,91 +358,68 @@ public:
 
 
 
-	
-	bool generate_batch_matching(const cv::Mat& in_true_image, const cv::Mat& in_synth_image) {
+
+
+
+	bool run_lightglue_image_matching(const cv::Mat& in_true_image, const cv::Mat& in_synth_image) {
 		// check true and synth image to match
 		if (in_true_image.empty() || in_synth_image.empty()) {
-			log_generateBatchFile << "cannot generate batch file due to missing images" << std::endl;
+			log_readJson << "cannot run lightglue image matching due to missing images" << std::endl;
 			return false;
 		}
 		else {
-			log_generateBatchFile << "generate batch file to run image matching" << std::endl;
+			log_readJson << "run lightglue image matching" << std::endl;
 		}
 
 		// define file path for matching input data and results 
-		std::string path_directory_myData = (this->get_path_working_directory() + "\\myData\\");
-		CreateDirectoryA(LPCSTR(path_directory_myData.c_str()), NULL); //generate myData directory
+		fs::path path_directory_myData = this->get_path_working_directory() / "myData";
+		fs::create_directory(path_directory_myData); // generate myData directory
 
-		std::string path_file_imagelist_to_match = (path_directory_myData + "image_file_list.txt").c_str(); // generate imageList.txt & bat-file for d2Net
-		std::string path_file_trueImage_to_match = (path_directory_myData + "true_image.jpg").c_str();
-		std::string path_file_synthImage_to_match = (path_directory_myData + "synth_image.jpg").c_str();
-		path_file_output_D2Net_matches = (path_directory_myData + "kpts.txt").c_str();
-		path_file_output_superglue_matches = (path_directory_myData + "kpts.txt").c_str();
-		path_file_output_lightglue_matches = (path_directory_myData + "kpts.txt").c_str();
+		fs::path path_file_imagelist_to_match = path_directory_myData / "image_file_list.txt";
+		fs::path path_file_trueImage_to_match = path_directory_myData / "true_image.jpg";
+		fs::path path_file_synthImage_to_match = path_directory_myData / "synth_image.jpg";
+		this->path_file_output_lightglue_matches = path_directory_myData / "kpts.txt";
 
-		log_generateBatchFile << "path image_file_list.txt: " << path_file_imagelist_to_match << std::endl;
 
 		// write images to myData path
-		cv::imwrite(path_file_trueImage_to_match, in_true_image);
-		cv::imwrite(path_file_synthImage_to_match, in_synth_image);
-		
-
+		cv::imwrite(path_file_trueImage_to_match.string(), in_true_image);
+		cv::imwrite(path_file_synthImage_to_match.string(), in_synth_image);
 
 		// check if image data have been stored 
-		while (Utils::calculateFileSize(path_file_trueImage_to_match) == NULL || Utils::calculateFileSize(path_file_synthImage_to_match) == NULL || Utils::calculateFileSize(path_file_trueImage_to_match) < 1 || Utils::calculateFileSize(path_file_synthImage_to_match) < 1) {
+		while (Utils::calculateFileSize(path_file_trueImage_to_match) == NULL || Utils::calculateFileSize(path_file_synthImage_to_match) == NULL || Utils::calculateFileSize(path_file_trueImage_to_match.string()) < 1 || Utils::calculateFileSize(path_file_synthImage_to_match) < 1) {
 			// do nothing as long as image data have not been stored
 		}
 
-		log_generateBatchFile << "file size real image: " << Utils::calculateFileSize(path_file_trueImage_to_match) << ", file size virtual image: " << Utils::calculateFileSize(path_file_synthImage_to_match) << std::endl;
-		std::cout << "image sizes (true/synth) " << in_true_image.size().width << "," << in_true_image.size().height << in_synth_image.size().width << "," << in_synth_image.size().height << std::endl;
-
-		// open filestreams for 'image_list_file' and batch file 
-		std::ofstream myFileImageList;
-		myFileImageList.open(path_file_imagelist_to_match); // store in WD
+		// open filestream for 'image_list_file'
+		std::ofstream myFileImageList(path_file_imagelist_to_match);
 		myFileImageList << path_file_trueImage_to_match << std::endl;
 		myFileImageList << path_file_synthImage_to_match << std::endl;
-
 		myFileImageList.close();
 
 		while (Utils::calculateFileSize(path_file_imagelist_to_match) == NULL) {
 			// do nothing as long as file is not available
 		}
 
+		// LIGHTGLUE - execute Python script directly
+		std::string python_executable = "python";  // Anpassen je nach Setup (z.B. "python3" oder der Pfad zum Python-Interpreter)
 
-		
-		
-			// LIGHTGLUE
-			// generate batch file 
-			path_file_batch_call_lightglue = (path_directory_feature_matching_tool.substr(0, path_directory_feature_matching_tool.find_last_of("\\/")) + "\\lightglue\\myBatchLightglue.bat").c_str();
-			std::string path_lightglue = (path_directory_feature_matching_tool.substr(0, path_directory_feature_matching_tool.find_last_of("\\/")) + "\\lightglue").c_str();
+		// Übergebe die Pfade und Argumente an das Python-Skript
+		std::string command = python_executable + " " + this->get_path_python_script_lightglue().string() +
+			" --left_image " + path_file_trueImage_to_match.string() +
+			" --right_image " + path_file_synthImage_to_match.string() +
+			" --output_dir " + path_directory_myData.string();
 
+		// run
+		int result = std::system(command.c_str());  // Execute Python script with arguments
 
-			std::ofstream myLightglueBatchFile;
-			myLightglueBatchFile.open(path_file_batch_call_lightglue);
+		if (result != 0) {
+			std::cerr << "Error executing Python script." << std::endl;
+			return false;
+		}
 
-			if (path_conda_env.empty() ) {
-				std::cout << "No path to conda environment given. Return." << std::endl;
-				return false;
-			}
-			else {
-				myLightglueBatchFile << "cd " << path_lightglue
-					<< " &"
-					<< " %windir%\\System32\\cmd.exe /k"
-					<< " " << "\"\"" << path_conda_env << "\""
-					<< " " << "lightglue"
-					<< " " << " & python.exe"
-					<< " " << path_lightglue << "./match_pairs_lightglue.py" //TODO make path to anaconda env generic!<< " --resize " << std::to_string(max_img_size)
-					<< " --left_image " << path_file_trueImage_to_match
-					<< " --right_image " << path_file_synthImage_to_match
-					<< " --output_dir " << path_directory_myData
-					<< " & exit() & cd " << path_directory_myData << "\"" << std::endl;
-				std::cout << "my path to lightglue " << path_file_batch_call_lightglue << std::endl;
-			}
-		
-
+		log_readJson << "Python-based lightglue image matching executed successfully." << std::endl;
+		return true;
 	}
-
-	
 
 
 	// --------
@@ -469,32 +443,39 @@ public:
 			logFilePrinter->append("JSON_Err:\tno errors");
 	}
 
-	void printLogfile_log_generateBatchFile() {
-		std::string line;
-
-		logFilePrinter->append(""); // return one line
-		while (std::getline(log_generateBatchFile, line)) {
-			logFilePrinter->append("GenBatFile:\t" + line);
-		}	
-	}
-
 	// -----------------
 	// GETTERS / SETTERS 
 	// -----------------
 
 	// PATHS
-	std::string get_path_working_directory() { return path_working_directory; }	
-	std::string get_name_working_directory() { return name_working_directory; }
-	std::string get_path_file_pointcloud() { return path_file_point_cloud; }
-	std::string getPathOutputFile_Lightglue() { return path_file_output_lightglue_matches; }
-	std::string getPathBatchFile_Lightglue() { return path_file_batch_call_lightglue; }
-	std::string getExeDirectory() { return path_directory_feature_matching_tool; }
+	fs::path get_path_file_pointcloud() const { return path_file_point_cloud; }
+	fs::path get_path_working_directory() const { return path_working_directory; }
+	fs::path get_path_python_script_lightglue() const { return path_python_script_lightglue; }
+	fs::path get_path_lightglue_kpts() { return path_file_output_lightglue_matches; }
 
-	void set_path_working_directory(std::string path_dir) { path_working_directory = path_dir; }
-	void set_working_directory_name(std::string wD_name) { name_working_directory = wD_name; }
-	void set_path_file_pointcloud(std::string path) { path_file_point_cloud = path; } // get/set path of point cloud used for synthetic image rendering (pointcloud.pw file)
-	void setDirectoryExecutable(std::string value) { path_directory_feature_matching_tool = value; }
 
+	void set_path_working_directory(const fs::path& path_dir) {
+		path_working_directory = path_dir;
+	}
+
+	void set_path_file_pointcloud(const fs::path& path) {
+		path_file_point_cloud = path;
+	}
+
+	void set_path_python_script_lightglue(const fs::path& path_python_lightglue) {
+		path_python_script_lightglue = path_python_lightglue;
+	}
+
+	void setDirectoryExecutable(const fs::path& value) {
+		path_directory_feature_matching_tool = value;
+	}
+
+	// set/get file name of image points file (only file name with extension, not path!)
+	std::string get_file_name_image_points() { return _file_name_image_points; }
+	void set_file_name_image_points(std::string name) { 
+		_file_name_image_points = name; 
+	}
+	
 	
 	// LOGFILE
 	LogFile* getLogFilePrinter() { return logFilePrinter; } // get logfile
@@ -512,7 +493,6 @@ public:
 	void set_true_image(cv::Mat& true_img) { true_img.copyTo(true_image); } //set true image 
 	void set_coordinate_image(int column, int row) { coord_img = new CoordinateImage(column, row); }	// set coordinate image of projected point cloud
 	
-
 	// POINT CLOUD MANAGEMENT
 	// getter point cloud / projected points
 	std::vector<cv::Point2d>* get_pts_synth_2D_double() { return pts_synth_2D_double; }
@@ -521,24 +501,23 @@ public:
 	std::vector<Recolored_Point_Cloud>* get_point_cloud_recolored() { return pointCloud_recolored; }
 
 	// getter/setter utm shift
-	double get_shift_x() { return _shift_x; }
-	double get_shift_y() { return _shift_y; }
-	double get_shift_z() { return _shift_z; }
+	double get_shift_x() const { return _shift_x; }
+	double get_shift_y() const { return _shift_y; }
+	double get_shift_z() const { return _shift_z; }
 
 	// getter BoundingBox 
 	BoundingBox* getBoundingBox() { return boundingBox; }
 
-	std::vector<cv::Point2d>* get_image_points_2D_ptr() { return pts_image_points_2D; } // get pointer to 2D water line
+	// get pointer to image points to be referenced
+	std::vector<cv::Point2d>* get_image_points_2D_ptr() { return pts_image_points_2D; }
 
 	// get camera attributes
-	double& get_pixel_size() { return pix_size; }
-	double& getFocalLength() { return principal_distance; }
-	double& getThresholdForPointProjection() { return _min_dist_to_X0; }
-	
-
+	double& get_pixel_size() { return _pix_size; }
+	double& get_principal_distance() { return principal_distance; }
+	double& get_min_dist_to_X0() { return _min_dist_to_X0; }
 	cv::Point3d getProjectionCenter() { return cv::Point3d(_x0, _y0, _z0); }
 
-	void set_ProjectionCenter(double _x0, double _y0, double _z0) {
+	void set_X0_to_BBox(double _x0, double _y0, double _z0) {
 		_x0 = _x0;
 		_y0 = _y0;
 		_z0 = _z0;
@@ -546,10 +525,10 @@ public:
 	}
 
 	// get rotation matrix
-	double* getRotationMatrix() { return _rotM; } 
+	double* get_rotM() { return _rotM; } 
 
 	// set rotation matrix [row-major]
-	void set_RotationMatrix(cv::Mat rotM) {
+	void set_rotM(cv::Mat rotM) {
 		_rotM[0] = rotM.at<double>(0, 0); _rotM[3] = rotM.at<double>(0, 1); _rotM[6] = rotM.at<double>(0, 2);
 		_rotM[1] = rotM.at<double>(1, 0); _rotM[4] = rotM.at<double>(1, 1); _rotM[7] = rotM.at<double>(1, 2);
 		_rotM[2] = rotM.at<double>(2, 0); _rotM[5] = rotM.at<double>(2, 1); _rotM[8] = rotM.at<double>(2, 2);
@@ -561,10 +540,10 @@ public:
 		}
 		else {
 			logFilePrinter->append("Invalid value for filter_matches_ransac_fisheye threshold. Must be val > 0. Restore default (200.0)");
-			filter_matches_ransac_fisheye = 200.0f;
+			filter_matches_ransac_fisheye = 200.0;
 		}
 	}
-	double get_filter_matches_ransac_fisheye() { return filter_matches_ransac_fisheye; }
+	double get_filter_matches_ransac_fisheye() const { return filter_matches_ransac_fisheye; }
 
 	void set_filter_matches_ransac_pinhole(double val) {
 		if (val > 0.0) {
@@ -572,21 +551,13 @@ public:
 		}
 		else {
 			logFilePrinter->append("Invalid value for filter_matches_ransac_pinhole threshold. Must be val > 0. Restore default (8.0)");
-			filter_matches_ransac_pinhole = 8.0f;
+			filter_matches_ransac_pinhole = 8.0;
 		}
 	}
-	double get_filter_matches_ransac_pinhole() { return filter_matches_ransac_pinhole; }
+	double get_filter_matches_ransac_pinhole() const { return filter_matches_ransac_pinhole; }
 
-	
-	// set path/name to conda env
-	void set_path_conda_env(std::string path) { path_conda_env = path; }
-	void set_name_conda_env(std::string name) { name_conda_env = name; }
-	std::string get_path_conda_env() { return path_conda_env; }
-	std::string get_name_conda_env() { return name_conda_env; }
 
-	// set/get file name of image points file (only file name with extension, not path!)
-	void set_file_name_image_points(std::string name) { file_name_water_line = name; }
-	std::string get_file_name_image_points() { return file_name_water_line; }
+
 
 
 private:
@@ -597,23 +568,17 @@ private:
 	
 	// paths to directories or files
 	// -----------------------------
-	std::string path_working_directory;
-	std::string name_working_directory;
-	std::string path_directory_feature_matching_tool;
-	std::string path_file_point_cloud;
-	std::string path_file_output_D2Net_matches;
-	std::string path_file_output_lightglue_matches;
-	std::string path_file_output_superglue_matches;
-	std::string path_file_batch_call_jarEllipsoid;
-	std::string path_file_batch_call_lightglue;
-	std::string file_name_true_image, file_name_water_line;
-	std::string path_conda_env;
-	std::string name_conda_env;
+	fs::path path_working_directory;
+	fs::path path_file_point_cloud;
+	fs::path path_directory_feature_matching_tool;
+	fs::path path_file_output_lightglue_matches;
+	fs::path path_python_script_lightglue;
+
+	std::string file_name_true_image, _file_name_image_points;
 
 	// logoutput (gesammelt plotten)
 	LogFile* logFilePrinter;
 	std::stringstream log_readJson, log_readJsonErr; 
-	std::stringstream log_generateBatchFile;
 	
 	// image data
 	// ----------
@@ -622,7 +587,7 @@ private:
 
 	// parameters
 	// ----------
-	double pix_size, dh, r, view_angle_half_H, view_angle_half_V, principal_distance; // for IOP
+	double _pix_size, dh, r, view_angle_half_H, view_angle_half_V, principal_distance; // for IOP
 	double _x0, _y0, _z0; // for EOP
 	double _shift_x, _shift_y, _shift_z; // enable shift of georeferenced point clouds (utm values very large numbers) 
 	
@@ -647,9 +612,4 @@ private:
 	std::vector<cv::Scalar>* pts_color_RGB_int; 	// for matching
 	std::vector<cv::Point2d>* pts_image_points_2D; // water line
 	std::vector<Recolored_Point_Cloud>* pointCloud_recolored; // point cloud colored
-
-	// bools
-	// -----
-	bool well_distributed_object_points_3D_space; // check if distribution of object points is sufficient to refine cameras intrinsics
-	bool well_distributed_object_points_image_space;  // well distributed means: in each quadric of image are matched image points
 };

@@ -12,6 +12,9 @@
 #include <fstream>
 #include <iomanip>
 #include <string>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 
 class Model
@@ -94,8 +97,7 @@ public:
 	 * @param shifter_z The amount to shift the Z coordinates of the points.
 	 */
 	void export_point_cloud_recolored(
-		const std::string& workingDirectory,
-		const std::string& wD_name,
+		const fs::path& workingDirectory,
 		const std::vector<cv::Point3d>& point_cloud,
 		const std::vector<cv::Vec3b>& point_cloud_colors,
 		const std::vector<cv::Point2d>& image_coords_colors,

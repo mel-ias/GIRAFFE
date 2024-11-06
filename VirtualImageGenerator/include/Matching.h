@@ -162,7 +162,7 @@ private:
 	// Output functions
 	void write_camera_calibration_statistics(cv::Mat& in_camera_matrix, cv::Mat& in_dist_coeffs, cv::Mat& in_rvec, cv::Mat& in_tvec, cv::Mat& stdDev_In, cv::Mat& stdDev_Ext, cv::Mat& perViewErrors, double in_pix_size);
 	void write_visualization_matches(cv::Mat& canvas_real_image, cv::Mat& canvas_synth_image, std::vector <cv::Point2d>& real_matches_draw, std::vector <cv::Point2d>& synth_matches_draw, std::string fileName);
-	void write_corresponding_points_to_file(std::vector<cv::Point3d>& objectPoints3D, std::vector<cv::Point2d>& imagePoints2D_realImage,	std::vector<cv::Point2d>& imagePoints2D_synthImage);
+	void write_corresponding_points_to_file(const std::vector<cv::Point3d>& object_points_3D, const std::vector<cv::Point2d>& image_points_2D_real, const std::vector<cv::Point2d>& image_points_2D_synth);
 	void write_and_print_log_statistics(std::stringstream& log_statistics) const;
 
 	// constants
@@ -171,7 +171,7 @@ private:
 	// member
 	DataManager *mDataManager;
 	LogFile *mLogFile;
-	std::string mWorkingDirectory;
+	fs::path _working_dir_matching;
 		
 };
 

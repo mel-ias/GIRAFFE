@@ -1,9 +1,6 @@
 
 #include "PerspectiveImage.h"
 
-//#include"DataManager.h"
-
-// code on the base from Scan2Image
 // C'tor
 
 // Initialisierung mit DatenManager
@@ -17,7 +14,7 @@ PerspectiveImage::PerspectiveImage(DataManager* _dataManager) {
 	dataManager = _dataManager;
 	calculator.init(_dataManager);
 
-	pointloader = new PointLoader(_dataManager->get_path_file_pointcloud(), _dataManager); //new PointLoader(path);    
+	pointloader = new PointLoader(_dataManager->get_path_file_pointcloud().string(), _dataManager); //new PointLoader(path);    
 
 	
 }

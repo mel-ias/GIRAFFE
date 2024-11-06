@@ -16,6 +16,8 @@
 #endif
 
 
+namespace fs = std::filesystem;
+
 class Utils {
 
 public:
@@ -65,7 +67,7 @@ public:
 		}
 	}
 
-	static int calculateFileSize(const std::string& path) {
+	static int calculateFileSize(const fs::path& path) {
 		std::ifstream file(path, std::ios::binary | std::ios::ate); // open file as binary
 		if (!file.is_open()) { // check file opening
 			return -1; // file could not be opened, return error code (-1)
@@ -76,9 +78,9 @@ public:
 	}
 
 	// check if file exists (returns either true or false)
-	static bool is_file(const std::string& name) {
-		struct stat buffer;
-		return (stat(name.c_str(), &buffer) == 0);
+	static bool is_file(const fs::path& name) {
+		// Überprüfen, ob der Pfad eine existierende Datei ist
+		return fs::exists(name) && fs::is_regular_file(name);
 	}
 
 	// get working directory

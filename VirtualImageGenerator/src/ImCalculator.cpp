@@ -48,7 +48,7 @@ void ImCalculator::init(DataManager* _dataManager) {
 	next_dists.reserve(3);
 
 	// Settings for camera
-	_ck = dataManager->getFocalLength();
+	_ck = dataManager->get_principal_distance();
 	_imageSize = dataManager->get_size_true_image();
 	_pixSize = dataManager->get_pixel_size();
 	logfile->append(TAG + "received camera parameters (ck, imageSize, pixSize)");
@@ -59,10 +59,12 @@ void ImCalculator::init(DataManager* _dataManager) {
 	logfile->append(TAG + "received realImage, create copy (realImage_copy_orig)");
 
 
-	// create ImCalculator directory
-	path_directory_ImCalculator = (dataManager->get_path_working_directory() + "\\ImCalculator\\");
-	CreateDirectoryA(LPCSTR(path_directory_ImCalculator.c_str()), NULL);
-	logfile->append(TAG + "created ImCalculator directory: " + path_directory_ImCalculator);
+	// Create ImCalculator directory
+	_working_dir_imcalculator = dataManager->get_path_working_directory() / "ImCalculator";
+	if (!fs::exists(_working_dir_imcalculator)) {
+		fs::create_directory(_working_dir_imcalculator);  // Creates the directory if it doesn't exist
+	}
+	logfile->append(TAG + "created ImCalculator directory: " + _working_dir_imcalculator.string());
 };
 
 
@@ -101,21 +103,19 @@ void ImCalculator::saveImages() {
 	_mask = new cv::Mat(_image->rows, _image->cols, CV_8UC1);
 
 	// write dist images and dist pyramids
-	cv::imwrite(path_directory_ImCalculator + "dist_image.png", *_distImage);
+	cv::imwrite(fs::path(_working_dir_imcalculator / "dist_image.png").string(), *_distImage);
 	if (next_dists.size() > 0) {
 		for (unsigned int i = 0; i < next_dists.size(); ++i) {
 			std::string name = "dist_image_p";
 			name += std::to_string(i) + ".png";
-
-			cv::imwrite(path_directory_ImCalculator + name.c_str(), *next_dists[i]);
+			cv::imwrite(fs::path(_working_dir_imcalculator / name).string(), *next_dists[i]);
 		}
 	}
 	
 
 	// save _image if it's already a color image
 	if (_image->depth() == CV_8U) {
-
-		cv::imwrite(path_directory_ImCalculator + dataManager->get_filename_true_image() + "_synth.png", *_image);
+		cv::imwrite(fs::path(_working_dir_imcalculator / (dataManager->get_filename_true_image() + "_synth.png")).string(), *_image);
 		logfile->append(TAG + "saved mask of virtual image rgb");
 		return; // we don't need to calc the gray values as in the next lines
 	}
@@ -134,7 +134,7 @@ void ImCalculator::saveImages() {
 	}
 
 	// save image as *.im.png
-	cv::imwrite(path_directory_ImCalculator + dataManager->get_filename_true_image() + ".png", *_mask);
+	cv::imwrite(fs::path(_working_dir_imcalculator / (dataManager->get_filename_true_image() + ".png")).string(), *_mask);
 	logfile->append(TAG + "saved mask of virtual image intensity");
 
 
@@ -163,7 +163,7 @@ void ImCalculator::projectPoint(LaserPoint* lp) {
 
 	
 	// check near and far
-	if (z < dataManager->getThresholdForPointProjection() || z > bb->get_dist()) return;
+	if (z < dataManager->get_min_dist_to_X0() || z > bb->get_dist()) return;
 	
 	// _ck in mm, Hauptpunkt als Abweichung von ittelpunkt!
 	double u = _ck  * x / z;
@@ -307,7 +307,7 @@ void ImCalculator::calc_image_Plane(float* plane /*,float xbmin, float xbmax, fl
 
 	// take rotation matrix from bounding box. in case of android rot_m, 
 	// rotation matrix is already provided. otherwise rotation matrix would be calculated during json imread
-	rot_xyz = dataManager->getRotationMatrix();
+	rot_xyz = dataManager->get_rotM();
 
 	logfile->append("");
 	logfile->append(TAG + "TVec:");
@@ -367,8 +367,7 @@ void ImCalculator::writeImages() {
 
 	calc_distImage(distMin, distMax, false);
 
-
-	cv::imwrite(path_directory_ImCalculator + "dist_image_orig.png", *_distImage);
+	cv::imwrite	(fs::path(_working_dir_imcalculator / "dist_image_orig.png").string(), *_distImage);
 	logfile->append(TAG + "calc new masks");
 
 
@@ -611,14 +610,7 @@ void ImCalculator::fill_image(int radius_mask_fill) {
 		}
 	}
 
-	cv::imwrite(path_directory_ImCalculator + "maskefill.png", _maske_8UC1);
-
-	/*assert(!punkte.empty());
-	assert(farbenPunkte.size() == punkte.size());
-	assert(!bild.empty());
-	assert(bild.rows > 0 && bild.cols > 0);
-	assert(bild.rows == maske.rows && bild.cols == maske.cols);
-	assert(maske.channels() == 1);*/
+	cv::imwrite(fs::path(_working_dir_imcalculator / "maskefill.png").string(), _maske_8UC1);
 
 	cv::Mat tempBild = _image->clone();
 	cv::Mat fillMask = cv::Mat::zeros(_maske_8UC1.size(), CV_8U);
@@ -692,6 +684,6 @@ void ImCalculator::fill_image(int radius_mask_fill) {
 	tempBild.setTo(cv::Scalar(0, 0, 0), _maske_8UC1 == 0);
 
 	tempBild.copyTo(*_image);
-	cv::imwrite(path_directory_ImCalculator + "filled_image.png", *_image);
+	cv::imwrite(fs::path(_working_dir_imcalculator / "filled_image.png").string(), *_image);
 	logfile->append(TAG + "write filled_image.png");
 }

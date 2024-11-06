@@ -111,8 +111,7 @@ Model::ReferencedPoints Model::getColorFor(std::vector<cv::Point3d>& point_cloud
 
 
 void Model::export_point_cloud_recolored(
-	const std::string& workingDirectory,
-	const std::string& wD_name,
+	const fs::path& workingDirectory,
 	const std::vector<cv::Point3d>& point_cloud,
 	const std::vector<cv::Vec3b>& point_cloud_colors,
 	const std::vector<cv::Point2d>& image_coords_colors,
@@ -120,12 +119,15 @@ void Model::export_point_cloud_recolored(
 	const double shifter_y,
 	const double shifter_z) {
 
+	// Build the full path for the output file
+	fs::path outputFilePath = workingDirectory / "recolored_pcl.txt";
+
 	// Open output file stream
-	std::ofstream outStream(workingDirectory + wD_name + "_pcl.txt");
+	std::ofstream outStream(outputFilePath);
 
 	// Check if the file opened successfully
 	if (!outStream.is_open()) {
-		throw std::runtime_error("Could not open output file for writing.");
+		throw std::runtime_error("Could not open output file for writing: " + outputFilePath.string());
 	}
 
 	// Output point cloud to file with coordinate shifting

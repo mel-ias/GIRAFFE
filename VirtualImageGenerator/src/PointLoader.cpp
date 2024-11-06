@@ -6,9 +6,6 @@
 
 // C'tor
 PointLoader::PointLoader(std::string filename, DataManager* dataManager) {
-    // init variables
-	//my_imc = nullptr;
-	//my_bb = nullptr;
 	logfile = dataManager->getLogFilePrinter();
 	logfile->append(""); // return one line
 	logfile->append(TAG + "Initialisation point loader"); // return one line

@@ -5,7 +5,7 @@
 Matching::Matching() {
 	mDataManager = nullptr;
 	mLogFile = nullptr;
-	mWorkingDirectory = "";
+	_working_dir_matching = "";
 }
 
 Matching::~Matching() {
@@ -22,9 +22,11 @@ void Matching::init(DataManager* _dataManager) {
 	// hand over data manager
 	mDataManager = _dataManager;
 
-	// create working directory .../Matching
-	mWorkingDirectory = (mDataManager->get_path_working_directory() + "\\Matching\\");
-	CreateDirectoryA(LPCSTR(mWorkingDirectory.c_str()), NULL);
+	// Create working directory .../Matching
+	_working_dir_matching = mDataManager->get_path_working_directory() / "Matching";
+	if (!fs::exists(_working_dir_matching)) {
+		fs::create_directory(_working_dir_matching);  // Creates the directory if it doesn't exist
+	}
 
 }
 
@@ -135,8 +137,8 @@ void Matching::calculate_nn_synth_key___pts_image_pts(
         mLogFile->append(TAG + "finish matching");
 
         // Save output images
-        cv::imwrite(mWorkingDirectory + "corresp_points_synth.png", draw_canvas_synth);
-        cv::imwrite(mWorkingDirectory + "corresp_points_real.png", draw_canvas_real);
+		cv::imwrite(fs::path(_working_dir_matching / "corresp_points_synth.png").string(), draw_canvas_synth);
+		cv::imwrite(fs::path(_working_dir_matching / "corresp_points_real.png").string(), draw_canvas_real);
     }
 
 
@@ -583,7 +585,7 @@ void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image
 	// Print point cloud if required
 	if (export_pcl) {
 		mLogFile->append(TAG + "---- export 3D point cloud ----");
-		model.export_point_cloud_recolored(mWorkingDirectory, mDataManager->get_name_working_directory(), synth_pts_3D, point_cloud_color, image_coordinates_color, shift_x, shift_y, shift_z);
+		model.export_point_cloud_recolored(_working_dir_matching, synth_pts_3D, point_cloud_color, image_coordinates_color, shift_x, shift_y, shift_z);
 	}
 
 	// If projection succeeded, log statistics and export results
@@ -601,17 +603,29 @@ void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image
 		for (cv::Point2d p : filtered_data.image_data_projected) {
 			cv::circle(copy_masterimage, p, 4, cv::Scalar(255, 0, 255), -1);
 		}
-		cv::imwrite(mWorkingDirectory + "projected_original_image_points.png", copy_masterimage);
+		cv::imwrite(fs::path(_working_dir_matching / "projected_original_image_points.png").string(), copy_masterimage);
 
-		// Write projected points and IDs to files
-		std::ofstream myfile(mWorkingDirectory + file_name_image_points + "_projected.txt");	
-		for (int i = 0; i < filtered_data.image_data_3D.size(); i++) {
+		// Construct the file path using std::filesystem
+		std::filesystem::path file_path = _working_dir_matching / (file_name_image_points + "_projected.txt");
+
+		// Open the file stream
+		std::ofstream myfile(file_path);
+
+		// Check if the file opened successfully
+		if (!myfile.is_open()) {
+			throw std::runtime_error("Could not open the file: " + file_path.string());
+		}
+
+		// Write projected points and IDs to the file
+		for (size_t i = 0; i < filtered_data.image_data_3D.size(); ++i) {
 			myfile << std::fixed << std::setprecision(4)
 				<< filtered_data.image_data_original_idx[i] << ","
 				<< filtered_data.image_data_3D[i].x + shift_x << ","
 				<< filtered_data.image_data_3D[i].y + shift_y << ","
 				<< filtered_data.image_data_3D[i].z + shift_z << "\n";
 		}
+
+		// Close the file stream
 		myfile.close();
 		mLogFile->append(TAG + "count referenced image points: " + std::to_string(filtered_data.image_data_3D.size()));
 
@@ -694,7 +708,9 @@ void Matching::write_visualization_matches(cv::Mat& in_real_image, cv::Mat& in_s
 	}
 
 	// Save the final image with the drawn matches
-	cv::imwrite(mWorkingDirectory + fileName + ".jpg", matchesImage);
+	cv::imwrite(fs::path(_working_dir_matching / (fileName + ".jpg")).string(), matchesImage);
+
+
 }
 
 
@@ -776,17 +792,25 @@ void Matching::write_camera_calibration_statistics(cv::Mat& in_camera_matrix, cv
  *
  * @param log_statistics A stringstream containing the statistics to be logged.
  */
+
 void Matching::write_and_print_log_statistics(std::stringstream& log_statistics) const {
+	// Construct the file path in a cross-platform way
+	std::filesystem::path statsFilePath = std::filesystem::path(_working_dir_matching) / "image_points_projected_stats.txt";
+
+	// Open the file to store log statistics
+	std::ofstream stats_file(statsFilePath);
+	if (!stats_file) {
+		std::cerr << "Failed to open file: " << statsFilePath << std::endl;
+		return;
+	}
+
 	std::string line;
-	std::ofstream stats_file;
-
-	// Open the output file in the working directory to store log statistics
-	stats_file.open(mWorkingDirectory + "image_points_projected_stats.txt");
-
 	// Iterate through each line of the log statistics stringstream
 	while (std::getline(log_statistics, line)) {
 		// Print each line to the console
 		std::cout << line << std::endl;
+		// Write each line to the file
+		stats_file << line << std::endl;
 	}
 
 	// Close the file stream after writing
@@ -810,59 +834,52 @@ void Matching::write_and_print_log_statistics(std::stringstream& log_statistics)
  * the function will log an error and return without writing the files.
  */
 void Matching::write_corresponding_points_to_file(
-	std::vector<cv::Point3d>& object_points_3D,
-	std::vector<cv::Point2d>& image_points_2D_real,
-	std::vector<cv::Point2d>& image_points_2D_synth)
+	const std::vector<cv::Point3d>& object_points_3D,
+	const std::vector<cv::Point2d>& image_points_2D_real,
+	const std::vector<cv::Point2d>& image_points_2D_synth)
 {
-	// Create output file streams for 3D, 2D real, and 2D synthetic points
-	std::ofstream myfile3D, myfile3D_rrws, myfile2D_real, myfile2D_synth;
+	// Construct paths using std::filesystem
+	std::filesystem::path file3DPath = std::filesystem::path(_working_dir_matching) / "corresp_points_3D.txt";
+	std::filesystem::path file2DRealPath = std::filesystem::path(_working_dir_matching) / "corresp_points_2D_real.txt";
+	std::filesystem::path file2DSynthPath = std::filesystem::path(_working_dir_matching) / "corresp_points_2D_synth.txt";
 
-	// Open files in the working directory for writing
-	myfile3D.open(mWorkingDirectory + "corresp_points_3D.txt");
-	myfile2D_real.open(mWorkingDirectory + "corresp_points_2D_real.txt");
-	myfile2D_synth.open(mWorkingDirectory + "corresp_points_2D_synth.txt");
-
-	// Check if the size of all input vectors is equal; if not, log and return
-	if (object_points_3D.size() != image_points_2D_real.size() ||
-		object_points_3D.size() != image_points_2D_synth.size() ||
-		image_points_2D_real.size() != image_points_2D_synth.size())
-	{
-		mLogFile->append(TAG + "number of 3D & 2D points not matching. return");
+	// Open files and check for success
+	std::ofstream myfile3D(file3DPath), myfile2D_real(file2DRealPath), myfile2D_synth(file2DSynthPath);
+	if (!myfile3D || !myfile2D_real || !myfile2D_synth) {
+		mLogFile->append(TAG + "Failed to open one or more output files. Aborting.");
 		return;
 	}
 
-	// Get the number of elements to process
-	size_t size_vectors = object_points_3D.size();
-
-	// Iterate over the points and write each to its corresponding file
-	for (uint counter = 0; counter < size_vectors; ++counter) {
-		// Write the 3D points to the file (1 is a prefix used in the output format)
-		myfile3D << 1 << " " << counter << " "
-			<< object_points_3D.at(counter).x << " "
-			<< object_points_3D.at(counter).y << " "
-			<< object_points_3D.at(counter).z << std::endl;
-
-		// Write the real 2D points to the file
-		myfile2D_real << 1 << " " << counter << " "
-			<< image_points_2D_real.at(counter).x << " "
-			<< image_points_2D_real.at(counter).y << std::endl;
-
-		// Write the synthetic 2D points to the file
-		myfile2D_synth << 1 << " " << counter << " "
-			<< image_points_2D_synth.at(counter).x << " "
-			<< image_points_2D_synth.at(counter).y << std::endl;
+	// Check if vector sizes are equal
+	if (object_points_3D.size() != image_points_2D_real.size() ||
+		object_points_3D.size() != image_points_2D_synth.size())
+	{
+		mLogFile->append(TAG + "Number of 3D & 2D points do not match. Aborting.");
+		return;
 	}
 
-	// Close the output streams to finalize the files
-	myfile3D.close();
-	myfile2D_real.close();
-	myfile2D_synth.close();
+	// Write each point to its corresponding file
+	for (size_t counter = 0; counter < object_points_3D.size(); ++counter) {
+		// Write 3D points
+		myfile3D << "1 " << counter << " "
+			<< object_points_3D[counter].x << " "
+			<< object_points_3D[counter].y << " "
+			<< object_points_3D[counter].z << std::endl;
 
-	// Log the successful creation of the output files
-	mLogFile->append(TAG + "Have written: corresp_points_3D.txt");
-	mLogFile->append(TAG + "Have written: corresp_points_2D_real.txt");
-	mLogFile->append(TAG + "Have written: corresp_points_2D_synth.txt");
+		// Write real 2D points
+		myfile2D_real << "1 " << counter << " "
+			<< image_points_2D_real[counter].x << " "
+			<< image_points_2D_real[counter].y << std::endl;
 
+		// Write synthetic 2D points
+		myfile2D_synth << "1 " << counter << " "
+			<< image_points_2D_synth[counter].x << " "
+			<< image_points_2D_synth[counter].y << std::endl;
+	}
+
+	// Log success messages
+	mLogFile->append(TAG + "Successfully written: corresp_points_3D.txt");
+	mLogFile->append(TAG + "Successfully written: corresp_points_2D_real.txt");
+	mLogFile->append(TAG + "Successfully written: corresp_points_2D_synth.txt");
 }
-
 

@@ -5,20 +5,30 @@
 #include <stdlib.h>
 #include <cmath>
 #include <cstring>
-#include <iostream>
-#include <sstream>
 #include "PerspectiveImage.h"
 #include "Matching.h"
 #include "json.hpp"
 #include "DataManager.h"
-#include <windows.h>
 #include <ctime>
 #include "LogfilePrinter.h"
+
+#include <iostream>
+#include <string>
 #include <filesystem>
-#include "boost/filesystem.hpp"
+#include <sstream>
+
 #include "Utils.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <limits.h>
+#endif
+
+
 using json = nlohmann::json;
+namespace fs = std::filesystem;
 
 const::std::string NO_TAG = "";
 const::std::string TAG = "Main:\t\t";
@@ -29,6 +39,7 @@ DataManager* data_manager;
 LogFile* log_printer;
 Matching* matching;
 PerspectiveImage* pim;
+
 
 // ToDos
 // TODO -> check distribution image <-> object point correspondences, apply IOP optimization only if point correspondences are well distributed 
@@ -47,19 +58,20 @@ bool output_pointcloud;
 bool fisheye;
 double balance_undist = 0.0;
 
-// https://stackoverflow.com/a/24386991
 template<class T>
 T base_name(T const& path, T const& delims = "/\\")
 {
-	return path.substr(path.find_last_of(delims) + 1);
+	// Verwende std::filesystem, um den Basisnamen zu extrahieren
+	fs::path p(path);
+	return p.filename().string();  // returns the base name (with extension)
 }
+
 template<class T>
 T remove_extension(T const& filename)
 {
-	typename T::size_type const p(filename.find_last_of('.'));
-	return p > 0 && p != T::npos ? filename.substr(0, p) : filename;
+	fs::path p(filename);
+	return p.stem().string(); // returns the filename without extension
 }
-
 
 
 // terminate VIG.exe in case of an error and delete all pointer variables
@@ -79,15 +91,48 @@ int terminate_program(std::string error_message) {
 	return (EXIT_FAILURE);
 }
 
+fs::path get_executable_path() {
+	fs::path exe_path;
+
+#ifdef _WIN32
+	// Windows: Get the executable path using GetModuleFileName
+	char buffer[MAX_PATH];
+	if (GetModuleFileNameA(NULL, buffer, MAX_PATH) != 0) {
+		exe_path = fs::path(buffer).parent_path();
+	}
+	else {
+		std::cerr << "Error getting executable path." << std::endl;
+	}
+#else
+	// Linux/Unix: Get the executable path using /proc/self/exe
+	char buffer[PATH_MAX];
+	ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+	if (len != -1) {
+		buffer[len] = '\0'; // Null-terminate the string
+		exe_path = fs::path(buffer).parent_path();
+	}
+	else {
+		std::cerr << "Error getting executable path." << std::endl;
+	}
+#endif
+
+	return exe_path;
+}
+
+
+
+
 
 
 // read initialisation file
 void read_init_file() {
-	std::string path_init = (data_manager->getExeDirectory().substr(0, data_manager->getExeDirectory().find_last_of("\\/")) + "\\init.json").c_str();
+	fs::path path_init = get_executable_path() / "init.json"; // (data_manager->getExeDirectory().substr(0, data_manager->getExeDirectory().find_last_of("\\/")) + "\\init.json").c_str();
+
+	std::cout << path_init.string() << std::endl;
 
 	//check if init file exists, otherwise quit
 	if (!Utils::is_file(path_init)) {
-		log_printer->append(TAG + "Could not found init.txt. Please check!");
+		log_printer->append(TAG + "Could not found init.json. Please check!");
 	}
 
 	// read init.txt
@@ -167,14 +212,7 @@ void read_init_file() {
 			else {
 				log_printer->append(TAG + " read init.txt, will NOT save true-image-coloured point cloud to disk");
 			}
-		}
-
-		if (j.contains("conda_path")) {
-			std::string path_conda_env = j.at("conda_path").get<std::string>();
-			data_manager->set_path_conda_env(path_conda_env); // 5. set and read json. using dataManager for reading and storage
-			log_printer->append(TAG + " Set path to lightglue venv");
-		}
-		
+		}		
 
 	}
 	catch (const json::parse_error& e) {
@@ -215,85 +253,105 @@ int main(int argc, char** argv)
 	// READ ARGUMENTS ARGV 
 	// -------------------
 	// interpret input arguments from cmd line
-	std::stringstream s;
-	std::string path_file_pointcloudPW, path_file_jsonTxt;
+	
+	fs::path path_file_pointcloudPW, path_file_jsonTxt, path_python_script_lightglue;
+	std::string working_directory_name;
+
 	for (int i = 1; i < argc; ++i) {
 		char check = argv[i][1];
 		switch (check) {
-		case 'i': path_file_pointcloudPW = argv[i + 1];
-			if (argv[i + 1][0] == '"') {
-				int na = path_file_pointcloudPW.find_first_of("\"");
-				int nb = path_file_pointcloudPW.find_last_of("\"");
-				path_file_pointcloudPW = path_file_pointcloudPW.substr(na + 1, nb - na - 1);
+		case 'i':
+			path_file_pointcloudPW = fs::path(argv[++i]);
+
+			if (!fs::exists(path_file_pointcloudPW)) {
+				std::cerr << "Error: Point cloud file does not exist: " << path_file_pointcloudPW << std::endl;
+				return -1;
 			}
 
-			log_printer->append(TAG + "Read ARGV. Set path to point cloud (PW-file): " + path_file_pointcloudPW);
+			log_printer->append(TAG + "Read ARGV. Set path to point cloud (PW-file): " + path_file_pointcloudPW.string());
 			data_manager->set_path_file_pointcloud(path_file_pointcloudPW); // set path point cloud (input)
-
-			i += 1;
 			break;
 
-		case 'j': path_file_jsonTxt = argv[i + 1];
-			if (argv[i + 1][0] == '"') {
-				int na = path_file_jsonTxt.find_first_of("\"");
-				int nb = path_file_jsonTxt.find_last_of("\"");
-				path_file_jsonTxt = path_file_jsonTxt.substr(na + 1, nb - na - 1); // set path of JSON file (jsonTxt)
+		case 'j':
+			path_file_jsonTxt = fs::path(argv[++i]);
+
+			if (!fs::exists(path_file_jsonTxt)) {
+				std::cerr << "Error: JSON file does not exist: " << path_file_jsonTxt << std::endl;
+				return -1;
 			}
 
-			log_printer->append(TAG + "Read ARGV. Set path to json (TXT-file): " + path_file_jsonTxt);
-			data_manager->read_json_file(path_file_jsonTxt); // 5. set and read json. using dataManager for reading and storage 
+			log_printer->append(TAG + "Read ARGV. Set path to json (TXT-file): " + path_file_jsonTxt.string());
+			data_manager->read_json_file(path_file_jsonTxt.string()); // Read JSON file using data_manager
 			log_printer->append(TAG + "Read json file");
-
-			i += 1;
 			break;
+
+		case 'p':
+			path_python_script_lightglue = fs::path(argv[++i]);
+
+			if (!fs::exists(path_python_script_lightglue)) {
+				std::cerr << "Error: Python script file does not exist: " << path_python_script_lightglue << std::endl;
+				return -1;
+			}
+
+			log_printer->append(TAG + "Read ARGV. Set path to python script running lightglue: " + path_python_script_lightglue.string());
+			data_manager->set_path_python_script_lightglue(path_python_script_lightglue);
+			break;
+
+		case 'n':
+			working_directory_name = std::string(argv[++i]);
+
+			// Check if the directory exists using std::filesystem::exists
+			 // Check if the working directory name is empty
+			if (working_directory_name.empty()) {
+				std::cerr << "Error: No working directory name is given." << std::endl;
+				return -1;
+			}
+
+			log_printer->append(TAG + "Read ARGV. Set working directory name to: " + working_directory_name);
+			break;
+
+		default:
+			std::cerr << "Unknown argument: " << argv[i] << std::endl;
+			return -1;
 		}
 	}
 
 
-	// ------------------
-	// SET UP DIRECTORIES
-	// ------------------
-	// create results directory (used for all results of all requests) + working dir using local time stamp as identifier
-	// get path to working directory and script for feature matching
 
-	// get time stamp
-	//char localTime[20];
-	//time_t now = time(0);
-	//strftime(localTime, 20, "%Y-%m-%d_%H-%M-%S", localtime(&now)); // current date/time based on current system
+	// Arbeitsverzeichnis und Ergebnisse-Pfad
+	fs::path path_dir_result = fs::current_path() / "Results";  // results Ordner im aktuellen Arbeitsverzeichnis
+	fs::path path = path_dir_result / working_directory_name;
 
-	//09.08.22 - Update: Use Json-FileName as WorkingDirName
-
-
-
-	std::string wD_name = remove_extension(base_name(path_file_jsonTxt));
-	std::string path_dir_result = Utils::get_working_dir() + "\\" + "Result" + "\\" + wD_name;
-	std::string path(path_dir_result);
-
-	/*
-	 * i starts at 2 as that's what you've hinted at in your question
-	 * and ends before 10 because, well, that seems reasonable.
-	 */
-	 // check if working Dir already exist, if so, re-create one with a number, max allowed: 10
-	uint dirCounter = 0;
-	for (int i = 2; boost::filesystem::exists(path) && i < 10; ++i) {
-		std::stringstream ss;
-		ss << path_dir_result << "(" << i << ")";
-		path = ss.str();
-		dirCounter = i;
+	// Prüfen, ob der Ordner "Results" existiert, falls nicht, erstelle ihn
+	if (!fs::exists(path_dir_result)) {
+		if (!fs::create_directory(path_dir_result)) {
+			std::cerr << "Error: Could not create 'Results' directory!" << std::endl;
+			return 1;
+		}
 	}
 
-	//std::string path_dir_result = Utils::get_working_dir() + "\\" + "Result" + "\\" + remove_extension(base_name(path_file_jsonTxt)) + "\\";
-	if (!boost::filesystem::create_directories(path) || dirCounter == 9)
-		log_printer->append(TAG + "could not create output directory");
-	data_manager->set_path_working_directory(path); // set working directory in dataManager
-	data_manager->set_working_directory_name(wD_name);
+	// Prüfen, ob der Ordner mit wD_name existiert; falls ja, Zähler anfügen
+	int dirCounter = 0;
+	while (fs::exists(path) && dirCounter < 10) {
+		dirCounter++;
+		path = path_dir_result / (working_directory_name + "(" + std::to_string(dirCounter) + ")");
+	}
+
+	// Wenn der Ordner immer noch nicht existiert, erstelle ihn
+	if (!fs::create_directories(path)) {
+		std::cerr << "Error: Could not create output directory!" << std::endl;
+		return 1;
+	}
+
+	// Verzeichnispfade setzen
+	data_manager->set_path_working_directory(path);
 	data_manager->setDirectoryExecutable(argv[0]);
 
-	log_printer->append(TAG + "working dir: " + path);
+	log_printer->append(TAG + "working dir: " + path.string());
 	log_printer->append(TAG + "script dir: " + std::string(argv[0]));
 
 	// ------------------
-	// READ INIT.TXT FILE 
+	// INIT.TXT-DATEI EINLESEN
 	// ------------------
 	std::cout << "before read init file " << std::endl;
 	read_init_file();
@@ -339,16 +397,16 @@ int main(int argc, char** argv)
 		data_manager->get_true_image().copyTo(true_img_4matching);
 		data_manager->get_synth_image().copyTo(synth_img_4matching);
 
-		// c) generate batch call to perfrom image matching (wait command to ensure that batch call has been fully generated)
-		while (!data_manager->generate_batch_matching(true_img_4matching, synth_img_4matching)) {
-			log_printer->append(TAG + "wait for generation batch file for image matching .");
-		};
-		data_manager->printLogfile_log_generateBatchFile(); // print log
+		//// c) generate batch call to perfrom image matching (wait command to ensure that batch call has been fully generated)
+		//while (!data_manager->generate_batch_matching(true_img_4matching, synth_img_4matching)) {
+		//	log_printer->append(TAG + "wait for generation batch file for image matching .");
+		//};
+		//data_manager->printLogfile_log_generateBatchFile(); // print log
 
 
 		// init IO
 		// prepare camera matrix + dist_coeffs using approximations from init file (use of pre-calib cams removed because of diverse camera models; instead use undistorted images)
-		double focal_length_px = data_manager->getFocalLength() / data_manager->get_pixel_size();
+		double focal_length_px = data_manager->get_principal_distance() / data_manager->get_pixel_size();
 		cv::Point2d center = cv::Point2d(data_manager->get_true_image().cols / 2, data_manager->get_true_image().rows / 2); // calc image center for initial principle point				
 		camera_matrix = cv::Mat(3, 3, CV_64FC1);
 		camera_matrix = (cv::Mat_<double>(3, 3) << focal_length_px, 0, center.x, 0, focal_length_px, center.y, 0, 0, 1);
@@ -367,7 +425,7 @@ int main(int argc, char** argv)
 		tVecObj.push_back(data_manager->getProjectionCenter().y);
 		tVecObj.push_back(data_manager->getProjectionCenter().z);
 
-		double* rotM_ptr = data_manager->getRotationMatrix();		// receive pointer rotation matrix, 9 elements; (row, column)
+		double* rotM_ptr = data_manager->get_rotM();		// receive pointer rotation matrix, 9 elements; (row, column)
 		rMatObj.at<double>(0, 0) = rotM_ptr[0]; rMatObj.at<double>(0, 1) = rotM_ptr[3]; rMatObj.at<double>(0, 2) = rotM_ptr[6];
 		rMatObj.at<double>(1, 0) = rotM_ptr[1]; rMatObj.at<double>(1, 1) = rotM_ptr[4]; rMatObj.at<double>(1, 2) = rotM_ptr[7];
 		rMatObj.at<double>(2, 0) = rotM_ptr[2]; rMatObj.at<double>(2, 1) = rotM_ptr[5]; rMatObj.at<double>(2, 2) = rotM_ptr[8];
@@ -397,20 +455,19 @@ int main(int argc, char** argv)
 				"START FEATURE DETECTION / MATCHING : " + "LIGHTGLUE" + "\n" +
 				"-----------------------------------------");
 
-			//VSFM removed because of legacy
-			std::string path_matching_out, path_matching_batch;
-			//double scale_true_img, scale_synth_img;
 			
 			
-			path_matching_batch = data_manager->getPathBatchFile_Lightglue().c_str();
-			path_matching_out = data_manager->getPathOutputFile_Lightglue().c_str();
-			//scale_true_img = data_manager->get_lightglue_scalingFactor_trueImage();
-			//scale_synth_img = data_manager->get_lightglue_scalingFactor_synthImage();
 			
-
+		
 
 			// run external matching tool
-			if (Utils::run_batch_file(path_matching_batch)) {
+			if (data_manager->run_lightglue_image_matching(true_img_4matching, synth_img_4matching)) {
+
+				//path_matching_batch = data_manager->getPathBatchFile_Lightglue().c_str();
+				std::string path_matching_out = data_manager->get_path_lightglue_kpts().string();
+
+				std::cout << "MYYYYYYYYYYYYYYYYYYYYYYYYYPATTTTH " << path_matching_out << std::endl;
+
 				log_printer->append(TAG + "matching successful, read inliers passing fundamental test...");
 
 				// wait until images are saved and path of visual sfm output becomes valid
@@ -468,7 +525,9 @@ int main(int argc, char** argv)
 						camera_matrix_new = cv::getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, data_manager->get_size_true_image(), balance_undist);
 						cv::undistort(data_manager->get_true_image(), undist_true_image, camera_matrix, dist_coeffs);
 					}
-					cv::imwrite(data_manager->get_path_working_directory() + "\\" + "undist_test_" + std::to_string(iteration) + ".png", undist_true_image); // Test out
+					fs::path out_path_undist_img = data_manager->get_path_working_directory() / ("undist_test_" + std::to_string(iteration) + ".png");
+					cv::imwrite(out_path_undist_img.string(), undist_true_image); 
+
 					data_manager->set_true_image(undist_true_image);
 					camera_matrix = camera_matrix_new.clone();
 					dist_coeffs = cv::Mat::zeros(5, 1, CV_64FC1); // camera_matrix is fine but distortion needs to be reset cause there is no distortion anymore
@@ -499,8 +558,8 @@ int main(int argc, char** argv)
 		// convert to get cameraPose
 		//cv::transpose(rMatObj, rMatCam);
 		//tVecCam = -rMatCam * tVecObj;
-		data_manager->set_RotationMatrix(rMatObj);
-		data_manager->set_ProjectionCenter(tVecObj.at<double>(0), tVecObj.at<double>(1), tVecObj.at<double>(2));
+		data_manager->set_rotM(rMatObj);
+		data_manager->set_X0_to_BBox(tVecObj.at<double>(0), tVecObj.at<double>(1), tVecObj.at<double>(2));
 		data_manager->getBoundingBox()->calculate_view_frustum();
 
 		
@@ -634,7 +693,7 @@ int main(int argc, char** argv)
 			const size_t outSize = 5;
 			std::string subfix[outSize] = { "EOP", "IOP_mm", "IOP_px", "dist", "repro"};
 			std::string contentToPrint[outSize] = { out_extr , out_intr_mm , out_intr_px , out_dist , std::to_string(repro_error) };
-			std::string outFnBasic = path + "\\" + seglist.at(0) + "_";
+			std::string outFnBasic = path.string() + "\\" + seglist.at(0) + "_";
 
 			for (int i = 0; i < outSize; i++) {
 				std::ofstream myfile(outFnBasic + subfix[i] + ".txt");
@@ -654,9 +713,8 @@ int main(int argc, char** argv)
 			delete matching;
 
 			// clear wd
-			boost::filesystem::remove_all(data_manager->get_path_working_directory() + "\\myData\\");
-			boost::filesystem::remove_all(data_manager->get_path_working_directory() + "\\Matching\\");
-			boost::filesystem::remove_all(data_manager->get_path_working_directory() + "\\VegetationMask\\");
+			fs::remove_all(data_manager->get_path_working_directory() / "myData");
+			fs::remove_all(data_manager->get_path_working_directory() / "Matching");
 		}
 	}
 
@@ -671,7 +729,7 @@ int main(int argc, char** argv)
 
 	matching->image_points_3D_referencing(*data_manager->get_image_points_2D_ptr(), *data_manager->get_pts_synth_3D_double(), data_manager->get_true_image(), camera_matrix, dist_coeffs, rMatObj, tVecObj, data_manager->get_shift_x(), data_manager->get_shift_y(), data_manager->get_shift_z(), output_pointcloud, data_manager->get_file_name_image_points());
 
-	log_printer->print_content_disk(path + "\\logfile.txt");
+	log_printer->print_content_disk(path.string() + "\\logfile.txt");
 
 
 	// final call destructors

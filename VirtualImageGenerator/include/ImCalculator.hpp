@@ -150,6 +150,6 @@ private:
 	cv::Mat _realImage;// echtes Bild als input
 	cv::Mat _realImage_copy_orig;
 
-	std::string path_directory_ImCalculator;
+	fs::path _working_dir_imcalculator;
 	
 };
