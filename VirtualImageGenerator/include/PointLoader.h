@@ -1,11 +1,13 @@
 #pragma once
 
 #include <iostream>
-#include <fstream>  // Für std::ifstream
+#include <fstream>  // for std::ifstream
 #include <vector>
 #include <thread>
 #include <future>
 #include <mutex>
+#include <cfloat>
+#include <string>
 
 #include "LaserPoint.h"
 #include "ImCalculator.hpp"
@@ -20,45 +22,57 @@
 
 // class to load a pointcloud
 class PointLoader {
-public:
-    // C'tor
-    PointLoader(std::string filename, DataManager* dataManager);
-    // D'tor
+public:    
+
+	/**
+	 * @brief Constructor for the PointLoader class.
+	 * Initializes the PointLoader with a path to the point cloud and sets up logging and shift values.
+	 *
+	 * @param path_pcl Path to the point cloud file.
+	 * @param dataManager Pointer to the DataManager object for logging and accessing shift values.
+	 */
+    PointLoader(std::string path_pcl, DataManager* data_manager);
+
+	/**
+	 * @brief Destructor for the PointLoader class.
+	 * Cleans up resources by deallocating the input stream pointer.
+	 */
     virtual ~PointLoader();
 
-	/*
-	this reads a binary file (stored informations: id x y z intensity)
-	In this method are only read the points to the pointcloud, that are in the visible space.
-	*/
+	/**
+	 * @brief Checks if the point cloud file has a ".pw" extension.
+	 *
+	 * @return True if the file extension is ".pw", false otherwise.
+	 */
+	bool check_filetype_pw();
+
+	/**
+	 * @brief Displays a progress bar in the console for a given percentage.
+	 *
+	 * @param percent The current percentage (0-100) to display in the progress bar.
+	 */
+	void display_progress_bar(int percent);
+
+	/**
+	 * @brief Reads a binary file containing point cloud data, applies filtering and transformations,
+	 *        and projects the points in a multi-threaded manner.
+	 *
+	 * @return int Returns 0 if successful, or -1 if an error occurs.
+	 * @throws std::logic_error If no perspective image or bounding box is found.
+	 */
 	int read_binary_file();
 
-	/*checks, if the input file is a .pw file or not.*/
-	bool check_file();
-
-	void set_imc(ImCalculator *imc){ my_imc=imc; }
-	void set_bb(BoundingBox *bb){ my_bb = bb; }
-
-	void display_progress_bar(int percent);
+	// SETTER
+	void set_imc(ImCalculator* imc) { _imc = imc; }
+	void set_bb(BoundingBox* bb) { _bb = bb; }
 
 private:
    
-	LogFile* logfile;
+	LogFile* logfile; // Pointer to a LogFile object for logging messages and errors.
 	const std::string TAG = "PointLoader:\t";
-	
-	std::string path_point_cloud = "";
-
-    // input file stream
-    std::ifstream* input_stream_ptr;
-
-	/*a pointer to the perspective Image, that would be genrate on the base of this point Loader
-	CAUTION PointLoader don't own this, so don't delete!*/
-	ImCalculator *my_imc = nullptr;
-	
-	// the boundingBox needed to identify which point should be projected ( same as above don't delete !!)
-	BoundingBox *my_bb = nullptr;
-
-	// need DataManager for Shift x,y
-	DataManager *dataManager = nullptr;
-
-	double shift_x, shift_y, shift_z;
+	std::string _path_point_cloud = ""; // File path to the point cloud data to be loaded.
+    std::ifstream* _input_stream; // Pointer to an input file stream used to read binary data from the point cloud file.
+	ImCalculator *_imc = nullptr; // Pointer to the perspective image calculator (ImCalculator) used to project points. Note: PointLoader does not own this pointer, so it should not delete it. Ensure that the object referenced by this pointer is managed elsewhere in the code.
+	BoundingBox *_bb = nullptr; // Pointer to a BoundingBox object that defines the spatial limits for filtering points. Note: PointLoader does not own this pointer, so it should not delete it. The BoundingBox is used to determine which points are projected.
+	double _shift_x, _shift_y, _shift_z; //Shift values for the x, y, and z coordinates, obtained from the DataManager.
 };

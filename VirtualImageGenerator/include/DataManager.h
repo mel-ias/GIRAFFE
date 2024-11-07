@@ -386,7 +386,7 @@ public:
 		cv::imwrite(path_file_synthImage_to_match.string(), in_synth_image);
 
 		// check if image data have been stored 
-		while (Utils::calculateFileSize(path_file_trueImage_to_match) == NULL || Utils::calculateFileSize(path_file_synthImage_to_match) == NULL || Utils::calculateFileSize(path_file_trueImage_to_match.string()) < 1 || Utils::calculateFileSize(path_file_synthImage_to_match) < 1) {
+		while (Utils::calculate_file_size(path_file_trueImage_to_match) == NULL || Utils::calculate_file_size(path_file_synthImage_to_match) == NULL || Utils::calculate_file_size(path_file_trueImage_to_match.string()) < 1 || Utils::calculate_file_size(path_file_synthImage_to_match) < 1) {
 			// do nothing as long as image data have not been stored
 		}
 
@@ -396,7 +396,7 @@ public:
 		myFileImageList << path_file_synthImage_to_match << std::endl;
 		myFileImageList.close();
 
-		while (Utils::calculateFileSize(path_file_imagelist_to_match) == NULL) {
+		while (Utils::calculate_file_size(path_file_imagelist_to_match) == NULL) {
 			// do nothing as long as file is not available
 		}
 
@@ -466,7 +466,7 @@ public:
 		path_python_script_lightglue = path_python_lightglue;
 	}
 
-	void setDirectoryExecutable(const fs::path& value) {
+	void set_directory_executable(const fs::path& value) {
 		path_directory_feature_matching_tool = value;
 	}
 

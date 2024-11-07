@@ -21,69 +21,58 @@ namespace fs = std::filesystem;
 class Utils {
 
 public:
-	
-	// run a batch file
-	// input: path to file.bat
-	// return: true to inform the main that task has been finished
-	static bool run_batch_file(const std::string& path) {
-		if (path.empty()) {
-			throw std::invalid_argument("Path to batch file cannot be empty.");
-		}
-		int ret_code = std::system(path.c_str());
-		if (ret_code != 0) {
-			throw std::runtime_error("Failed to execute batch file. Return code: " + std::to_string(ret_code));
-		}
-		return true;
-	}
-
-	// delete all files within a directory
-	// input: directory to be cleaned
-	static void delete_all_files_dir(const std::string& dir) {
-		namespace fs = std::filesystem;
-		try {
-			if (fs::exists(dir) && fs::is_directory(dir)) {
-				for (const auto& entry : fs::directory_iterator(dir)) {
-					fs::remove_all(entry.path());
-				}
-			}
-		}
-		catch (const fs::filesystem_error& e) {
-			throw std::runtime_error("Error deleting files in directory: " + std::string(e.what()));
-		}
-	}
-
-	// check if directory exists (returns either true or false)
+	/**
+	 * @brief Checks if a directory exists.
+	 *
+	 * @param dir Path to the directory as a string.
+	 * @return True if the directory exists, false otherwise.
+	 */
 	static bool is_dir(const std::string& dir) {
 		struct stat info;
 		const char* path = dir.c_str();
-		if (stat(path, &info) != 0) { // check if `stat` ist successful
+		if (stat(path, &info) != 0) { // check if `stat` is successful
 			return false; // `stat` fails if the directory is not existing
 		}
-		else if (info.st_mode & S_IFDIR) { // dir exists
+		else if (info.st_mode & S_IFDIR) { // directory exists
 			return true;
 		}
-		else { // not a file but something else			
+		else { // Path exists but is not a directory		
 			return false;
 		}
 	}
 
-	static int calculateFileSize(const fs::path& path) {
-		std::ifstream file(path, std::ios::binary | std::ios::ate); // open file as binary
-		if (!file.is_open()) { // check file opening
-			return -1; // file could not be opened, return error code (-1)
+	/**
+	 * @brief Calculates the size of a file in bytes.
+	 *
+	 * @param path Path to the file as a filesystem path.
+	 * @return Size of the file in bytes, or -1 if the file could not be opened.
+	 */
+	static int calculate_file_size(const fs::path& path) {
+		std::ifstream file(path, std::ios::binary | std::ios::ate); // Open file in binary mode at end
+		if (!file.is_open()) { // Check if file was opened
+			return -1; // File could not be opened, return error code (-1)
 		}
-		int size = static_cast<int>(file.tellg()); // `std::ios::ate` put file pointer to the end and allows for file calculation
+		int size = static_cast<int>(file.tellg()); // Get file size by position at end
 		file.close(); // close file
 		return size;
 	}
 
-	// check if file exists (returns either true or false)
+	/**
+	 * @brief Checks if a file exists.
+	 *
+	 * @param name Path to the file as a filesystem path.
+	 * @return True if the file exists, false otherwise.
+	 */
 	static bool is_file(const fs::path& name) {
-		// Überprüfen, ob der Pfad eine existierende Datei ist
-		return fs::exists(name) && fs::is_regular_file(name);
+		return fs::exists(name) && fs::is_regular_file(name); // Check if path is an existing file
 	}
 
-	// get working directory
+	/**
+	 * @brief Retrieves the current working directory as a string.
+	 *
+	 * @return The current working directory.
+	 * @throws std::runtime_error if the working directory cannot be retrieved.
+	 */
 	static std::string get_working_dir() {
 		const size_t buffer_size = 260; // Initial buffer size
 		char buff[buffer_size];
@@ -94,7 +83,7 @@ public:
 		}
 		return std::string(buff);
 #else
-		char* cwd = getcwd(nullptr, 0); // Passing nullptr and 0 lets the system allocate a buffer
+		char* cwd = getcwd(nullptr, 0); // System allocates buffer if nullptr and 0 are passed
 		if (cwd == nullptr) {
 			throw std::runtime_error("Failed to get current working directory");
 		}
@@ -103,27 +92,7 @@ public:
 		return result;
 #endif
 	}
-	
-	// helper function for output, append a string to a text file 
-	// input: file path to txt.file (if file not exists, it will be created), line to be added
-	static void append_line_to_file(const std::string& path, const std::string& line) {
-		std::ofstream file;
-		file.open(path, std::ios::app);
-		if (!file.is_open()) { // check if file was opened
-			throw std::ios_base::failure("Error opening file: " + std::string(std::strerror(errno)));
-		}
-		file.exceptions(file.exceptions() | std::ios::failbit | std::ios::badbit); // exception to catch writing errors
-		try {
-			file << line << std::endl;
-		}
-		catch (const std::ios_base::failure& e) {
-			throw std::ios_base::failure("Error writing to file: " + std::string(e.what()));
-		}
-		file.close(); // close file (optional, d'tor should do this)
-	}
 
 private:
-
-
 
 };

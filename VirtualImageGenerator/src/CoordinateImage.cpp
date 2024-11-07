@@ -1,13 +1,10 @@
 #include "CoordinateImage.hpp"
-#include <iostream>
-#include <stdexcept>  // For std::logic_error
-
 
 CoordinateImage::CoordinateImage(const int width, const int height)
 {
-    pixels = std::vector<std::shared_ptr<Coordinate>>(width * height, nullptr);
-    this->width = width;
-    this->height = height;
+    _pixels = std::vector<std::shared_ptr<Coordinate>>(width * height, nullptr);
+    this->_img_width = width;
+    this->_img_height = height;
 }
 
 
@@ -17,14 +14,14 @@ CoordinateImage::~CoordinateImage() = default;
 CoordinateImage::Coordinate* const CoordinateImage::get_pixel(const int column, const int row)
 {
     validateBounds(column, row);
-    return pixels[row * width + column].get();
+    return _pixels[row * _img_width + column].get();
 }
 
 
 const CoordinateImage::Coordinate* const CoordinateImage::get_pixel(const int column, const int row) const
 {
     validateBounds(column, row);
-    return pixels[row * width + column].get();
+    return _pixels[row * _img_width + column].get();
 }
 
 
@@ -32,7 +29,7 @@ void CoordinateImage::set_pixel(const int column, const int row, const Coordinat
 {
     validateBounds(column, row);
 
-    auto& pix = pixels[row * width + column];
+    auto& pix = _pixels[row * _img_width + column];
     if (!pix) pix = std::make_unique<Coordinate>();
 
     pix->x = c.x;
@@ -51,12 +48,12 @@ void CoordinateImage::set_pixel(const int column, const int row, const Coordinat
 void CoordinateImage::delete_pixel(const int column, const int row)
 {
     validateBounds(column, row);
-    pixels[row * width + column].reset(); // Resets the unique_ptr, automatically deletes
+    _pixels[row * _img_width + column].reset(); // Resets the unique_ptr, automatically deletes
 }
 
 
 void CoordinateImage::validateBounds(const int column, const int row) const
 {
-    if (row < 0 || row >= height || column < 0 || column >= width)
+    if (row < 0 || row >= _img_height || column < 0 || column >= _img_width)
         throw std::logic_error("Index out of bounds in CoordinateImage");
 }

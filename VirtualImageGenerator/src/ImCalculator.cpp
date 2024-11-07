@@ -346,10 +346,10 @@ void ImCalculator::init_images(int column, int row) {
 		int pr = row % scale == 0 ? (row / scale) : (row / scale + 1); // rows in pyramid
 
 		next_dists.push_back(new cv::Mat(pr, pc, CV_8UC3)); 
-		next_dists[i - 1u]->setTo(cv::Scalar(0u, 0u, 0u));
-
+		next_dists[static_cast<size_t>(i - 1)]->setTo(cv::Scalar(0, 0, 0));
+		
 		next_masks.push_back(new cv::Mat(pr, pc, CV_32FC1));
-		next_masks[i - 1u]->setTo(cv::Scalar(-1.0f));
+		next_masks[static_cast<size_t>(i - 1)]->setTo(cv::Scalar(-1.0f));
 
 	}
 
@@ -435,7 +435,8 @@ void ImCalculator::filter_image(float db) {
 		cv::Mat* current_pyr = next_masks[pyr_index];
 
 		if (pyr_index != 0)
-			nextPyr = next_masks[pyr_index - 1];
+			//nextPyr = next_masks[pyr_index - 1];
+			nextPyr = next_masks[static_cast<size_t>(pyr_index - 1)];
 		else
 			nextPyr = _mask;
 
@@ -522,17 +523,20 @@ void ImCalculator::filter_image(float db) {
 	}
 }
 
+
+
+
 /*Calc the color for all distance pyramids*/
 void ImCalculator::calc_distPyramids(float d_min, float d_diff) {
 
 	for (unsigned int p = 1u; p <= next_dists.size(); ++p) {
-		for (int r = 0; r < next_dists[p - 1u]->rows; ++r) {
-			for (int c = 0; c < next_dists[p - 1u]->cols; ++c) {
+		for (int r = 0; r < next_dists[static_cast<size_t>(p - 1u)]->rows; ++r) {
+			for (int c = 0; c < next_dists[static_cast<size_t>(p - 1u)]->cols; ++c) {
 
-				cv::Point3_ <uchar>* pixel = next_dists[p - 1u]->ptr<cv::Point3_<uchar>>(r, c);
+				cv::Point3_ <uchar>* pixel = next_dists[static_cast<size_t>(p - 1u)]->ptr<cv::Point3_<uchar>>(r, c);
 
 				// get distance
-				float d = next_masks[p - 1u]->ptr<float>(r)[c];
+				float d = next_masks[static_cast<size_t>(p - 1u)]->ptr<float>(r)[c];
 				// calc distance between [0..1]
 				// ignore default values
 				if (d > 0) {

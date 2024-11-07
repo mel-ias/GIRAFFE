@@ -1,52 +1,46 @@
 
 #include "PerspectiveImage.h"
 
-// C'tor
 
-// Initialisierung mit DatenManager
 PerspectiveImage::PerspectiveImage(DataManager* _dataManager) { 
-    // init log
+	// Initialize logging
 	logfile = _dataManager->getLogFilePrinter();
-	logfile->append(""); // return one line
-	logfile->append(TAG + "---- initialisation perspective image ----"); // return one line
+	logfile->append(""); // Empty line for log formatting
+	logfile->append(TAG + "---- initialisation perspective image ----"); // Start log for initialization
 
-	// init variables (dataManager, pointloader)
-	dataManager = _dataManager;
-	calculator.init(_dataManager);
+	// Initialize variables, including the DataManager and point loader
+	_data_manager = _dataManager;
+	_calculator.init(_dataManager);
 
-	pointloader = new PointLoader(_dataManager->get_path_file_pointcloud().string(), _dataManager); //new PointLoader(path);    
-
-	
+	// Create the PointLoader with the path from DataManager
+	_point_loader = new PointLoader(_dataManager->get_path_file_pointcloud().string(), _dataManager);  
 }
 
-// D'tor
+
 PerspectiveImage::~PerspectiveImage() {
-	// tidy up
-	delete pointloader;
+	// Clean up dynamically allocated point loader
+	delete _point_loader;
   
 }
 
 
-
-// generates image
-void
-PerspectiveImage::generateImage(){
+void PerspectiveImage::generateImage(){
    	
-	// NUR MATCHING TESTEN!
-	pointloader->set_imc(&calculator); //startet init von imcalculator
-	
-	
-	pointloader->set_bb(dataManager->getBoundingBox()); // bouding box is specified by dataManager
-	calculator.init_Image(dataManager->getBoundingBox()); // bouding box is specified by dataManager
+	// Set up calculator and bounding box for point loader
+	_point_loader->set_imc(&_calculator); // Initializes ImCalculator within point loader
+	_point_loader->set_bb(_data_manager->getBoundingBox()); // Bounding box is specified by DataManager
+	_calculator.init_Image(_data_manager->getBoundingBox()); // Initialize image dimensions based on bounding box
 
-    // read point file
-	pointloader->read_binary_file();
+	// Read points from binary file and project into image
+	_point_loader->read_binary_file(); 
 	
-	calculator.writeImages();
-	calculator.saveImages();
-	calculator.fill_vectors();
-	calculator.fill_image();
+	// Process and save the generated image
+	_calculator.writeImages();
+	_calculator.saveImages();
+	_calculator.fill_vectors();
+	_calculator.fill_image();
 	
-	cv::Mat synthImage = *calculator.getImage();  
-	dataManager->set_synth_image(synthImage);
+	// Set the synthetic image in DataManager for further use
+	cv::Mat synthImage = *_calculator.getImage();  
+	_data_manager->set_synth_image(synthImage);
 }

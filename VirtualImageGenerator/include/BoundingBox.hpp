@@ -83,7 +83,7 @@ public:
 	 * @param distance The distance from the camera, defining the new depth of the view frustum.
 	 */
 	void set_frustum_depth(double distance) {
-		d = distance;
+		_d = distance;
 	}
 
 	/**
@@ -96,7 +96,7 @@ public:
 	 * @param half width The horizontal half-width, typically derived from GPS accuracy or frustum width.
 	 */
 	void set_r(double half_width) {
-		r = half_width;
+		_r = half_width;
 	}
 
 	/**
@@ -109,7 +109,7 @@ public:
 	 * @param half_height The vertical half-height, representing half the vertical extent of the bounding box.
 	 */
 	void set_dh(double half_height) {
-		dh = half_height;
+		_dh = half_height;
 	}
 
 	/**
@@ -134,59 +134,54 @@ public:
 	 *
 	 * @param _Rz A pointer to a 3x3 rotation matrix in column-major order, representing ZXY rotations.
 	 */
-	void set_Rzxy(double* Rz) { Rzxy = Rz; }
+	void set_Rzxy(double* Rz) { _Rzxy = Rz; }
 
 
-	double get_xMin()const { return xMin; }
-	double get_xMax()const { return xMax; }
-	double get_yMin()const { return yMin; }
-	double get_yMax()const { return yMax; }
-	double get_zMax()const { return zMax; }
-	double get_zMin()const { return zMin; }
+	double get_xMin()const { return _xMin; }
+	double get_xMax()const { return _xMax; }
+	double get_yMin()const { return _yMin; }
+	double get_yMax()const { return _yMax; }
+	double get_zMax()const { return _zMax; }
+	double get_zMin()const { return _zMin; }
 
-	double get_xmin_World()const { return xMin_world; }
-	double get_ymin_World()const { return yMin_world; }
-	double get_zmin_World()const { return zMin_world; }
-	double get_xmax_World()const { return xMax_world; }
-	double get_ymax_World()const { return yMax_world; }
-	double get_zmax_World()const { return zMax_world; }
+	double get_xmin_World()const { return _xMin_world; }
+	double get_ymin_World()const { return _yMin_world; }
+	double get_zmin_World()const { return _zMin_world; }
+	double get_xmax_World()const { return _xMax_world; }
+	double get_ymax_World()const { return _yMax_world; }
+	double get_zmax_World()const { return _zMax_world; }
 	
-	double get_dist() const { return d; }
-	double get_Correction_backward()const { return r / tH; }
+	double get_dist() const { return _d; }
+	double get_Correction_backward()const { return _r / _tH; }
 	
-	double* get_Rzxy() const { return Rzxy; }
-	double* get_X0_Cam_World()const { return X0_Cam_World; }
+	double* get_Rzxy() const { return _Rzxy; }
+	double* get_X0_Cam_World()const { return _X0_cam_world; }
 
 private:
 
 	// logger + TAG
-	LogFile* logFilePrinter;
+	LogFile* _logFilePrinter;
 	const std::string TAG = "View Frustum:\t";
 
 	// Rotation matrix in ZXY order (column-major)
-	double* Rzxy;
+	double* _Rzxy;
 	
 	// Translation vector (camera origin in world coordinates)
-	double* X0_Cam_World;
+	double* _X0_cam_world;
 
 	// Frustum extents in world coordinates
-	double xMin_world, xMax_world;
-	double yMin_world, yMax_world;
-	double zMin_world, zMax_world;
+	double _xMin_world, _xMax_world;
+	double _yMin_world, _yMax_world;
+	double _zMin_world, _zMax_world;
 
 	// Frustum parameters
-	double r;      // Radius (half-width) in local camera system
-	double dh;     // Half-height in local camera system
-	double d;      // Distance from the camera
-	double tV, tH; // Tangent of vertical and horizontal field of view angles to calculate frustum from bounding box
-	double zMin, zMax; // Min and max z values in local camera system
-	double xMin, xMax; // Min and max x values in local camera system
-	double yMin, yMax; // Min and max y values in local camera system
-
-	// Trigonometric values for rotation angles
-	double Cz, Sz; // Cosine and sine of azimuth
-	double Cx, Sx; // Cosine and sine of pitch
-	double Cy, Sy; // Cosine and sine of roll
+	double _r;      // Radius (half-width) in local camera system
+	double _dh;     // Half-height in local camera system
+	double _d;      // Distance from the camera
+	double _tV, _tH; // Tangent of vertical and horizontal field of view angles to calculate frustum from bounding box
+	double _zMin, _zMax; // Min and max z values in local camera system
+	double _xMin, _xMax; // Min and max x values in local camera system
+	double _yMin, _yMax; // Min and max y values in local camera system
 };
 
 #endif /* BOUNDINGBOX_H */

@@ -4,8 +4,9 @@
 #include <vector>
 #include <memory> // For std::unique_ptr
 #include <sstream>
-#include <stdexcept>
 #include <cstdint>
+#include <iostream>
+#include <stdexcept>  // For std::logic_error
 #include "opencv2\opencv.hpp"
 
 /**
@@ -22,9 +23,9 @@ public:
      */
     struct Coordinate
     {
-        double x, y, z;    ///< 3D coordinates of the pixel.
-        unsigned char color[3]; ///< RGB color values.
-        double xi, yi;      ///< Additional coordinates for image alignment.
+        double x, y, z; // 3D coordinates of the pixel.
+        unsigned char color[3]; // RGB color values.
+        double xi, yi; // Additional coordinates for image alignment.
 
         /**
          * @brief Default constructor initializing all values to 0.
@@ -143,7 +144,7 @@ public:
      *
      * @return int The width of the image.
      */
-    int getWidth() const { return width; }
+    int getWidth() const { return _img_width; }
 
 
     /**
@@ -151,7 +152,7 @@ public:
      *
      * @return int The height of the image.
      */
-    int getHeight() const { return height; }
+    int getHeight() const { return _img_height; }
 
 
     /**
@@ -159,13 +160,13 @@ public:
      *
      * @return std::vector<std::shared_ptr<Coordinate>> Vector of unique pointers to Coordinate.
      */
-    std::vector<std::shared_ptr<Coordinate>> getPixels() const { return pixels; }
+    std::vector<std::shared_ptr<Coordinate>> getPixels() const { return _pixels; }
 
 private:
-    int width, height; // Image dimensions
-    std::vector<std::shared_ptr<Coordinate>> pixels; // Vector storing unique pointers to Coordinates
+    int _img_width, _img_height; // Image dimensions
+    std::vector<std::shared_ptr<Coordinate>> _pixels; // Vector storing unique pointers to Coordinates
 
-    std::stringstream logfile; // Logfile stream
+    std::stringstream _logfile; // Logfile stream
 
     /**
      * @brief Validates that the given column and row are within bounds.

@@ -26,19 +26,29 @@ public:
 	~Model() = default;  // Destruktor muss jetzt nichts manuell freigeben
 
 
-	struct ReferencedPoints {   // Structure declaration
+	struct ReferencedPoints { 
 		std::vector<cv::Point2d> original_2D_image_pts; 
 		std::vector<cv::Point2d> corresponding_2D_image_pts_from_point_cloud;
 		std::vector<cv::Point3d> corresponding_3D_image_pts_from_point_cloud;
-	}; // End the structure with a semicolon
+	}; 
 
 
+	/**
+	 * @brief Finds the nearest neighbor indices in `image_pixels` for each point in `image_points`.
+	 *
+	 * Uses a KD-tree to efficiently locate the nearest neighbor in `image_pixels` for each 2D point
+	 * in `image_points`, based on Euclidean distance. The KD-tree is constructed using FLANN.
+	 *
+	 * @param image_points Vector of 2D points for which nearest neighbors are sought.
+	 * @param image_pixels Vector of 2D points representing the search space.
+	 * @return A vector of indices, each corresponding to the closest point in `image_pixels` for
+	 *         each point in `image_points`.
+	 */
 	std::vector<int> findNearestNeighbors(
 		const std::vector<cv::Point2d>& image_points,
 		const std::vector<cv::Point2d>& image_pixels);
 
 
-	
 	/**
 	 * @brief Projects a point cloud onto an image and retrieves colors from the image.
 	 *
@@ -70,8 +80,8 @@ public:
 		std::vector<cv::Vec3b>& point_cloud_colors,
 		std::vector<cv::Point2d>& image_coords_colors,
 		const bool fix_aspect_ratio,
-		const cv::Mat& cameraMatrix,
-		const cv::Mat& distCoeffs,
+		const cv::Mat& camera_matrix,
+		const cv::Mat& dist_coeffs,
 		const cv::Mat& rvec,
 		const cv::Mat& tvec,
 		const std::vector<cv::Point2d>& image_points);
@@ -97,7 +107,7 @@ public:
 	 * @param shifter_z The amount to shift the Z coordinates of the points.
 	 */
 	void export_point_cloud_recolored(
-		const fs::path& workingDirectory,
+		const fs::path& path_working_directory,
 		const std::vector<cv::Point3d>& point_cloud,
 		const std::vector<cv::Vec3b>& point_cloud_colors,
 		const std::vector<cv::Point2d>& image_coords_colors,

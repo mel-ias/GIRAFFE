@@ -1,99 +1,95 @@
-#include <fstream>
-#include <cfloat>
-#include <string>
 #include "PointLoader.h"
 
+PointLoader::PointLoader(std::string path_pcl, DataManager* data_manager) {
+	logfile = data_manager->getLogFilePrinter();
+	logfile->append(""); // Add a blank line to log
+	logfile->append(TAG + "Initialisation point loader"); // Log initialization message
 
-// C'tor
-PointLoader::PointLoader(std::string filename, DataManager* dataManager) {
-	logfile = dataManager->getLogFilePrinter();
-	logfile->append(""); // return one line
-	logfile->append(TAG + "Initialisation point loader"); // return one line
+	_path_point_cloud = path_pcl;
+    _input_stream = new std::ifstream(); // Allocate input stream
 
-	path_point_cloud = filename;
-	
-    input_stream_ptr = new std::ifstream();
-
-	shift_x = dataManager->get_shift_x();
-	shift_y = dataManager->get_shift_y();
-	shift_z = dataManager->get_shift_z();
-	logfile->append(TAG + "shift_x " + std::to_string(shift_x) + ", shift_y " + std::to_string(shift_y) + ", shift_z " + std::to_string(shift_z), 3);	 
+    // Initialize shift values from DataManager
+	_shift_x = data_manager->get_shift_x();
+	_shift_y = data_manager->get_shift_y();
+	_shift_z = data_manager->get_shift_z();
+	logfile->append(TAG + "shift_x " + std::to_string(_shift_x) + ", shift_y " + std::to_string(_shift_y) + ", shift_z " + std::to_string(_shift_z), 3);	 
 }
 
-// D'tor
+
 PointLoader::~PointLoader() {
-    // tidy up
-
-    delete input_stream_ptr;
-    input_stream_ptr = 0;
+    delete _input_stream;
+    _input_stream = 0;
 	
 }
 
 
-bool PointLoader::check_file() {
-
-	std::size_t loc = path_point_cloud.find_last_of('.');
-	if (path_point_cloud.size() - loc <= 3) {
-		return path_point_cloud.substr(loc + 1, loc + 3) == "pw";
+bool PointLoader::check_filetype_pw() {
+	std::size_t loc = _path_point_cloud.find_last_of('.'); // Find the last dot in the filename
+	if (_path_point_cloud.size() - loc <= 3) { // Check if there is a valid extension
+		return _path_point_cloud.substr(loc + 1, loc + 3) == "pw"; // Return true if extension is ".pw"
 	}
 	return false;
 }
 
 
-
 void PointLoader::display_progress_bar(int percent) {
-    const int barWidth = 50; // Adjust the width of the progress bar
+    const int barWidth = 50; // Width of the progress bar
     std::cout << "[";
-    int pos = barWidth * percent / 100;
+    int pos = barWidth * percent / 100; // Calculate position based on percentage
     for (int i = 0; i < barWidth; ++i) {
-        if (i < pos) std::cout << "=";
-        else if (i == pos) std::cout << ">";
-        else std::cout << " ";
+        if (i < pos) std::cout << "="; // Filled portion of the bar
+        else if (i == pos) std::cout << ">"; // Current position indicator
+        else std::cout << " "; // Empty portion of the bar
     }
-    std::cout << "] " << std::setw(3) << percent << "%\r"; // Print percentage and move cursor back
-    std::cout.flush(); // Ensure output is flushed immediately
+    std::cout << "] " << std::setw(3) << percent << "%\r"; // Display percentage and reset cursor
+    std::cout.flush(); // Ensure immediate output display
 }
 
+
 int PointLoader::read_binary_file() {
-    if (my_imc == nullptr) {
+    // Check if necessary components are initialized
+    if (_imc == nullptr) {
         throw std::logic_error(TAG + "no perspective image found");
     }
 
-    if (my_bb == nullptr) {
+    if (_bb == nullptr) {
         throw std::logic_error(TAG + "no bounding box found");
     }
 
-    if (!check_file()) {
-        logfile->append(TAG + "input is no pw-file: " + path_point_cloud);
+    // Check if file has the correct extension
+    if (!check_filetype_pw()) {
+        logfile->append(TAG + "input is no pw-file: " + _path_point_cloud);
         return -1;
     }
 
-    if (path_point_cloud.empty()) {
-        logfile->append(TAG + "input has no valid path: " + path_point_cloud);
+    // Check if the file path is valid
+    if (_path_point_cloud.empty()) {
+        logfile->append(TAG + "input has no valid path: " + _path_point_cloud);
         return -1;
     }
 
-    logfile->append(TAG + "load reference point cloud: " + path_point_cloud);
+    logfile->append(TAG + "load reference point cloud: " + _path_point_cloud);
     logfile->append(TAG + "this may take a while ... ");
 
-    input_stream_ptr->open(path_point_cloud, std::ifstream::binary);
-    if (!input_stream_ptr->good()) {
-        logfile->append(TAG + "cannot open file: " + path_point_cloud);
+    // Open the file in binary mode
+    _input_stream->open(_path_point_cloud, std::ifstream::binary);
+    if (!_input_stream->good()) {
+        logfile->append(TAG + "cannot open file: " + _path_point_cloud);
         return -1;
     }
 
-    // Get the total size of the file
-    input_stream_ptr->seekg(0, std::ios::end);
-    std::streampos totalSize = input_stream_ptr->tellg();
-    input_stream_ptr->seekg(1, std::ios::beg);  // Skip the first character
+    // Get the total file size for progress tracking
+    _input_stream->seekg(0, std::ios::end);
+    std::streampos totalSize = _input_stream->tellg();
+    _input_stream->seekg(1, std::ios::beg);  // Skip the first character
 
-    // Getting bounding box limits
-    double xMax_world = my_bb->get_xmax_World();
-    double yMax_world = my_bb->get_ymax_World();
-    double zMax_world = my_bb->get_zmax_World();
-    double xMin_world = my_bb->get_xmin_World();
-    double yMin_world = my_bb->get_ymin_World();
-    double zMin_world = my_bb->get_zmin_World();
+    // Retrieve frustum limits for filtering
+    double xMax_world = _bb->get_xmax_World();
+    double yMax_world = _bb->get_ymax_World();
+    double zMax_world = _bb->get_zmax_World();
+    double xMin_world = _bb->get_xmin_World();
+    double yMin_world = _bb->get_ymin_World();
+    double zMin_world = _bb->get_zmin_World();
 
     const size_t batchSize = 5000;
     std::vector<std::future<void>> futures;
@@ -104,42 +100,41 @@ int PointLoader::read_binary_file() {
     // Print initial progress bar
     display_progress_bar(0);
 
-    while (!input_stream_ptr->eof()) {
-        // Create a vector to hold the batch of points
+    // Read and process the binary data in batches
+    while (!_input_stream->eof()) {
         std::vector<LaserPoint*> batch;
         batch.reserve(batchSize); // Reserve space to improve performance
 
-        // Read a batch of points
-        for (size_t j = 0; j < batchSize && !input_stream_ptr->eof(); ++j) {
-            double x, y, z;
-            unsigned char color[3];
+        // Read points in the current batch
+        for (size_t j = 0; j < batchSize && !_input_stream->eof(); ++j) {
+            double x = 0.0, y = 0.0, z = 0.0;
+            unsigned char color[3] = { 0, 0, 0 }; // Initialize color array
 
-            input_stream_ptr->read(reinterpret_cast<char*>(&x), sizeof(x));
-            input_stream_ptr->read(reinterpret_cast<char*>(&y), sizeof(y));
-            input_stream_ptr->read(reinterpret_cast<char*>(&z), sizeof(z));
-            input_stream_ptr->read(reinterpret_cast<char*>(&color[0]), 1);
-            input_stream_ptr->read(reinterpret_cast<char*>(&color[1]), 1);
-            input_stream_ptr->read(reinterpret_cast<char*>(&color[2]), 1);
+            _input_stream->read(reinterpret_cast<char*>(&x), sizeof(x));
+            _input_stream->read(reinterpret_cast<char*>(&y), sizeof(y));
+            _input_stream->read(reinterpret_cast<char*>(&z), sizeof(z));
+            _input_stream->read(reinterpret_cast<char*>(&color[0]), 1);
+            _input_stream->read(reinterpret_cast<char*>(&color[1]), 1);
+            _input_stream->read(reinterpret_cast<char*>(&color[2]), 1);
 
-            // Check if the read was successful
-            if (!input_stream_ptr->good()) {
-                //logfile->append(TAG + "Error reading data from file.");
-                break; // Exit loop on error
+            // Stop on read error
+            if (!_input_stream->good()) {
+                break;
             }
 
-            // Apply shift
-            x -= shift_x;
-            y -= shift_y;
-            z -= shift_z;
+            // Apply shifts to point coordinates
+            x -= _shift_x;
+            y -= _shift_y;
+            z -= _shift_z;
 
-            // Check if the point is necessary
+            // Filter out points outside the frustum
             if (x > xMax_world || x < xMin_world ||
                 y > yMax_world || y < yMin_world ||
                 z > zMax_world || z < zMin_world) {
-                continue; // Skip unnecessary points
+                continue; 
             }
 
-            // Create and store the LaserPoint object
+            // Store the point
             LaserPoint* lp = new LaserPoint();
             lp->_id = static_cast<unsigned int>(i);
             lp->_xyz[0] = x;
@@ -149,24 +144,24 @@ int PointLoader::read_binary_file() {
             lp->color[1] = color[1];
             lp->color[2] = color[2];
 
-            batch.push_back(lp); // Store the pointer in the batch
-            ++i; // Increment the point counter
+            batch.push_back(lp); 
+            ++i; // Increment point counter
         }
 
-        // Only launch if we have valid points
+        // Launch processing of the batch asynchronously
         if (!batch.empty()) {
             futures.push_back(std::async(std::launch::async, [this, batch]() {
                 for (LaserPoint* lp : batch) {
-                    if (lp) { // Check if the pointer is valid
-                        my_imc->projectPoint(lp);
-                        delete lp; // Clean up after processing
+                    if (lp) {
+                        _imc->projectPoint(lp); // Project point in perspective image
+                        delete lp; // Clean up memory after processing
                     }
                 }
                 }));
         }
 
-        // Track the current position in the file for progress
-        currentPos = input_stream_ptr->tellg();
+        // Update the progress bar
+        currentPos = _input_stream->tellg();
         int percent = static_cast<int>((static_cast<double>(currentPos) / totalSize) * 100);
         if (percent >= lastPercent + 1) { // Update every 1%
             display_progress_bar(percent);
@@ -174,13 +169,13 @@ int PointLoader::read_binary_file() {
         }
     }
 
-    // Wait for all threads to finish
+    // Wait for all threads to complete
     for (auto& future : futures) {
         future.get();
     }
 
-    input_stream_ptr->close();
-    display_progress_bar(100); // Final progress at 100%
-    std::cout << std::endl; // Move to the next line after the progress bar is done
+    _input_stream->close(); // Close the input file
+    display_progress_bar(100); // Finalize progress bar at 100%
+    std::cout << std::endl; // New line after progress bar completion
     return 0;
 }
