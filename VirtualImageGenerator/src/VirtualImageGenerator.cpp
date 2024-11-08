@@ -45,11 +45,11 @@ Matching* matching;            ///< Pointer to Matching instance.
 PerspectiveImage* pim;         ///< Pointer to PerspectiveImage instance.
 
 float _max_pixel_distance_synth_3D_derivation = 2.5f; ///< allowed pixel neighbor distance when grabbing a corresponding 3D point from synthetic image after image matching
-int _final_iteration_number = 0;         ///< Tracks final iteration count.
+int _final_iteration_number = 1;         ///< Tracks final iteration count.
 bool _calc_IO = false;                   ///< Flag for input/output calculation.
 bool _output_pointcloud = false;         ///< Flag to output the point cloud.
-bool _have_fisheye = false;              ///< Flag indicating if fisheye lens is used.
-double _balance_img_undistortion = 0.0;  ///< Balance parameter for undistortion.
+bool _ultra_ww = false;              ///< Flag indicating if fisheye lens is used.
+double _balance_img_undistortion = 0.01;  ///< Balance parameter for undistortion.
 
 /**
  * @brief Extracts the base name from a given path.
@@ -164,26 +164,7 @@ static void read_init_file() {
 		// Parse the JSON configuration
 		json j = json::parse(f);
 
-		// Set filter_matches_ransac_pinhole
-		if (j.contains("filter_matches_ransac_pinhole")) {
-			float filter_matches_ransac_pinhole = j.at("filter_matches_ransac_pinhole").get<float>();
-			data_manager->set_filter_matches_ransac_pinhole(filter_matches_ransac_pinhole);
-			log_printer->append(TAG + " read init.txt, filter_matches_ransac_pinhole: " + std::to_string(filter_matches_ransac_pinhole));
-		}
-		else {
-			terminate_program("read init.txt, no valid filter_matches_ransac_pinhole value found. Break.");
-		}
-
-		// Set filter_matches_ransac_fisheye
-		if (j.contains("filter_matches_ransac_fisheye")) {
-			float filter_matches_ransac_fisheye = j.at("filter_matches_ransac_fisheye").get<float>();
-			data_manager->set_filter_matches_ransac_fisheye(filter_matches_ransac_fisheye);
-			log_printer->append(TAG + " read init.txt, filter_matches_ransac_fisheye: " + std::to_string(filter_matches_ransac_fisheye));
-		}
-		else {
-			terminate_program("read init.txt, no valid filter_matches_ransac_fisheye value found. Break.");
-		}
-
+		
 		// Set neighbour distance
 		if (j.contains("neighbour_distance")) {
 			_max_pixel_distance_synth_3D_derivation = j.at("neighbour_distance").get<float>();
@@ -209,18 +190,9 @@ static void read_init_file() {
 		}
 
 		// Set fisheye flag
-		if (j.contains("fisheye")) {
-			_have_fisheye = j.at("fisheye").get<bool>();
-			log_printer->append(TAG + " read init.txt, using " + std::string(_have_fisheye ? "fisheye camera model" : "central perspective camera model") + " for final epoch if refine_iop is true");
-		}
-
-		// Set balance undistortion parameter
-		if (j.contains("balance_undist")) {
-			_balance_img_undistortion = j.at("balance_undist").get<double>();
-			log_printer->append(TAG + " read init.txt, balance_undist: " + std::to_string(_balance_img_undistortion));
-		}
-		else {
-			terminate_program("read init.txt, no valid balance_undist value found. Break.");
+		if (j.contains("ultra_wide_camera")) {
+			_ultra_ww = j.at("ultra_wide_camera").get<bool>();
+			log_printer->append(TAG + " read init.txt, using " + std::string(_ultra_ww ? "ultra_wide_camera camera model" : "central perspective camera model") + " for final epoch if refine_iop is true");
 		}
 
 		// Set output_pointcloud flag
@@ -353,7 +325,7 @@ int main(int argc, char** argv) {
 
 	cv::Mat camera_matrix, dist_coeffs, tVecObj, rMatObj, stdDevCam_In, stdDevObj_Ext;
 	float repro_error;
-	for (int iteration = 0; iteration <= _final_iteration_number; ++iteration) {
+	for (int iteration = 1; iteration <= _final_iteration_number; ++iteration) {
 
 		log_printer->append(TAG + "------------------ ITERATION " + std::to_string(iteration) + "/" + std::to_string(_final_iteration_number) + "---------------------");
 
@@ -392,11 +364,7 @@ int main(int argc, char** argv) {
 		camera_matrix = (cv::Mat_<double>(3, 3) << focal_length_px, 0, center.x, 0, focal_length_px, center.y, 0, 0, 1);
 
 		// dist_coeffs: fisheye model uses less coeffs than central perspective
-		dist_coeffs = (_have_fisheye) ? cv::Mat::zeros(4, 1, CV_64FC1) : cv::Mat::zeros(5, 1, CV_64FC1);
-
-
-		// Initialize Exterior Orientation (EO) for solvePnPRansac
-		// Note: solvePnPRansac requires object pose in camera coordinates. Convert before use.
+		dist_coeffs = (_ultra_ww) ? cv::Mat::zeros(4, 1, CV_64FC1) : cv::Mat::zeros(5, 1, CV_64FC1);
 		
 		// Convert camera pose in object coordinate system to object pose in camera coordinate system
 		tVecObj = cv::Mat(); // Translation vector
@@ -475,13 +443,13 @@ int main(int argc, char** argv) {
 					stdDevCam_In,
 					stdDevObj_Ext,
 					flags_matching,
-					_have_fisheye);
+					_ultra_ww);
 
 				// If Interior Orientation Parameters (IOP) are calculated, undistort the image to align synthetic and real images for better matching
 				if (flags_matching == Matching::CALC_EO_IO) { // Before last iteration, undistort and use the undistorted image in the final iteration
 					cv::Mat undist_true_image;
 					cv::Mat camera_matrix_new = camera_matrix.clone();
-					if (_have_fisheye) {
+					if (_ultra_ww) {
 						// For fisheye lens, estimate a new camera matrix and undistort using fisheye functions
 						cv::Mat E = cv::Mat::eye(3, 3, cv::DataType<double>::type);
 						cv::Mat map1;
@@ -503,7 +471,7 @@ int main(int argc, char** argv) {
 					data_manager->set_true_image(undist_true_image);
 					camera_matrix = camera_matrix_new.clone();
 					dist_coeffs = cv::Mat::zeros(5, 1, CV_64FC1); // Reset distortion coefficients since image is now undistorted
-					_have_fisheye = false; // Fisheye corrections no longer needed
+					_ultra_ww = false; // Fisheye corrections no longer needed
 					_calc_IO = false; // Avoid recalculating IO repeatedly
 				}
 			}

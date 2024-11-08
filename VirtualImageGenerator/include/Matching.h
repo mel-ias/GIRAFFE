@@ -124,6 +124,52 @@ public:
 	
 
 	/**
+	 * @brief Prüft, ob die Verteilung der Punkte über das Bild ausreichend ist.
+	 *
+	 * Diese Funktion teilt das Bild in ein Raster und überprüft, ob jede Zelle
+	 * eine Mindestanzahl an Punkten enthält, um eine gute Verteilung zu gewährleisten.
+	 *
+	 * @param imagePoints 2D-Punkte im Bild.
+	 * @param imageSize Größe des Bildes.
+	 * @param gridRows Anzahl der Zeilen im Raster.
+	 * @param gridCols Anzahl der Spalten im Raster.
+	 * @param minPointsPerCell Mindestanzahl an Punkten pro Zelle.
+	 * @return True, wenn die Verteilung gut ist, false andernfalls.
+	 */
+	bool is_distribution_good(
+		const std::vector<cv::Point2f>& imagePoints,
+		const cv::Size& imageSize,
+		int gridRows = 4,
+		int gridCols = 4,
+		int minPointsPerCell = 3);
+
+
+	/**
+	 * @brief Calibrates a camera using 3D-2D point correspondences and computes intrinsic and extrinsic parameters.
+	 *
+	 * This function performs camera calibration given a set of 3D object points and their corresponding 2D image points.
+	 * It can calibrate either a standard pinhole camera model or a fisheye lens model, based on the `useFisheye` parameter.
+	 * The function outputs the camera's intrinsic matrix (`cameraMatrix`), distortion coefficients (`distCoeffs`),
+	 * and optionally rotation (`rvecs`) and translation (`tvecs`) vectors for each image.
+	 *
+	 * @param objectPoints 3D points in the world coordinate space for each image.
+	 * @param imagePoints 2D points in the image plane corresponding to `objectPoints`.
+	 * @param imageSize Size of the images used for calibration.
+	 * @param cameraMatrix Output matrix containing intrinsic camera parameters.
+	 * @param distCoeffs Output vector of distortion coefficients.
+	 * @param useFisheye If true, enables fisheye lens calibration; otherwise, standard pinhole model calibration is used.
+	 * @return True if the calibration succeeded, false otherwise.
+	 */
+	bool run_calibration(
+		std::vector<std::vector<cv::Point3f>> objectPoints,
+		std::vector<std::vector<cv::Point2f>> imagePoints,
+		cv::Size& imageSize,
+		cv::Mat& cameraMatrix,
+		cv::Mat& distCoeffs,
+		bool useFisheye);
+
+
+	/**
 	 * @brief Space resection using matched object and image points to estimate intrinsic / extrinsic camera parameters.
 	 *
 	 * This function refines the extrinsic and intrinsic parameters of the camera using spatial resection techniques.
@@ -158,6 +204,8 @@ public:
 		cv::Mat& stdDev_Ext, 
 		Flags_resec in_flag, 
 		bool fisheye);
+
+	
 
 private:
 
@@ -250,7 +298,7 @@ private:
 	 * @return FilteredData         A structure containing filtered indices, 2D points from list1 and list2,
 	 *                              and their corresponding 3D points from list2_3d.
 	 */
-	FilteredData filterPointsByDistance(
+	FilteredData filter_pts_by_distance(
 		const std::vector<cv::Point2d>& list1,
 		const std::vector<cv::Point2d>& list2,
 		const std::vector<cv::Point3d>& list2_3d,

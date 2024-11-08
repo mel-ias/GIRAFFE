@@ -194,6 +194,86 @@ void Matching::loadMatches(
 }
 
 
+
+bool Matching::is_distribution_good(
+	const std::vector<cv::Point2f>& image_points,
+	const cv::Size& image_size,
+	int grid_rows,
+	int grid_cols,
+	int min_pts_per_cell)
+{
+	std::vector<std::vector<int>> cell_counts(grid_rows, std::vector<int>(grid_cols, 0));
+
+	// Determine width / height of each cell
+	float cell_width = static_cast<float>(image_size.width) / grid_cols;
+	float cell_height = static_cast<float>(image_size.height) / grid_rows;
+
+	// count points in cell
+	for (const auto& point : image_points) {
+		int col = std::min(static_cast<int>(point.x / cell_width), grid_cols - 1);
+		int row = std::min(static_cast<int>(point.y / cell_height), grid_rows - 1);
+		cell_counts[row][col]++;
+	}
+
+	// check if each cell contains enough points
+	for (const auto& row : cell_counts) {
+		for (int count : row) {
+			if (count < min_pts_per_cell) {
+				return false; // distribution not sufficent
+			}
+		}
+	}
+	return true; // distribution ok
+}
+
+
+
+bool Matching::run_calibration(
+	std::vector<std::vector<cv::Point3f>> object_pts,
+	std::vector<std::vector<cv::Point2f>> image_pts,
+	cv::Size& image_size,
+	cv::Mat& camera_matrix,
+	cv::Mat& dist_coeffs,
+	bool use_fisheye_model)
+{
+
+	cv::TermCriteria termCrit(cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 300, DBL_EPSILON);
+	
+	// Run calibration and calculate RMS
+	double rms;
+	if (use_fisheye_model) {
+		cv::Mat _rvecs, _tvecs;
+		int flags = 
+			cv::fisheye::CALIB_USE_INTRINSIC_GUESS + 
+			cv::fisheye::CALIB_FIX_SKEW + 
+			cv::fisheye::CALIB_FIX_K4 +
+			cv::fisheye::CALIB_FIX_K3 + 
+			cv::fisheye::CALIB_FIX_K2 + 
+			cv::fisheye::CALIB_FIX_PRINCIPAL_POINT;
+		rms = cv::fisheye::calibrate(object_pts, image_pts, image_size, camera_matrix, dist_coeffs,
+			_rvecs, _tvecs, flags, termCrit);
+	}
+	else {
+		std::vector<cv::Mat> tvecs = {};
+		std::vector<cv::Mat> rvecs = {};
+		int flags = 
+			cv::CALIB_USE_INTRINSIC_GUESS + 
+			cv::CALIB_FIX_ASPECT_RATIO;
+		rms = cv::calibrateCamera(object_pts, image_pts, image_size, camera_matrix, dist_coeffs,
+			rvecs, tvecs, flags, termCrit);
+	}
+
+	_logfile->append("Camera calibration, rms: " + std::to_string(rms));
+
+	// Check calibration results: verify that parameters are within valid ranges
+	bool ok = checkRange(camera_matrix) && checkRange(dist_coeffs);
+
+	// Return true if calibration is successful (parameters are valid), false otherwise
+	return ok;
+}
+
+
+
 double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_points,
 	 std::vector<cv::Point2d>& in_matched_image_points_real,
 	 cv::Mat& true_image,
@@ -205,7 +285,7 @@ double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_poi
 	 cv::Mat& stdDev_In,
 	 cv::Mat& stdDev_Ext,
 	 Flags_resec in_flag,
-	 bool fisheye) {
+	 bool ultra_wide_angle) {
 	 
 	 // Early return if both extrinsic and intrinsic parameters are fixed
 	 if (in_flag == FIXED_EO_IO) {
@@ -220,14 +300,8 @@ double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_poi
 		 return -1;
 	 }
 
-	 // Define parameters for RANSAC
-	 constexpr int iterationsCount = 10000;
-	 const float solvePnPRansac_reproErr = fisheye ?
-		 _data_manager->get_filter_matches_ransac_fisheye() :
-		 _data_manager->get_filter_matches_ransac_pinhole();
-
+	
 	 std::vector<int> inliers;
-	 double repro_error = -1.0;
 
 	 // Optional: Set a deterministic random seed to make RANSAC reproducible
 	 cv::theRNG().state = 42;
@@ -240,76 +314,55 @@ double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_poi
 	 // Run solvePnPRansac for initial pose estimation and outlier filtering
 	 if (!cv::solvePnPRansac(in_matched_object_points, in_matched_image_points_real,
 		 camera_matrix, dist_coeffs, rvec, tvec, true,
-		 iterationsCount, solvePnPRansac_reproErr, 0.9999,
-		 inliers, cv::SOLVEPNP_ITERATIVE)) {
-		 _logfile->append(TAG + ", solvePnPRansac failed.");
+		 100, 8.0f, 0.99, //default parameters
+		 inliers, cv::SOLVEPNP_ITERATIVE)) 
+	 {
+		 _logfile->append(TAG + "solvePnPRansac failed.");
 		 return -1;
+	 }
+	 else {
+		 _logfile->append(TAG + "solvePnPRansac, number of inliers: " + std::to_string(inliers.size()));
 	 }
 
 	 // Collect inliers
-	 std::vector<cv::Point3d> object_points_ransac;
-	 std::vector<cv::Point2d> image_points_real_ransac;
+	 std::vector<cv::Point3f> object_points_ransac;
+	 std::vector<cv::Point2f> image_points_real_ransac;
 	 for (int i : inliers) {
 		 image_points_real_ransac.push_back(in_matched_image_points_real[i]);
 		 object_points_ransac.push_back(in_matched_object_points[i]);
 	 }
 
 	 // Optimize extrinsics or both intrinsic and extrinsic parameters
-	 cv::TermCriteria termCrit(cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 300, DBL_EPSILON);
+	 cv::Size imageSize = true_image.size();  // Store size in a variable
 	 
 	 if (in_flag ==!CALC_EO) {
-		 _logfile->append(TAG + " Optimizing both EO and IO.");
-		 std::vector<std::vector<cv::Point3d>> obj_pts_vector = { object_points_ransac };
-		 std::vector<std::vector<cv::Point2d>> img_pts_vector = { image_points_real_ransac };
-
-		 if (!fisheye) {
-			 int flags = cv::CALIB_USE_INTRINSIC_GUESS;
-			 repro_error = cv::calibrateCamera(obj_pts_vector, img_pts_vector,
-				 true_image.size(), camera_matrix, dist_coeffs,
-				 rvec, tvec, stdDev_In, stdDev_Ext, cv::Mat(), flags, termCrit);
+		 // Check the distribution of points inside the image
+		 if (!is_distribution_good(image_points_real_ransac, imageSize)) {
+			 _logfile->append("Distribution of 2D-3D correspondences is not sufficient to calculate camera matrix and distortion coefficients.");
 		 }
 		 else {
-			 std::vector<cv::Mat> rvecs, tvecs;
-			 int flags = cv::fisheye::CALIB_USE_INTRINSIC_GUESS | cv::fisheye::CALIB_FIX_SKEW |
-				 cv::fisheye::CALIB_RECOMPUTE_EXTRINSIC | cv::fisheye::CALIB_FIX_K4 |
-				 cv::fisheye::CALIB_FIX_K3 | cv::fisheye::CALIB_FIX_K2 | cv::fisheye::CALIB_FIX_PRINCIPAL_POINT;
-			 repro_error = cv::fisheye::calibrate(obj_pts_vector, img_pts_vector,
-				 true_image.size(), camera_matrix, dist_coeffs,
-				 rvecs, tvecs, flags, termCrit);
+			_logfile->append(TAG + " Optimizing IO");
+			std::vector<std::vector<cv::Point3f>> obj_pts_vector = { object_points_ransac };
+			std::vector<std::vector<cv::Point2f>> img_pts_vector = { image_points_real_ransac };
+			run_calibration(obj_pts_vector, img_pts_vector, imageSize, camera_matrix, dist_coeffs, ultra_wide_angle);
 		 }
 	 }
 
-	 // Log the optimized translation and rotation vectors
-	 std::ostringstream t_vec_str, r_vec_str;
-	 t_vec_str << tvec;
-	 r_vec_str << rvec;
-	 _logfile->append(TAG + " Optimized tvec / rvec: " + t_vec_str.str() + " / " + r_vec_str.str());
+	 // calculate reprojection error
+	 // project 3D points to image
+	 std::vector<cv::Point2f> projectedPoints;
+	 cv::projectPoints(object_points_ransac, rvec, tvec, camera_matrix, dist_coeffs, projectedPoints);
 
-	 // Compute reprojected points and standard deviations
-	 std::vector<cv::Point2d> reprojected_points;
-	 cv::Mat jacobian;
-	 if (fisheye) {
-		 cv::fisheye::projectPoints(object_points_ransac, reprojected_points, rvec, tvec, camera_matrix, dist_coeffs, 0, jacobian);
-	 }
-	 else {
-		 cv::projectPoints(object_points_ransac, rvec, tvec, camera_matrix, dist_coeffs, reprojected_points, jacobian);
-	 }
-
-	 // Calculate standard deviations if not fisheye
-	 if (!fisheye && !jacobian.empty()) {
-		 cv::Mat sigma_extr = cv::Mat(jacobian.t() * jacobian, cv::Rect(0, 0, 6, 6)).inv();
-		 cv::Mat sigma_intr = cv::Mat(jacobian.t() * jacobian, cv::Rect(6, 6, 9, 9)).inv();
-		 cv::sqrt(sigma_extr.diag(), stdDev_Ext);
-		 cv::sqrt(sigma_intr.diag(), stdDev_In);
-	 }
-
-	 // Compute reprojection error
-	 repro_error = 0.0f;
+	 // calculate error for each point
+	 double totalError = 0.0;
 	 for (size_t i = 0; i < image_points_real_ransac.size(); ++i) {
-		 repro_error += cv::norm(image_points_real_ransac[i] - reprojected_points[i]);
+		 double error = cv::norm(image_points_real_ransac[i] - projectedPoints[i]);
+		 totalError += error * error;  // Quadratischer Fehler
 	 }
-	 repro_error /= object_points_ransac.size();
 
+	 // calculate mean error
+	 double repro_error = std::sqrt(totalError / image_points_real_ransac.size());
+	 
 	 // Ensure rvec and tvec are single-channel
 	 if (rvec.channels() == 3 || tvec.channels() == 3) {
 		 rvec = rvec.reshape(1);
@@ -317,6 +370,7 @@ double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_poi
 	 }
 	 return repro_error;
 }
+
 
 
 cv::Mat Matching::ransac_test(std::vector<cv::Point2d>& _points1, std::vector<cv::Point2d>& _points2, double confidence, double distance, bool refineF)
@@ -445,6 +499,7 @@ cv::Mat Matching::ransac_test(std::vector<cv::Point2d>& _points1, std::vector<cv
 }
 
 
+
 void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image_points, std::vector<cv::Point3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y, double shift_z, bool export_pcl, std::string file_name_image_points) {
 
 	std::stringstream log_statistics;
@@ -488,7 +543,7 @@ void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image
 	if (!referenced_points.corresponding_3D_image_pts_from_point_cloud.empty()) {
 		
 		// Filter outliers based on distance threshold
-		Matching::FilteredData filtered_data = filterPointsByDistance(input_image_points, referenced_points.corresponding_2D_image_pts_from_point_cloud, referenced_points.corresponding_3D_image_pts_from_point_cloud, distance_threshold_img_to_proj_img);
+		Matching::FilteredData filtered_data = filter_pts_by_distance(input_image_points, referenced_points.corresponding_2D_image_pts_from_point_cloud, referenced_points.corresponding_3D_image_pts_from_point_cloud, distance_threshold_img_to_proj_img);
 		
 		cv::Mat copy_masterimage = in_image_4_color.clone();
 		// Draw input image points on the image
@@ -524,7 +579,8 @@ void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image
 }
 
 
-Matching::FilteredData Matching::filterPointsByDistance(
+
+Matching::FilteredData Matching::filter_pts_by_distance(
 	const std::vector<cv::Point2d>& list1,
 	const std::vector<cv::Point2d>& list2,
 	const std::vector<cv::Point3d>& list2_3d,
