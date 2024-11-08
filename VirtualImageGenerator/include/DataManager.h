@@ -88,6 +88,10 @@ public:
 		_loc_acc_X0_z = 20.0;
 		_loc_acc_X0_xy = 20.0;
 		
+		// others		
+		_filter_matches_ransac_fisheye = 200.0; // run solvepnoransac to find good image-to-object matches before running spatial resection -> fisheye thresh (should be high cause OCVs solvepnp does not support fisheye cams)
+		_filter_matches_ransac_pinhole = 8.0; // run solvepnoransac to find good image-to-object matches before running spatial resection -> pinhole thresh (should be small)
+
 		// instantiate objects
 		_frustum = new BoundingBox(logFile); // Instantiate frustum by BoundingBox to select point cloud part to be projected, provide pointer to logfile
 		_coord_img = nullptr;
@@ -470,6 +474,31 @@ public:
 		_rotM[2] = rotM.at<double>(2, 0); _rotM[5] = rotM.at<double>(2, 1); _rotM[8] = rotM.at<double>(2, 2);
 	}
 
+	void set_filter_matches_ransac_fisheye(double val) {
+		if (val > 0.0) {
+			_filter_matches_ransac_fisheye = val;
+		}
+		else {
+			_logfile->append("Invalid value for filter_matches_ransac_fisheye threshold. Must be val > 0. Restore default (200.0)");
+			_filter_matches_ransac_fisheye = 200.0;
+		}
+	}
+	double get_filter_matches_ransac_fisheye() const { return _filter_matches_ransac_fisheye; }
+
+	void set_filter_matches_ransac_pinhole(double val) {
+		if (val > 0.0) {
+			_filter_matches_ransac_pinhole = val;
+		}
+		else {
+			_logfile->append("Invalid value for filter_matches_ransac_pinhole threshold. Must be val > 0. Restore default (8.0)");
+			_filter_matches_ransac_pinhole = 8.0;
+		}
+	}
+	double get_filter_matches_ransac_pinhole() const { return _filter_matches_ransac_pinhole; }
+
+
+
+
 
 private:
 
@@ -504,6 +533,9 @@ private:
 
 	double _min_dist_to_X0; // for projection; check if point to be projected is to close to projection centre. use 1 m distance by default 
 	double _max_dist_to_X0; // max depth of point cloud to be projected starting from projection cnetre. use 200 m distance by default
+
+	double _filter_matches_ransac_fisheye;
+	double _filter_matches_ransac_pinhole;
 
 	// objects
 	// -------
