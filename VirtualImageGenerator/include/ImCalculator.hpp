@@ -39,38 +39,96 @@
 class ImCalculator
 {
 
-	
-
-
 public:
 
 	// Ctor
 	ImCalculator();
 
+	// Dtor
+	~ImCalculator();
+
+	/**
+	 * @brief Initializes the ImCalculator with necessary parameters, including camera settings and directory setup.
+	 *
+	 * This function sets up the ImCalculator by initializing the log file, setting up distance limits,
+	 * reserving space for pyramid masks, and configuring camera settings based on data from the
+	 * provided DataManager. It also ensures that the output directory exists.
+	 *
+	 * @param _dataManager Pointer to the DataManager providing required parameters and file paths.
+	 */
 	void init(DataManager* _dataManager);
 	
 	
-	~ImCalculator();
-	
-	/*Projekt this point to the current images.
-	CAUTION you should set all neccessary members befor (see setter of this class)*/
+	/**
+	 * @brief Projects a 3D point onto the 2D image plane and updates mask and image data accordingly.
+	 *
+	 * This function transforms a given 3D point from world coordinates into camera space,
+	 * projects it onto the 2D image plane, and updates the pixel values and depth mask if
+	 * the point is closer than any existing value at that pixel. Pyramid masks at lower
+	 * resolutions are also updated to enable multi-scale processing.
+	 *
+	 * @param lp Pointer to the LaserPoint object containing the 3D coordinates and color information.
+	 */
 	void projectPoint(LaserPoint* lp);
 
-	/*Init Images with the given bb*/
-	void init_Image(BoundingBox* b);
+	/**
+	 * @brief Initializes the image with the given bounding box.
+	 *
+	 * This function calculates the image plane based on the bounding box and pixel size,
+	 * then initializes the images (e.g., `_image`, `_mask`, `_distImage`, pyramids) with the
+	 * calculated columns and rows.
+	 *
+	 * @param b The bounding box containing the minimum and maximum values for x, y, and z.
+	 */
+	void init_image(BoundingBox* b);
 
+	/**
+	 * @brief Generates output images based on distance and filtering operations.
+	 *
+	 * This function calculates and saves the original distance image, applies filtering
+	 * to remove overlapping background pixels, and recalculates both the distance image
+	 * and distance pyramids.
+	 *
+	 * @warning Call this function only after all points have been projected.
+	 */
+	void write_images();
 
-	/*This do all the stuff, needed to generate the output images.
-	CAUTION call this after all points are projected!!*/ 
-	void writeImages();
-
-	/*saves all generated Images*/
-	void saveImages();
+	/**
+	 * @brief Saves all generated synthetic images, including distance maps and pyramids, in the ImCalculator directory.
+	 *
+	 * This function handles the saving of synthetic images created during processing. It first releases
+	 * and reinitializes the mask, writes the distance images and their pyramid levels to files,
+	 * and saves the synthetic color image if available. If the image is in grayscale, it converts
+	 * intensity values to an 8-bit format for storage.
+	 *
+	 * @details
+	 * - Saves the distance image (`dist_image.png`) and distance pyramids (`dist_image_pX.png` for each level).
+	 * - Saves the color or grayscale synthetic image in the directory as specified by `_working_dir_imcalculator`.
+	 * - Logs each save operation and includes a check for whether the image is color or grayscale.
+	 */
+	void save_images();
 	
+	/**
+	 * @brief Fills 2D, 3D, and color vectors with data from the coordinate image.
+	 *
+	 * This function retrieves synthetic 2D coordinates, 3D coordinates, and RGB colors from a
+	 * coordinate image managed by the data manager. It checks that each vector has been initialized
+	 * before use, clears any existing data, and then populates the vectors with new data from the
+	 * coordinate image.
+	 */
 	void fill_vectors();
+
+	/**
+	 * @brief Fills masked regions in the input image with colors from provided synthetic points.
+	 *
+	 * This function generates a mask based on non-white pixels in the image, fills specified points
+	 * with corresponding colors, and interpolates colors to fill in remaining masked regions.
+	 *
+	 * @param radius_mask_fill The radius used for filling the mask around non-white areas.
+	 */
 	void fill_image(int radius_mask_fill = 10);
 
-	cv::Mat* getImage(){ return _image; }
+	cv::Mat* get_image(){ return _image; }
 
 	
 
@@ -79,27 +137,72 @@ private:
 	const std::string TAG = "ImCalculator:\t";
 	LogFile* logfile;
 
-	/*This calculate the image Plane as an projektion from the bounding box far area.
-	It also sets ie,je and ke*/
-	void calc_image_Plane(float* plane );
+	/**
+	 * @brief Calculates the image plane projection from the bounding box.
+	 *
+	 * This function computes the image plane by projecting the bounding box's coordinates in camera space
+	 * and logs various details like camera position and rotation matrix.
+	 *
+	 * @param plane The array where the image plane corners (u0, v0, u1, v1) will be stored.
+	 */
+	void calc_image_plane(float* plane );
 
-	/*Initialize all nessecary images with the given coloumns and rows.
-	The size of the pyramids will also be calculate.*/
+	/**
+	 * @brief Initializes all necessary images with the given columns and rows.
+	 *
+	 * This function sets up the following images:
+	 * - _image: The main image (initialized to white).
+	 * - _mask: The mask image (initialized to -1.0f).
+	 * - _distImage: The distance image (initialized to black).
+	 * - next_dists: Distance pyramid images.
+	 * - next_masks: Mask pyramid images.
+	 *
+	 * The pyramids are generated based on the input dimensions.
+	 *
+	 * @param column Number of columns for the image size.
+	 * @param row Number of rows for the image size.
+	 */
 	void init_images(int column, int row);
 
-	/*This calcs the colors of the distImage with the current data in _mask.
-	deleteCurrentData say if information in the distImage, which is deleted in_mask will be reset to 0 or not.*/
-	void calc_distImage(float d_min, float d_diff, bool deleteCurrentData = true);
 
-	/*Filter Methode, um überlagerte Hintergrund Pixel aus dem Vordergrund zu eliminieren.
-	Hierfür werden die Pyramiden Bilder genutzt und neu die Hintergrund pixel schrittwiese gelöscht.
-	db gibt den maximalen Abstand zwischen einem Vordergrund und einem Hintergrund Pixel an.
-	Wenn dieser Abstand überschritten wird, wird das Hintergrund pixel gelöscht.*/
+	/**
+	 * @brief Calculates the colors for `_distImage` based on distances in `_mask`.
+	 *
+	 * This function applies a color gradient to `_distImage` based on distance values in `_mask`,
+	 * where distances are normalized to the range [0,1] using `d_min` and `d_diff`.
+	 * Each distance is mapped to RGB values, with optional resetting of pixel values.
+	 *
+	 * @param d_min Minimum distance value used for normalization.
+	 * @param d_diff Difference between the maximum and minimum distances for normalization.
+	 * @param deleteCurrentData If true, resets pixels where no valid distance is found.
+	 */
+	void calc_dist_image(float d_min, float d_diff, bool deleteCurrentData = true);
+
+
+	 /**
+	  * @brief Filters out overlapping background pixels from the foreground using pyramid images.
+	  *
+	  * This function iterates through pyramid images and progressively removes background pixels
+	  * that are further than a given threshold distance `db` from corresponding foreground pixels.
+	  * Edge pixels are treated specially to avoid unintended deletion, with checks for neighboring
+	  * pixels in the current pyramid level to ensure consistency.
+	  *
+	  * @param db Maximum allowed distance between a foreground and background pixel.
+	  */
 	void filter_image(float db);
 
 
-	/*Calc the color for all distance pyramids*/
-	void calc_distPyramids(float d_min, float d_diff);
+	/**
+	 * @brief Calculates and sets colors for each distance pyramid level based on distance values.
+	 *
+	 * This function applies a color gradient to each pixel in the `next_dists` images
+	 * based on distance values stored in `next_masks`. Distances are normalized and mapped to a
+	 * color blend: red, green, and blue intensities vary according to the distance value.
+	 *
+	 * @param d_min Minimum distance value for normalization.
+	 * @param d_diff Difference between minimum and maximum distance values for normalization.
+	 */
+	void calc_dist_pyramids(float d_min, float d_diff);
 
 	// image of the projected intensity values
 	cv::Mat* _image;
@@ -124,25 +227,21 @@ private:
 	cv::Size _imageSize;
 
 	// the columns and rows in the current Images
-	int columns, rows;
+	int _columns, _rows;
 
 	// the minima and maxima distance in current Images
-	float distMin, distMax;
+	float _dist_min, _dist_max;
 
-	double* rot_xyz;
-	float* image_plane;
-	BoundingBox* bb;
-	DataManager* dataManager;
+	double* _rotM;
+	float* _image_plane;
+	BoundingBox* _frustum;
+	DataManager* _data_manager;
 
-	// für zuordnung von keypoint, gefunden in synthetischen und echten bild und für guten match befunden und
-	// projizierten punkt in punktwolke --> liegen schließlich nicht zwangsläufig aufeinander, wenn interpolierter
-	// punkt von filling getroffen wurde. Mache distanzkritierum! --> nur wenn dist < halbes pixel, nehme diesen punkt als 
-	// entsprechenden keypoint an und hole den passenden 3D Wert dazu.
-	std::vector<cv::Point2d> real_matched_pts;
-	std::vector<cv::Point2d> synth_matched_pts;
-	std::vector<cv::Point2d> imagePoints_real;
-	std::vector<cv::Point2d> imagePoints_synth;
-	std::vector<cv::Point3d> objectPoints;
+	std::vector<cv::Point2d> _real_matched_pts;
+	std::vector<cv::Point2d> _synth_matched_pts;
+	std::vector<cv::Point2d> _image_points_real;
+	std::vector<cv::Point2d> _image_points_synth;
+	std::vector<cv::Point3d> _object_points;
 
 	// fillImages
 	// init 

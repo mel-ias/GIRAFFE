@@ -11,61 +11,56 @@ ImCalculator::ImCalculator() {
 	_distImage = nullptr;
 	_pixSize = 0.0f;
 	_ck = 0.0f;
-	bb = nullptr;
-	columns = 0;
-	rows = 0;
+	_frustum = nullptr;
+	_columns = 0;
+	_rows = 0;
 	logfile = nullptr;
-	rot_xyz = new double [9];
-	image_plane = new float [4];
-	distMin = 0.0f;
-	distMax = 0.0f;
-	dataManager = nullptr;
-
-
-
-
-
+	_rotM = new double [9];
+	_image_plane = new float [4];
+	_dist_min = 0.0f;
+	_dist_max = 0.0f;
+	_data_manager = nullptr;
 }
 
 
 void ImCalculator::init(DataManager* _dataManager) {
 
-	logfile = _dataManager->getLogFilePrinter(); // init logfile
+	// Initialize logfile and log the start of initialization
+	logfile = _dataManager->get_logfile();
 	logfile->append("");
-	logfile->append(TAG + "---- initialisation image calculator ----");
+	logfile->append(TAG + "---- Initializing Image Calculator ----");
 
-	dataManager = _dataManager;
-
+	// Assign data manager and initialize other members
+	_data_manager = _dataManager;
 	_mask = nullptr;
 	_image = nullptr;
-	
-	distMax = 0.0f;
-	distMin = (std::numeric_limits<float>::max)();
-	
-	bb = nullptr;
 
+	_dist_max = 0.0f;
+	_dist_min = std::numeric_limits<float>::max();
+	_frustum = nullptr;
+
+	// Reserve space for next masks and distance pyramids
 	next_masks.reserve(3);
 	next_dists.reserve(3);
 
-	// Settings for camera
-	_ck = dataManager->get_principal_distance();
-	_imageSize = dataManager->get_size_true_image();
-	_pixSize = dataManager->get_pixel_size();
-	logfile->append(TAG + "received camera parameters (ck, imageSize, pixSize)");
-	
-	//reference & copy real image
-	_realImage = dataManager->get_true_image();
-	_realImage.copyTo(_realImage_copy_orig); 
-	logfile->append(TAG + "received realImage, create copy (realImage_copy_orig)");
+	// Retrieve and log camera settings
+	_ck = _data_manager->get_principal_distance();
+	_imageSize = _data_manager->get_size_true_image();
+	_pixSize = _data_manager->get_pixel_size();
+	logfile->append(TAG + "Camera parameters received (ck, imageSize, pixSize).");
 
+	// Reference and copy the real image
+	_realImage = _data_manager->get_true_image();
+	_realImage.copyTo(_realImage_copy_orig);
+	logfile->append(TAG + "Real image received and original copy created.");
 
-	// Create ImCalculator directory
-	_working_dir_imcalculator = dataManager->get_path_working_directory() / "ImCalculator";
+	// Set up the ImCalculator working directory
+	_working_dir_imcalculator = _data_manager->get_path_working_directory() / "ImCalculator";
 	if (!fs::exists(_working_dir_imcalculator)) {
-		fs::create_directory(_working_dir_imcalculator);  // Creates the directory if it doesn't exist
+		fs::create_directory(_working_dir_imcalculator);
 	}
-	logfile->append(TAG + "created ImCalculator directory: " + _working_dir_imcalculator.string());
-};
+	logfile->append(TAG + "ImCalculator directory created or verified: " + _working_dir_imcalculator.string());
+}
 
 
 
@@ -87,434 +82,369 @@ ImCalculator::~ImCalculator()
 }
 
 
+// saves all generated synthetic images in ImCalculator directory
+void ImCalculator::save_images() {
 
+	logfile->append(TAG + "Saving synthetic images...");
 
-
-
-/*saves all generated synthetic images in ImCalculator directory*/
-void ImCalculator::saveImages() {
-
-	logfile->append(TAG + "save images synthetic images...");
-
-	// deallocation of image header and data
+	// Release and reinitialize the mask as an 8-bit single-channel image
 	_mask->release();
-
-	// create new mask (imageSize, CV_8UC1)
 	_mask = new cv::Mat(_image->rows, _image->cols, CV_8UC1);
 
-	// write dist images and dist pyramids
-	cv::imwrite(fs::path(_working_dir_imcalculator / "dist_image.png").string(), *_distImage);
-	if (next_dists.size() > 0) {
-		for (unsigned int i = 0; i < next_dists.size(); ++i) {
-			std::string name = "dist_image_p";
-			name += std::to_string(i) + ".png";
-			cv::imwrite(fs::path(_working_dir_imcalculator / name).string(), *next_dists[i]);
-		}
-	}
-	
+	// Write the main distance image
+	cv::imwrite((fs::path(_working_dir_imcalculator) / "dist_image.png").string(), *_distImage);
 
-	// save _image if it's already a color image
-	if (_image->depth() == CV_8U) {
-		cv::imwrite(fs::path(_working_dir_imcalculator / (dataManager->get_filename_true_image() + "_synth.png")).string(), *_image);
-		logfile->append(TAG + "saved mask of virtual image rgb");
-		return; // we don't need to calc the gray values as in the next lines
+	// Save distance pyramids if they exist
+	for (size_t i = 0; i < next_dists.size(); ++i) {
+		std::string name = "dist_image_p" + std::to_string(i) + ".png";
+		cv::imwrite((fs::path(_working_dir_imcalculator) / name).string(), *next_dists[i]);
 	}
 
-	// clear mask image
+	// Check if _image is an 8-bit color image and save it directly
+	if (_image->depth() == CV_8U && _image->channels() == 3) {
+		cv::imwrite((fs::path(_working_dir_imcalculator) / (_data_manager->get_filename_true_image() + "_synth.png")).string(), *_image);
+		logfile->append(TAG + "Saved synthetic RGB image.");
+		return; // No further processing required for color images
+	}
+
+	// Clear mask for grayscale conversion
 	_mask->setTo(cv::Scalar(0));
 
-	// for intensity data 
-	for (int i = 0; i < _image->rows; i++) {
-		for (int j = 0; j < _image->cols; j++) {
-			// get gray value from image
-			float intensity = _image->ptr<float>(i)[j]; 
-			_mask->at<uchar>(i, j) = (int)floor(intensity * 255 + 0.5);
-
+	// Convert intensity values to 8-bit grayscale and store in _mask
+	for (int i = 0; i < _image->rows; ++i) {
+		for (int j = 0; j < _image->cols; ++j) {
+			// Scale float intensity value to 8-bit range
+			float intensity = _image->ptr<float>(i)[j];
+			_mask->at<uchar>(i, j) = static_cast<uchar>(std::clamp(intensity * 255.0f + 0.5f, 0.0f, 255.0f));
 		}
 	}
 
-	// save image as *.im.png
-	cv::imwrite(fs::path(_working_dir_imcalculator / (dataManager->get_filename_true_image() + ".png")).string(), *_mask);
-	logfile->append(TAG + "saved mask of virtual image intensity");
-
-
+	// Save the grayscale intensity mask
+	cv::imwrite((fs::path(_working_dir_imcalculator) / (_data_manager->get_filename_true_image() + ".png")).string(), *_mask);
+	logfile->append(TAG + "Saved synthetic grayscale intensity image.");
 }
 
 
 
-
-
-
-
-
-
-
-/*Projekt this point to the current images*/
+// Project the given 3D point to the current image and update the mask and image data as necessary.
 void ImCalculator::projectPoint(LaserPoint* lp) {
+	// Compute the difference between the laser point's world coordinates and the camera's position in world space
+	double dx = lp->_xyz[0] - _frustum->get_X0_Cam_World()[0];
+	double dy = lp->_xyz[1] - _frustum->get_X0_Cam_World()[1];
+	double dz = lp->_xyz[2] - _frustum->get_X0_Cam_World()[2];
 
-	
-	
-	double dx = lp->_xyz[0]- bb->get_X0_Cam_World()[0]; 
-	double dy = lp->_xyz[1]- bb->get_X0_Cam_World()[1];
-	double dz = lp->_xyz[2]- bb->get_X0_Cam_World()[2];
-	double x = rot_xyz[0] * dx + rot_xyz[3] * dy + rot_xyz[6] * dz;
-	double y = rot_xyz[1] * dx + rot_xyz[4] * dy + rot_xyz[7] * dz;
-	double z = rot_xyz[2] * dx + rot_xyz[5] * dy + rot_xyz[8] * dz;
+	// Transform the coordinates to camera space using the rotation matrix
+	double x = _rotM[0] * dx + _rotM[3] * dy + _rotM[6] * dz;
+	double y = _rotM[1] * dx + _rotM[4] * dy + _rotM[7] * dz;
+	double z = _rotM[2] * dx + _rotM[5] * dy + _rotM[8] * dz;
 
-	
-	// check near and far
-	if (z < dataManager->get_min_dist_to_X0() || z > bb->get_dist()) return;
-	
-	// _ck in mm, Hauptpunkt als Abweichung von ittelpunkt!
-	double u = _ck  * x / z;
+	// Check if the point is within the acceptable near/far bounds
+	if (z < _data_manager->get_min_dist_to_X0() || z > _frustum->get_dist()) return;
+
+	// Project 3D camera-space coordinates to the 2D image plane
+	double u = _ck * x / z;
 	double v = _ck * y / z;
 
-	double column_float = (u - image_plane[0]) / _pixSize;
-	double row_float = (v - image_plane[2]) / _pixSize;
-	
-	// calc to column and row
-	int column = static_cast<int>(floor(column_float)); // column
-	int row = static_cast<int>(floor(row_float)); // row
+	// Convert projected coordinates to image pixel coordinates
+	double column_float = (u - _image_plane[0]) / _pixSize;
+	double row_float = (v - _image_plane[2]) / _pixSize;
 
-	// check the Image borders
-	if (row < 0 || row >(rows - 1) || column < 0 || column >(columns - 1)) return;
+	// Calculate integer row and column indices
+	int column = static_cast<int>(floor(column_float));
+	int row = static_cast<int>(floor(row_float));
 
-	float dist = static_cast<float>(sqrt(dx*dx + dy*dy + dz*dz));
+	// Ensure the pixel is within image boundaries
+	if (row < 0 || row >= _rows || column < 0 || column >= _columns) return;
 
-	// check for extrema dist
+	// Compute the Euclidean distance from the camera to the point
+	float dist = static_cast<float>(sqrt(dx * dx + dy * dy + dz * dz));
 
-	if (dist < distMin) distMin = dist;
-	if (dist > distMax) distMax = dist;
+	// Update the min and max distance values
+	if (dist < _dist_min) _dist_min = dist;
+	if (dist > _dist_max) _dist_max = dist;
 
-	//unsigned char* pixel = nullptr;
-	cv::Point3_ <uchar>* pixel;
-	// if there is already a value at mask(row, column)
-	if (_mask->ptr<float>(row)[column] > 0.0f) {
-		//if (((float*)(_mask->imageData + row*_mask->widthStep))[column] > 0.0f) {
+	// Retrieve the current mask value at this pixel position
+	float& mask_value = _mask->ptr<float>(row)[column];
+	cv::Point3_<uchar>* pixel = _image->ptr<cv::Point3_<uchar>>(row, column);
 
-		// if the new distance is smaller than the value in mask(row,column)
-		if (dist < _mask->ptr<float>(row)[column]) {
-			//if (dist < ((float*)(_mask->imageData + row*_mask->widthStep))[column]) {
-
-			// replace distance value with this 
-			_mask->ptr<float>(row)[column] = dist;
-			//((float*)(_mask->imageData + row*_mask->widthStep))[column] = dist;
-
-			// replace image value with this one
-
-
-			pixel = _image->ptr<cv::Point3_<uchar>>(row, column);
+	// Update mask and image if the new point is closer, or if there's no existing mask value
+	if (mask_value > 0.0f) {
+		if (dist < mask_value) {
+			mask_value = dist;
 			pixel->x = lp->color[2];
 			pixel->y = lp->color[1];
 			pixel->z = lp->color[0];
-				
-			dataManager->get_coordinate_image()->set_pixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], pixel, column_float, row_float));
-
-			
-		
+			_data_manager->get_coordinate_image()->set_pixel(
+				column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], pixel, column_float, row_float)
+			);
 		}
 	}
 	else {
-		// otherwise there is nothing yet, so just assign the  values
-	
-		_mask->ptr<float>(row)[column] = dist;
-
-
-		pixel = _image->ptr<cv::Point3_<uchar>>(row, column);
+		// Assign new values if no previous mask data exists at this pixel
+		mask_value = dist;
 		pixel->x = lp->color[2];
 		pixel->y = lp->color[1];
 		pixel->z = lp->color[0];
-		
-
-		dataManager->get_coordinate_image()->set_pixel(column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], pixel, column_float, row_float));
-
-		
-	
+		_data_manager->get_coordinate_image()->set_pixel(
+			column, row, CoordinateImage::Coordinate(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2], pixel, column_float, row_float)
+		);
 	}
 
+	// Update pyramid masks for additional resolution levels
+	for (unsigned int p = 0; p < next_masks.size(); ++p) {
+		float scale = powf(2.0f, static_cast<float>(p + 1));
 
-	// calc _mask for the next pyramids
-	for (unsigned int p = 0u; p < next_masks.size(); ++p) {
-		float scale = powf(2.0f, 1.0f*(p + 1u));
+		// Calculate the scaled coordinates in the pyramid level
+		int cPyr = static_cast<int>(floor((u - _image_plane[0]) / (scale * _pixSize)));
+		int rPyr = static_cast<int>(floor((v - _image_plane[2]) / (scale * _pixSize)));
 
+		// Ensure pyramid coordinates are within bounds before accessing the mask
+		if (rPyr < 0 || rPyr >= next_masks[p]->rows || cPyr < 0 || cPyr >= next_masks[p]->cols) continue;
 
-		int cPyr = static_cast<int>(floor(((u - image_plane[0]) / (scale*_pixSize))));
-		int rPyr = static_cast<int>(floor(((v - image_plane[2]) / (scale*_pixSize))));
+		float& mask_pix = next_masks[p]->ptr<float>(rPyr)[cPyr];
 
-
-
-		float mask_pix = next_masks[p]->ptr<float>(rPyr)[cPyr];
+		// Update pyramid mask if it's empty or if the new distance is closer
 		if (mask_pix > 0.0f) {
-			if (mask_pix > dist) {
-				next_masks[p]->ptr<float>(rPyr)[cPyr] = dist;
-				
-			}
+			if (dist < mask_pix) mask_pix = dist;
 		}
 		else {
-			next_masks[p]->ptr<float>(rPyr)[cPyr] = dist;
-			
+			mask_pix = dist;
 		}
 	}
-
-	
 }
 
 
+void ImCalculator::init_image(BoundingBox* b) {
 
+	// Set the bounding box (bb) to the given bounding box
+	_frustum = b;
 
+	// Calculate the image plane based on the bounding box
+	calc_image_plane(_image_plane);
 
-/*Init Images with the given bb*/
-/*float xbmin, float xbmax, float zbmin, float zbmax, float yb,float* Rz*/
-void ImCalculator::init_Image(BoundingBox* b) {
+	// Calculate the number of columns and rows based on the image plane and pixel size
+	_columns = static_cast<int>(ceil((_image_plane[1] - _image_plane[0]) / _pixSize)) + 1; // X dimension
+	_rows = static_cast<int>(ceil((_image_plane[3] - _image_plane[2]) / _pixSize)) + 1; // Y dimension
 
-	bb = b;
+	// Initialize the images with the calculated dimensions
+	init_images(_columns, _rows);
 
-	calc_image_Plane(image_plane);
-
-	columns = static_cast<int>(ceil((image_plane[1] - image_plane[0]) / _pixSize)) + 1;
-	rows = static_cast<int>(ceil((image_plane[3] - image_plane[2]) / _pixSize)) + 1;
-
-	init_images(columns, rows);
-	logfile->append(TAG + "initalize image_plane (px): " + std::to_string(columns) + "x" + std::to_string(rows));
-
+	// Log the initialization of the image plane with the pixel dimensions
+	logfile->append(TAG + "initialize image_plane (px): " + std::to_string(_columns) + "x" + std::to_string(_rows));
 }
 
 
-/*This calculate the image Plane as an projektion from the bounding box far area.
-It also sets ie,je and ke*/
-void ImCalculator::calc_image_Plane(float* plane /*,float xbmin, float xbmax, float zbmin, float zbmax, float yb,float *Rz*/) {
+void ImCalculator::calc_image_plane(float* plane) {
 
-
-	// we have the BB in kamera koordinates, so the calculation from the image plane is simple:
-	// koordinates in the camerasystem
+	// Coordinates in camera system (bb represents bounding box in camera space)
 	float xk, yk, zk;
 
-	// the upper left edge (u0,v0)
-	xk = bb->get_xMin();
-	yk = -bb->get_zMax();
-	zk = bb->get_yMax();// +bb->get_Correction_backward();
+	// Upper left corner (u0, v0)
+	xk = _frustum->get_xMin();
+	yk = -_frustum->get_zMax();  // Inverting Z for the camera space convention
+	zk = _frustum->get_yMax();   // Inverted Y for the camera system
 
+	plane[0] = xk / zk * _ck;  // u0
+	plane[2] = yk / zk * _ck;  // v0
 
-	plane[0] = xk / zk *_ck;
-	plane[2] = yk / zk *_ck;
+	// Lower right corner (u1, v1)
+	xk = _frustum->get_xMax();
+	yk = -_frustum->get_zMin();  // Inverting Z again
+	plane[1] = xk / zk * _ck;  // u1
+	plane[3] = yk / zk * _ck;  // v1
 
-	// the lower right edge (u1,v1)
-	xk = bb->get_xMax();
-	yk = -bb->get_zMin();
+	// Get the rotation matrix from dataManager
+	_rotM = _data_manager->get_rotM();
 
-	plane[1] = xk / zk *_ck;
-	plane[3] = yk / zk *_ck;
-
-	// take rotation matrix from bounding box. in case of android rot_m, 
-	// rotation matrix is already provided. otherwise rotation matrix would be calculated during json imread
-	rot_xyz = dataManager->get_rotM();
-
-	logfile->append("");
+	// Logging information
 	logfile->append(TAG + "TVec:");
-	logfile->append("\t\t" + std::to_string(bb->get_X0_Cam_World()[0]) + " " + std::to_string(bb->get_X0_Cam_World()[1]) + " " + std::to_string(bb->get_X0_Cam_World()[2]));
+	logfile->append("\t\t" + std::to_string(_frustum->get_X0_Cam_World()[0]) + " " +
+		std::to_string(_frustum->get_X0_Cam_World()[1]) + " " +
+		std::to_string(_frustum->get_X0_Cam_World()[2]));
 
 	logfile->append(TAG + "RotM:");
-	logfile->append("\t\t" + std::to_string(rot_xyz[0]) + " " + std::to_string(rot_xyz[3]) + " " + std::to_string(rot_xyz[6]),4);
-	logfile->append("\t\t" + std::to_string(rot_xyz[1]) + " " + std::to_string(rot_xyz[4]) + " " + std::to_string(rot_xyz[7]),4);
-	logfile->append("\t\t" + std::to_string(rot_xyz[2]) + " " + std::to_string(rot_xyz[5]) + " " + std::to_string(rot_xyz[8]),4);
+	logfile->append("\t\t" + std::to_string(_rotM[0]) + " " + std::to_string(_rotM[3]) + " " +
+		std::to_string(_rotM[6]), 4);
+	logfile->append("\t\t" + std::to_string(_rotM[1]) + " " + std::to_string(_rotM[4]) + " " +
+		std::to_string(_rotM[7]), 4);
+	logfile->append("\t\t" + std::to_string(_rotM[2]) + " " + std::to_string(_rotM[5]) + " " +
+		std::to_string(_rotM[8]), 4);
 	logfile->append("");
-	logfile->append(TAG + "calculated plane: " + std::to_string(plane[0]) + "," + std::to_string(plane[1]) + "," + std::to_string(plane[2]) + "," + std::to_string(plane[3]), 4);
+	logfile->append(TAG + "calculated plane: " + std::to_string(plane[0]) + "," + std::to_string(plane[1]) + "," +
+		std::to_string(plane[2]) + "," + std::to_string(plane[3]), 4);
 }
 
 
-/*Initialize all nessecary images with the given coloumns and rows.
-The size of the pyramids will also be calculate.*/
+
 void ImCalculator::init_images(int column, int row) {
 
-
-
+	// Initialize the main image (_image) with white color (255, 255, 255)
 	_image = new cv::Mat(row, column, CV_8UC3);
 	_image->setTo(cv::Scalar(255, 255, 255));
-		
-	
 
+	// Initialize the mask (_mask) with default value -1.0f
 	_mask = new cv::Mat(row, column, CV_32FC1);
 	_mask->setTo(cv::Scalar(-1.0f));
-	
+
+	// Initialize the distance image (_distImage) with black color (0, 0, 0)
 	_distImage = new cv::Mat(row, column, CV_8UC3);
 	_distImage->setTo(cv::Scalar(0u, 0u, 0u));
 
-	// generate next 3 pyramids 
+	// Generate 3 pyramids for next_dists and next_masks
 	for (int i = 1; i <= 3; ++i) {
-		int scale = static_cast<int>(powf(2.0f, i*1.0f));
-		int pc = column % scale == 0 ? (column / scale) : (column / scale + 1); // columns in pyramid ( calcs the next integral f.e. 2.5 -> 3)
-		int pr = row % scale == 0 ? (row / scale) : (row / scale + 1); // rows in pyramid
+		int scale = static_cast<int>(powf(2.0f, static_cast<float>(i)));  // Compute scaling factor for pyramid levels
+		int pc = column % scale == 0 ? (column / scale) : (column / scale + 1);  // Calculate columns in pyramid
+		int pr = row % scale == 0 ? (row / scale) : (row / scale + 1);  // Calculate rows in pyramid
 
-		next_dists.push_back(new cv::Mat(pr, pc, CV_8UC3)); 
-		next_dists[static_cast<size_t>(i - 1)]->setTo(cv::Scalar(0, 0, 0));
-		
+		// Create and initialize distance pyramid image
+		next_dists.push_back(new cv::Mat(pr, pc, CV_8UC3));
+		next_dists[i - 1]->setTo(cv::Scalar(0, 0, 0));
+
+		// Create and initialize mask pyramid image
 		next_masks.push_back(new cv::Mat(pr, pc, CV_32FC1));
-		next_masks[static_cast<size_t>(i - 1)]->setTo(cv::Scalar(-1.0f));
-
+		next_masks[i - 1]->setTo(cv::Scalar(-1.0f));
 	}
 
-	dataManager->set_coordinate_image(column, row);
-
+	// Set the coordinate image in the data manager
+	_data_manager->set_coordinate_image(column, row);
 }
 
-/*This do all the stuff, needed to generate the output images.
-CAUTION call this after the projection of all points!!*/
-void ImCalculator::writeImages() {
 
-	
 
-	distMax -= distMin;
+void ImCalculator::write_images() {
 
-	calc_distImage(distMin, distMax, false);
+	// Calculate the effective distance range for normalization
+	_dist_max -= _dist_min;
 
-	cv::imwrite	(fs::path(_working_dir_imcalculator / "dist_image_orig.png").string(), *_distImage);
+	// Calculate the distance image without resetting existing data
+	calc_dist_image(_dist_min, _dist_max, false);
+
+	// Save the initial distance image
+	cv::imwrite(fs::path(_working_dir_imcalculator / "dist_image_orig.png").string(), *_distImage);
 	logfile->append(TAG + "calc new masks");
 
-
-	//filter image, new calc distance image and pyramids
+	// Apply filtering on the image to remove overlapping background pixels
 	filter_image(1.0f);
-	calc_distImage(distMin, distMax);
-	calc_distPyramids(distMin, distMax);
 
+	// Recalculate the distance image with resetting enabled (default `deleteCurrentData = true`)
+	calc_dist_image(_dist_min, _dist_max);
+
+	// Calculate the distance pyramids to generate layered color representations
+	calc_dist_pyramids(_dist_min, _dist_max);
 }
 
-/*This calcs the colors of the distImage with the current data in _mask.
-deleteCurrentData say if information in the distImage, which is deleted in_mask will be reset to 0 or not.*/
-void ImCalculator::calc_distImage(float d_min, float d_diff, bool deleteCurrentData) {
+
+
+void ImCalculator::calc_dist_image(float d_min, float d_diff, bool deleteCurrentData) {
 
 	logfile->append(TAG + "save distances.. ");
+
+	// Iterate through each pixel in `_distImage`
 	for (int r = 0; r < _distImage->rows; ++r) {
 		for (int c = 0; c < _distImage->cols; ++c) {
 
-			cv::Point3_ <uchar>* pixel = _distImage->ptr<cv::Point3_<uchar>>(r, c);
+			// Access the pixel at position (r, c) in `_distImage`
+			cv::Point3_<uchar>* pixel = _distImage->ptr<cv::Point3_<uchar>>(r, c);
 
-			// get distance
-			//float d = reinterpret_cast<float*>(_mask->imageData + r*_mask->widthStep)[c];
+			// Retrieve the corresponding distance value from `_mask`
 			float d = _mask->ptr<float>(r)[c];
 
-
-			// calc distance between [0..1]
-			// ignore default values
+			// Calculate normalized distance and set color if valid
 			if (d > 0.0f) {
-				d = (d - d_min) / d_diff;
-				// calc blend values for red, green and blue
-				float red = d <= 0.5f ? (1.0f - 2.0f * d) : 0.0f; // red = [1..0] , if d=[0..0.5] else 0.0
-				float green = d <= 0.5f ? 2.0f*d : (2.0f - 2.0f*d); // green = [0..1], if d=[0..0.5] else [1..0]
-				float blue = d >= 0.5f ? (2.0f*d - 1.0f) : 0.0f; // blue = 0.0 if d=[0..0.5] else [0..1]
+				d = (d - d_min) / d_diff; // Normalize `d` to [0, 1]
 
+				// Calculate RGB values based on normalized `d`
+				float red = (d <= 0.5f) ? (1.0f - 2.0f * d) : 0.0f;
+				float green = (d <= 0.5f) ? (2.0f * d) : (2.0f - 2.0f * d);
+				float blue = (d >= 0.5f) ? (2.0f * d - 1.0f) : 0.0f;
 
+				// Set RGB values in `_distImage`, scaling to 0–255
 				pixel->x = static_cast<unsigned char>(blue * 255u);
 				pixel->y = static_cast<unsigned char>(green * 255u);
 				pixel->z = static_cast<unsigned char>(red * 255u);
+
 			}
 			else if (deleteCurrentData) {
-
+				// Reset pixel color to black (0,0,0) if `deleteCurrentData` is true and `d` is invalid
 				pixel->x = 0u;
 				pixel->y = 0u;
 				pixel->z = 0u;
-
 			}
 		}
 	}
 
 	logfile->append(TAG + "done.");
-
 }
 
-/*Filter Methode, um überlagerte Hintergrund Pixel aus dem Vordergrund zu eliminieren.
-Hierfür werden die Pyramiden Bilder genutzt und neu die Hintergrund pixel schrittwiese gelöscht.
-db gibt den maximalen Abstand zwischen einem Vordergrund und einem Hintergrund Pixel an.
-Wenn dieser Abstand überschritten wird, wird das Hintergrund pixel gelöscht.*/
+
+
 void ImCalculator::filter_image(float db) {
 
-	// pyr mask, that will be filtered.
-	cv::Mat* nextPyr = 0;
-
+	// Iterate through the pyramid levels from top to bottom (starting from highest resolution)
 	for (int pyr_index = next_masks.size() - 1; pyr_index >= 0; --pyr_index) {
 
-		cv::Mat* current_pyr = next_masks[pyr_index];
+		// Current and next level masks in the pyramid
+		cv::Mat* current_pyr = next_masks[static_cast<size_t>(pyr_index)];
+		cv::Mat* nextPyr = (pyr_index != 0) ? next_masks[static_cast<size_t>(pyr_index - 1)] : _mask;
 
-		if (pyr_index != 0)
-			//nextPyr = next_masks[pyr_index - 1];
-			nextPyr = next_masks[static_cast<size_t>(pyr_index - 1)];
-		else
-			nextPyr = _mask;
-
+		// Traverse each pixel in the current pyramid level
 		for (int r = 0; r < nextPyr->rows; ++r) {
 			for (int c = 0; c < nextPyr->cols; ++c) {
 
 				float d = nextPyr->ptr<float>(r)[c];
+				if (d == -1.0f) continue;  // Skip invalid pixels
 
+				// Coordinates in the current pyramid for half-resolution (downsampled) check
 				int cPyr = c / 2;
 				int rPyr = r / 2;
 
-				// get d from current Pyr_mask
+				// Distance at the downsampled position in the current pyramid
 				float dPyr = current_pyr->ptr<float>(rPyr)[cPyr];
 
-
-				if (d == -1.0f)
-					continue;
-
+				// Check if the distance exceeds the threshold; if so, evaluate deletion criteria
 				if (abs(d - dPyr) > db) {
-
-					/*
-					Dieser Punkt soll evtl. gelöscht werden.
-					Nun wird geprüft, ob es sich um EInen Punkt an einer Kante handelt.
-					Kanten Punkte sind wie folgt definiert:
-					r/c = ungerade : in der aktuellen Pyr muss der nächste Pixel passen
-					r/c = gerade: in der aktuellen Pyr muss der vorherige Pixel passen.
-					*/
 
 					bool checkR = true;
 					bool checkC = true;
 					float dNew = 0.0f;
 
-					// check r. anfangs und Endzeile wird übersprungen
-					if (r < nextPyr->rows - 1 && r > 0) {
+					// Check the row edge cases for even/odd rows
+					if (r > 0 && r < nextPyr->rows - 1) {
 						if (r % 2 == 0) {
-
 							dNew = current_pyr->ptr<float>(rPyr - 1)[cPyr - 1];
-
-							if (dNew > 0.0f)
-								checkR = abs(d - dNew) > db;
 						}
 						else {
-
 							dNew = current_pyr->ptr<float>(rPyr + 1)[cPyr + 1];
-							if (dNew > 0.0f)
-								checkR = abs(d - dNew) > db;
+						}
+						if (dNew > 0.0f) {
+							checkR = abs(d - dNew) > db;
 						}
 					}
 
-					// check c.
-					if (c < nextPyr->cols - 1 && c > 0) {
+					// Check the column edge cases for even/odd columns
+					if (c > 0 && c < nextPyr->cols - 1) {
 						if (c % 2 == 0) {
-
 							dNew = current_pyr->ptr<float>(rPyr)[cPyr - 1];
-							if (dNew > 0.0f)
-								checkC = abs(d - dNew) > db;
 						}
 						else {
-
 							dNew = current_pyr->ptr<float>(rPyr)[cPyr + 1];
-							if (dNew > 0.0f)
-								checkC = abs(d - dNew) > db;
+						}
+						if (dNew > 0.0f) {
+							checkC = abs(d - dNew) > db;
 						}
 					}
 
-					// Lösche, wenn kein Randpixel getroffen wurde
+					// If not an edge pixel, delete it from the next pyramid mask
 					if (checkR && checkC) {
 						nextPyr->ptr<float>(r)[c] = -1.0f;
-						if (pyr_index == 0) {
-							if (r > 0 && r < _image->rows && c > 0 && c < _image->cols) {
-								
-								cv::Point3_ <uchar>* pixel = _image->ptr<cv::Point3_<uchar>>(r, c);
-								pixel->x = 255u;
-								pixel->y = 255u;
-								pixel->z = 255u;
-								
-								dataManager->get_coordinate_image()->delete_pixel(c, r);
-							}
+
+						// For the base pyramid level, update the color to indicate deletion
+						if (pyr_index == 0 && r > 0 && r < _image->rows && c > 0 && c < _image->cols) {
+							cv::Point3_<uchar>* pixel = _image->ptr<cv::Point3_<uchar>>(r, c);
+							pixel->x = 255u; pixel->y = 255u; pixel->z = 255u;
+
+							// Remove the corresponding pixel from the coordinate image in dataManager
+							_data_manager->get_coordinate_image()->delete_pixel(c, r);
 						}
 					}
 				}
@@ -525,27 +455,33 @@ void ImCalculator::filter_image(float db) {
 
 
 
+void ImCalculator::calc_dist_pyramids(float d_min, float d_diff) {
 
-/*Calc the color for all distance pyramids*/
-void ImCalculator::calc_distPyramids(float d_min, float d_diff) {
-
+	// Iterate through each level of the distance pyramids
 	for (unsigned int p = 1u; p <= next_dists.size(); ++p) {
 		for (int r = 0; r < next_dists[static_cast<size_t>(p - 1u)]->rows; ++r) {
 			for (int c = 0; c < next_dists[static_cast<size_t>(p - 1u)]->cols; ++c) {
 
 				cv::Point3_ <uchar>* pixel = next_dists[static_cast<size_t>(p - 1u)]->ptr<cv::Point3_<uchar>>(r, c);
 
-				// get distance
+				// Retrieve the distance at the current pixel
 				float d = next_masks[static_cast<size_t>(p - 1u)]->ptr<float>(r)[c];
-				// calc distance between [0..1]
-				// ignore default values
+
+				// Normalize distance to [0, 1] range, if greater than 0 (ignoring default/invalid values)
 				if (d > 0) {
 					d = (d - d_min) / d_diff;
-					// calc blend values for red, green and blue
-					float red = d <= 0.5f ? (1.0f - 2.0f * d) : 0.0f; // red = [1..0] , if d=[0..0.5] else 0.0
-					float green = d <= 0.5f ? 2.0f*d : (2.0f - 2.0f*d); // green = [0..1], if d=[0..0.5] else [1..0]
-					float blue = d >= 0.5f ? (2.0f*d - 1.0f) : 0.0f; // blue = 0.0 if d=[0..0.5] else [0..1]
 
+					// Calculate color channels based on distance
+					// Red decreases from 1 to 0 as d goes from 0 to 0.5, otherwise remains 0
+					float red = d <= 0.5f ? (1.0f - 2.0f * d) : 0.0f; 
+
+					// Green increases from 0 to 1 as d goes from 0 to 0.5, then decreases to 0 as d goes from 0.5 to 1
+					float green = d <= 0.5f ? 2.0f*d : (2.0f - 2.0f*d); 
+
+					// Blue remains 0 until d reaches 0.5, then increases to 1 as d approaches 1
+					float blue = d >= 0.5f ? (2.0f*d - 1.0f) : 0.0f;
+
+					// Assign calculated color values to the pixel, scaling to [0, 255] for uchar format
 					pixel->x = static_cast<unsigned char>(blue * 255u);
 					pixel->y = static_cast<unsigned char>(green * 255u);
 					pixel->z = static_cast<unsigned char>(red * 255u);
@@ -559,9 +495,9 @@ void ImCalculator::calc_distPyramids(float d_min, float d_diff) {
 
 void ImCalculator::fill_vectors() {
 	// Retrieve vectors from the data manager
-	std::vector<cv::Point2d>* synth2DCoordinates = dataManager->get_pts_synth_2D_double();
-	std::vector<cv::Scalar>* synth3DColors = dataManager->get_pts_color_RGB_int();
-	std::vector<cv::Point3d>* synth3DCoordinates = dataManager->get_pts_synth_3D_double();
+	std::vector<cv::Point2d>* synth2DCoordinates = _data_manager->get_pts_synth_2D_double();
+	std::vector<cv::Scalar>* synth3DColors = _data_manager->get_pts_color_RGB_int();
+	std::vector<cv::Point3d>* synth3DCoordinates = _data_manager->get_pts_synth_3D_double();
 
 	// Check if vectors have been initialized; if not, exit the function
 	if (synth2DCoordinates == nullptr || synth3DColors == nullptr || synth3DCoordinates == nullptr) {
@@ -577,7 +513,7 @@ void ImCalculator::fill_vectors() {
 	}
 
 	// Retrieve pixel coordinates from the coordinate image
-	std::vector<std::shared_ptr<CoordinateImage::Coordinate>> pixelCoordinates = dataManager->get_coordinate_image()->getPixels();
+	std::vector<std::shared_ptr<CoordinateImage::Coordinate>> pixelCoordinates = _data_manager->get_coordinate_image()->getPixels();
 	auto endIt = pixelCoordinates.cend();
 
 
@@ -601,10 +537,12 @@ void ImCalculator::fill_vectors() {
 	}
 }
 
+
+
 void ImCalculator::fill_image(int radius_mask_fill) {
 	logfile->append(TAG + "Fill Images RGB ...");
 
-	// Initialize the mask with zeros (black)
+	// Initialize the mask with black (all zeroes)
 	_maske_8UC1 = cv::Mat::zeros(_image->size(), CV_8UC1);
 	for (int r = 0; r < _image->rows; r++) {
 		for (int c = 0; c < _image->cols; c++) {
@@ -614,38 +552,39 @@ void ImCalculator::fill_image(int radius_mask_fill) {
 		}
 	}
 
+	// Save initial mask for debugging/verification
 	cv::imwrite(fs::path(_working_dir_imcalculator / "maskefill.png").string(), _maske_8UC1);
 
-	cv::Mat tempBild = _image->clone();
-	cv::Mat fillMask = cv::Mat::zeros(_maske_8UC1.size(), CV_8U);
+	cv::Mat tempBild = _image->clone(); // Temporary image to work on filled colors
+	cv::Mat fillMask = cv::Mat::zeros(_maske_8UC1.size(), CV_8U); // Tracking filled areas
 
-	// set colors and update fillMask
-	for (int i = 0; i < dataManager->get_pts_synth_2D_double()->size(); ++i) {
-		int x = static_cast<int>(dataManager->get_pts_synth_2D_double()->at(i).x);
-		int y = static_cast<int>(dataManager->get_pts_synth_2D_double()->at(i).y);
+	// Populate fillMask and tempBild with synthetic point colors
+	for (int i = 0; i < _data_manager->get_pts_synth_2D_double()->size(); ++i) {
+		int x = static_cast<int>(_data_manager->get_pts_synth_2D_double()->at(i).x);
+		int y = static_cast<int>(_data_manager->get_pts_synth_2D_double()->at(i).y);
 
+		// Ensure the points are within image bounds
 		if (x >= 0 && x < tempBild.cols && y >= 0 && y < tempBild.rows) {
 			cv::Vec3b color{
-				static_cast<uchar>(dataManager->get_pts_color_RGB_int()->at(i)[0]),
-				static_cast<uchar>(dataManager->get_pts_color_RGB_int()->at(i)[1]),
-				static_cast<uchar>(dataManager->get_pts_color_RGB_int()->at(i)[2])
+				static_cast<uchar>(_data_manager->get_pts_color_RGB_int()->at(i)[0]),
+				static_cast<uchar>(_data_manager->get_pts_color_RGB_int()->at(i)[1]),
+				static_cast<uchar>(_data_manager->get_pts_color_RGB_int()->at(i)[2])
 			};
 
-
-			{
-				tempBild.at<cv::Vec3b>(y, x) = color;
-				fillMask.at<uchar>(y, x) = 255;
-			}
+			// Update pixel color and mark location in fillMask
+			tempBild.at<cv::Vec3b>(y, x) = color;
+			fillMask.at<uchar>(y, x) = 255;	
 		}
 	}
 
-	// Fill gaps in filled mask using interpolation
+	// Interpolate colors for gaps in the masked area
 	for (int row = 0; row < _image->rows; ++row) {
 		for (int col = 0; col < _image->cols; ++col) {
 			if (_maske_8UC1.at<uchar>(row, col) > 0 && fillMask.at<uchar>(row, col) == 0) {
 				cv::Vec3f interpolierteFarbe = cv::Vec3f(0, 0, 0);
 				int nCount = 0;
 
+				// Average color from 8-neighbors to fill gaps
 				for (int yOff = -1; yOff <= 1; ++yOff) {
 					for (int xOff = -1; xOff <= 1; ++xOff) {
 						int ny = row + yOff;
@@ -660,6 +599,7 @@ void ImCalculator::fill_image(int radius_mask_fill) {
 					}
 				}
 
+				// Apply the averaged color if any neighbors were found
 				if (nCount > 0) {
 					interpolierteFarbe /= nCount;
 					tempBild.at<cv::Vec3b>(row, col) = cv::Vec3b(
@@ -667,13 +607,13 @@ void ImCalculator::fill_image(int radius_mask_fill) {
 						cv::saturate_cast<uchar>(interpolierteFarbe[1]),
 						cv::saturate_cast<uchar>(interpolierteFarbe[2])
 					);
-					fillMask.at<uchar>(row, col) = 255;
+					fillMask.at<uchar>(row, col) = 255; // Mark as filled
 				}
 			}
 		}
 	}
 
-	// unfilled areas -> black
+	// Assign black to any remaining unfilled mask regions
 	for (int row = 0; row < _image->rows; ++row) {
 		for (int col = 0; col < _image->cols; ++col) {
 			if (_maske_8UC1.at<uchar>(row, col) > 0 && fillMask.at<uchar>(row, col) == 0) {
@@ -682,12 +622,15 @@ void ImCalculator::fill_image(int radius_mask_fill) {
 		}
 	}
 
-	// erosion to filled image to refine edges
+	// Apply morphological erosion to refine edges of the filled area
 	cv::Mat erodeElement = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(radius_mask_fill, radius_mask_fill));
 	cv::erode(_maske_8UC1, _maske_8UC1, erodeElement);
-	tempBild.setTo(cv::Scalar(0, 0, 0), _maske_8UC1 == 0);
+	tempBild.setTo(cv::Scalar(0, 0, 0), _maske_8UC1 == 0); // Set areas outside mask to black
 
+	// Update the original image with filled regions
 	tempBild.copyTo(*_image);
+
+	// Save the final filled image for verification
 	cv::imwrite(fs::path(_working_dir_imcalculator / "filled_image.png").string(), *_image);
 	logfile->append(TAG + "write filled_image.png");
 }

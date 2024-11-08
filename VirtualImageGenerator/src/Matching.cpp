@@ -1,166 +1,131 @@
-﻿
-#include "Matching.h"
+﻿#include "Matching.h"
 
 
 Matching::Matching() {
-	mDataManager = nullptr;
-	mLogFile = nullptr;
-	_working_dir_matching = "";
+	_data_manager = nullptr;   // Initialize data manager pointer to null
+	_logfile = nullptr;        // Initialize log file pointer to null
+	_working_dir_matching = ""; // Initialize working directory path as empty
 }
 
+
 Matching::~Matching() {
+	// Currently, no dynamic memory or resources to release.
 }
 
 
 void Matching::init(DataManager* _dataManager) {
 
-	// initialisation log_file
-	mLogFile = _dataManager->getLogFilePrinter();
-	mLogFile->append("");
-	mLogFile->append(TAG + "---- initialisation matching ----");
+	// Initialize log file for tracking Matching process steps
+	_logfile = _dataManager->get_logfile();
+	_logfile->append("");
+	_logfile->append(TAG + "---- initialisation matching ----");
 
-	// hand over data manager
-	mDataManager = _dataManager;
+	// Store reference to the DataManager for future data access
+	_data_manager = _dataManager;
 
-	// Create working directory .../Matching
-	_working_dir_matching = mDataManager->get_path_working_directory() / "Matching";
+	// Define the path for the "Matching" working directory
+	_working_dir_matching = _data_manager->get_path_working_directory() / "Matching";
+
+	// Check if the directory exists; if not, create it
 	if (!fs::exists(_working_dir_matching)) {
-		fs::create_directory(_working_dir_matching);  // Creates the directory if it doesn't exist
+		fs::create_directory(_working_dir_matching);
 	}
-
 }
 
 
-/**
- * @brief Calculates the nearest neighbor matches between synthesized keypoints and real keypoints using KNN search.
- *
- * This function finds the closest synthesized points corresponding to the synthesized keypoints
- * from an image and matches them with real keypoints. It also returns the matched 3D points.
- * Points are matched based on a specified distance threshold.
- *
- * @param in_synth_pts_float A vector of synthesized 2D points (in image space).
- * @param in_synth_pts_3D_float A vector of synthesized 3D points (object space).
- * @param in_synth_keypoints_float A vector of synthesized keypoints (2D).
- * @param in_real_keypoints_float A vector of real keypoints (2D).
- * @param in_real_image The real image for visualization.
- * @param in_synth_image The synthesized image for visualization.
- * @param out_matched_image_points_real Output vector for matched real image points.
- * @param out_matched_image_points_synth Output vector for matched synthesized image points.
- * @param out_matched_object_points Output vector for matched 3D object points.
- * @param in_neighbour_distance The distance threshold for matching (in pixels).
- */
 void Matching::calculate_nn_synth_key___pts_image_pts(
-        const std::vector<cv::Point2d>& in_synth_pts_float, // 2D points
-        const std::vector<cv::Point3d>& in_synth_pts_3D_float, // 3D points
-        const std::vector<cv::Point2d>& in_synth_keypoints_float,
-        const std::vector<cv::Point2d>& in_real_keypoints_float,
-        const cv::Mat& in_real_image,
-        const cv::Mat& in_synth_image,
-        std::vector<cv::Point2d>& out_matched_image_points_real,
-        std::vector<cv::Point2d>& out_matched_image_points_synth,
-        std::vector<cv::Point3d>& out_matched_object_points,
-        const float in_neighbour_distance) {
+    const std::vector<cv::Point2d>& in_synth_pts_float, // 2D points
+    const std::vector<cv::Point3d>& in_synth_pts_3D_float, // 3D points
+    const std::vector<cv::Point2d>& in_synth_keypoints_float,
+    const std::vector<cv::Point2d>& in_real_keypoints_float,
+    const cv::Mat& in_real_image,
+    const cv::Mat& in_synth_image,
+    std::vector<cv::Point2d>& out_matched_image_points_real,
+    std::vector<cv::Point2d>& out_matched_image_points_synth,
+    std::vector<cv::Point3d>& out_matched_object_points,
+    const float in_neighbour_distance) {
 
-        // Check input data
-        assert(!in_synth_pts_float.empty());
-        assert(!in_synth_pts_3D_float.empty());
+    // Check input data
+    assert(!in_synth_pts_float.empty());
+    assert(!in_synth_pts_3D_float.empty());
 
-        // Clear output vectors
-        out_matched_image_points_synth.clear();
-        out_matched_image_points_real.clear();
-        out_matched_object_points.clear();
+    // Clear output vectors
+    out_matched_image_points_synth.clear();
+    out_matched_image_points_real.clear();
+    out_matched_object_points.clear();
 
-        // Log information
-        mLogFile->append(TAG + "count synth_keypoints_float: " + std::to_string(in_synth_keypoints_float.size()));
-        mLogFile->append(TAG + "count real_keypoints_float: " + std::to_string(in_real_keypoints_float.size()));
-        mLogFile->append(TAG + "neighbour distance threshold (in Px): " + std::to_string(in_neighbour_distance));
+    // Log information
+    _logfile->append(TAG + "count synth_keypoints_float: " + std::to_string(in_synth_keypoints_float.size()));
+    _logfile->append(TAG + "count real_keypoints_float: " + std::to_string(in_real_keypoints_float.size()));
+    _logfile->append(TAG + "neighbour distance threshold (in Px): " + std::to_string(in_neighbour_distance));
 
-        // Create cv::Mat for the 2D points
-        cv::Mat in_synth_pts_mat(in_synth_pts_float.size(), 2, CV_32F);
-        for (size_t i = 0; i < in_synth_pts_float.size(); ++i) {
-            in_synth_pts_mat.at<float>(i, 0) = static_cast<float>(in_synth_pts_float[i].x); // x-coordinate
-            in_synth_pts_mat.at<float>(i, 1) = static_cast<float>(in_synth_pts_float[i].y); // y-coordinate
-        }
-
-        // Prepare for KNN search
-        cv::flann::Index kdtree(in_synth_pts_mat, cv::flann::KDTreeIndexParams());
-
-        // Initialize canvas for output
-        cv::Mat draw_canvas_synth = in_synth_image.clone();
-        cv::Mat draw_canvas_real = in_real_image.clone();
-
-        // Step through synth keypoints and apply KNN search
-        uint counter = 0;
-        for (const auto& p : in_synth_keypoints_float) {
-            // Convert 2D keypoint to a format suitable for knnSearch (a row matrix)
-            cv::Mat query_point(1, 2, CV_32F);
-            query_point.at<float>(0, 0) = static_cast<float>(p.x);
-            query_point.at<float>(0, 1) = static_cast<float>(p.y);
-
-            // Perform KNN search
-            std::vector<int> indices(1); // For storing the index of the nearest neighbor
-            std::vector<float> dists(1); // For storing the distance to the nearest neighbor
-            kdtree.knnSearch(query_point, indices, dists, 1);
-
-            // Ensure that the nearest neighbor distance is valid
-            if (dists.empty() || dists[0] > in_neighbour_distance * in_neighbour_distance) {
-                counter++; // Increment counter in each case
-                continue;
-            }
-
-            // Push back corresponding synth 2D, real 2D (image points) and synth 3D (object points)
-            out_matched_image_points_synth.push_back(cv::Point2d(in_synth_pts_float[indices[0]].x, in_synth_pts_float[indices[0]].y));
-            out_matched_image_points_real.push_back(cv::Point2d(in_real_keypoints_float[counter].x, in_real_keypoints_float[counter].y));
-            out_matched_object_points.push_back(cv::Point3d(in_synth_pts_3D_float[indices[0]].x, in_synth_pts_3D_float[indices[0]].y, in_synth_pts_3D_float[indices[0]].z));
-
-            // Output
-            cv::circle(draw_canvas_synth, cv::Point(in_synth_pts_float[indices[0]].x, in_synth_pts_float[indices[0]].y), 5, cv::Scalar(0, 0, 255), -1);
-            cv::circle(draw_canvas_synth, cv::Point(p.x, p.y), 1, cv::Scalar(0, 255, 0), 3);
-            cv::circle(draw_canvas_real, cv::Point(in_real_keypoints_float[counter].x, in_real_keypoints_float[counter].y), 1, cv::Scalar(0, 255, 0), 3);
-
-            std::string counterTxt = std::to_string(counter) + "," +
-                std::to_string(in_synth_pts_3D_float[indices[0]].x) + "," +
-                std::to_string(in_synth_pts_3D_float[indices[0]].y) + "," +
-                std::to_string(in_synth_pts_3D_float[indices[0]].z);
-
-            cv::putText(draw_canvas_real, std::to_string(counter), cv::Point(in_real_keypoints_float[counter].x, in_real_keypoints_float[counter].y), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
-            cv::putText(draw_canvas_synth, std::to_string(counter), cv::Point(in_synth_pts_float[indices[0]].x, in_synth_pts_float[indices[0]].y), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255));
-
-            counter++; // Increment counter in each case
-        }
-
-        // Log output
-        mLogFile->append(TAG + "size matched_objectPoints/ matched_imagePoints_synth/ matched_imagePoints_real: " +
-            std::to_string(out_matched_object_points.size()) + "/" +
-            std::to_string(out_matched_image_points_synth.size()) + "/" +
-            std::to_string(out_matched_image_points_real.size()));
-        mLogFile->append(TAG + "finish matching");
-
-        // Save output images
-		cv::imwrite(fs::path(_working_dir_matching / "corresp_points_synth.png").string(), draw_canvas_synth);
-		cv::imwrite(fs::path(_working_dir_matching / "corresp_points_real.png").string(), draw_canvas_real);
+    // Create cv::Mat for the 2D points
+    cv::Mat in_synth_pts_mat(in_synth_pts_float.size(), 2, CV_32F);
+    for (size_t i = 0; i < in_synth_pts_float.size(); ++i) {
+        in_synth_pts_mat.at<float>(i, 0) = static_cast<float>(in_synth_pts_float[i].x); // x-coordinate
+        in_synth_pts_mat.at<float>(i, 1) = static_cast<float>(in_synth_pts_float[i].y); // y-coordinate
     }
 
+    // Prepare for KNN search
+    cv::flann::Index kdtree(in_synth_pts_mat, cv::flann::KDTreeIndexParams());
+
+    // Initialize canvas for output
+    cv::Mat draw_canvas_synth = in_synth_image.clone();
+    cv::Mat draw_canvas_real = in_real_image.clone();
+
+    // Step through synth keypoints and apply KNN search
+    uint counter = 0;
+    for (const auto& p : in_synth_keypoints_float) {
+        // Convert 2D keypoint to a format suitable for knnSearch (a row matrix)
+        cv::Mat query_point(1, 2, CV_32F);
+        query_point.at<float>(0, 0) = static_cast<float>(p.x);
+        query_point.at<float>(0, 1) = static_cast<float>(p.y);
+
+        // Perform KNN search
+        std::vector<int> indices(1); // For storing the index of the nearest neighbor
+        std::vector<float> dists(1); // For storing the distance to the nearest neighbor
+        kdtree.knnSearch(query_point, indices, dists, 1);
+
+        // Ensure that the nearest neighbor distance is valid
+        if (dists.empty() || dists[0] > in_neighbour_distance * in_neighbour_distance) {
+            counter++; // Increment counter in each case
+            continue;
+        }
+
+        // Push back corresponding synth 2D, real 2D (image points) and synth 3D (object points)
+        out_matched_image_points_synth.push_back(cv::Point2d(in_synth_pts_float[indices[0]].x, in_synth_pts_float[indices[0]].y));
+        out_matched_image_points_real.push_back(cv::Point2d(in_real_keypoints_float[counter].x, in_real_keypoints_float[counter].y));
+        out_matched_object_points.push_back(cv::Point3d(in_synth_pts_3D_float[indices[0]].x, in_synth_pts_3D_float[indices[0]].y, in_synth_pts_3D_float[indices[0]].z));
+
+        // Output
+        cv::circle(draw_canvas_synth, cv::Point(in_synth_pts_float[indices[0]].x, in_synth_pts_float[indices[0]].y), 5, cv::Scalar(0, 0, 255), -1);
+        cv::circle(draw_canvas_synth, cv::Point(p.x, p.y), 1, cv::Scalar(0, 255, 0), 3);
+        cv::circle(draw_canvas_real, cv::Point(in_real_keypoints_float[counter].x, in_real_keypoints_float[counter].y), 1, cv::Scalar(0, 255, 0), 3);
+
+        std::string counterTxt = std::to_string(counter) + "," +
+            std::to_string(in_synth_pts_3D_float[indices[0]].x) + "," +
+            std::to_string(in_synth_pts_3D_float[indices[0]].y) + "," +
+            std::to_string(in_synth_pts_3D_float[indices[0]].z);
+
+        cv::putText(draw_canvas_real, std::to_string(counter), cv::Point(in_real_keypoints_float[counter].x, in_real_keypoints_float[counter].y), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
+        cv::putText(draw_canvas_synth, std::to_string(counter), cv::Point(in_synth_pts_float[indices[0]].x, in_synth_pts_float[indices[0]].y), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255));
+
+        counter++; // Increment counter in each case
+    }
+
+    // Log output
+    _logfile->append(TAG + "size matched_objectPoints/ matched_imagePoints_synth/ matched_imagePoints_real: " +
+        std::to_string(out_matched_object_points.size()) + "/" +
+        std::to_string(out_matched_image_points_synth.size()) + "/" +
+        std::to_string(out_matched_image_points_real.size()));
+    _logfile->append(TAG + "finish matching");
+
+    // Save output images
+	cv::imwrite(fs::path(_working_dir_matching / "corresp_points_synth.png").string(), draw_canvas_synth);
+	cv::imwrite(fs::path(_working_dir_matching / "corresp_points_real.png").string(), draw_canvas_real);
+}
 
 
-
-
-/**
- * @fn	void Matching::loadMatches( std::string in_path_FMatrixOutput, cv::Mat&amp; in_real_image, cv::Mat&amp; in_synth_image, std::vector&lt;cv::Point2d&gt;&amp; in_wl_pts_2D, std::vector&lt;cv::Point2d&gt;&amp; in_synth_pts_2D, std::vector&lt;cv::Point3d&gt;&amp; in_synth_pts_3D, std::vector&lt;cv::Point3d&gt;&amp; out_matched_object_points, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_real, std::vector&lt;cv::Point2d&gt;&amp; out_matched_image_points_synth)
- *
- * @summary	public function read f-inlier matches from SiftGPU (included in Visual SFM console
- * 			application)
- *
- * @param 			in_path_FMatrixOutput	  	input string path to matching results from Visual SFM.
- * @param [in]		in_real_image				  	matrix of real image.
- * @param [in]		in_synth_image				  	matrix of rendered image.
- * @param [in]		in_wl_pts_2D					image points of the detected water line
- * @param [in]		in_synth_pts_2D				  	image points of the rendered image
- * @param [in]		in_synth_pts_3D				  	object points that corresponds to the image	points of the rendered image
- * @param [out]	out_matched_object_points	  	image points from the real image having corresponding keypoints inside the rendered image with valid 3D correspondence
- * @param [out]	out_matched_image_points_real 	image points from the rendered image having corresponding keypoints inside the real image with valid 3D correspondence
- * @param [out]	out_matched_image_points_synth	object points that have corresponding points within the real and the rendered image.
- */
 void Matching::loadMatches(
 	std::string in_path_matching_output,
 	cv::Mat& in_real_image,
@@ -173,10 +138,10 @@ void Matching::loadMatches(
 	std::vector<cv::Point2d>& out_matched_image_points_synth,
 	float neighbour_distance_allowed_pointcloud) {
 
-	mLogFile->append("");
-	mLogFile->append(TAG + "read matching results");
-	mLogFile->append(TAG + "real_image: " + std::to_string(in_real_image.size().width) + "x" + std::to_string(in_real_image.size().height) + "," + std::to_string(in_real_image.type()));
-	mLogFile->append(TAG + "synth_image: " + std::to_string(in_synth_image.size().width) + "x" + std::to_string(in_synth_image.size().height) + "," + std::to_string(in_synth_image.type()));
+	_logfile->append("");
+	_logfile->append(TAG + "read matching results");
+	_logfile->append(TAG + "real_image: " + std::to_string(in_real_image.size().width) + "x" + std::to_string(in_real_image.size().height) + "," + std::to_string(in_real_image.type()));
+	_logfile->append(TAG + "synth_image: " + std::to_string(in_synth_image.size().width) + "x" + std::to_string(in_synth_image.size().height) + "," + std::to_string(in_synth_image.type()));
 
 	// initialisation
 	uint counter = 0;
@@ -184,10 +149,8 @@ void Matching::loadMatches(
 	std::string line;
 	std::vector<cv::Point2d> real_matched_pts, synth_matched_pts;
 
-
 	// read line-by-line
 	while (std::getline(file, line)) {
-
 		
 		// create an input string stream
 		std::istringstream stm(line);
@@ -199,20 +162,16 @@ void Matching::loadMatches(
 		real_matched_pts.push_back(cv::Point2d(img1_x, img1_y));
 		synth_matched_pts.push_back(cv::Point2d(img2_x, img2_y));
 
-		counter++;
-		
+		counter++;	
 	}
 
-	mLogFile->append(TAG + "count fundamental inlier matches (real_matched_pts/synth_matched_pts):" + std::to_string(real_matched_pts.size()) + "/" + std::to_string(synth_matched_pts.size()));
+	_logfile->append(TAG + "count fundamental inlier matches (real_matched_pts/synth_matched_pts):" + std::to_string(real_matched_pts.size()) + "/" + std::to_string(synth_matched_pts.size()));
 
-	// check for outlieres
+	// check for outliers
 	ransac_test(real_matched_pts, synth_matched_pts);
 
-
 	// data conversion for image matching
-	
-
-	// --- receive 3D coordinates for all image points 
+	// receive 3D coordinates for all image points 
 	// vectors for matching results in declaration
 	calculate_nn_synth_key___pts_image_pts(
 		in_synth_pts_2D, in_synth_pts_3D, synth_matched_pts, real_matched_pts,
@@ -220,10 +179,9 @@ void Matching::loadMatches(
 		out_matched_image_points_real, out_matched_image_points_synth, out_matched_object_points,
 		neighbour_distance_allowed_pointcloud);
 
-
 	// check sizes of matched point vectors (2D synth, real, 3D synth_object), must be equal otherwise return
 	if (out_matched_object_points.size() == 0 || out_matched_image_points_real.size() == 0 || out_matched_image_points_real.size() != out_matched_object_points.size()) {
-		mLogFile->append("Problem with determination of corresponding points between matched synthetic and matched real image and 3D point cloud data.");
+		_logfile->append("Problem with determination of corresponding points between matched synthetic and matched real image and 3D point cloud data.");
 		return;
 	}
 
@@ -232,37 +190,11 @@ void Matching::loadMatches(
 
 	// draw matches
 	write_visualization_matches(in_real_image, in_synth_image, real_matched_pts, synth_matched_pts, "matches_2D");
-
-	// update 02.07.22 because function above do not print inlier matches alone!
 	write_visualization_matches(in_real_image, in_synth_image, out_matched_image_points_real, out_matched_image_points_synth, "matches_with_3D_val");
-
 }
 
 
-
-/**
- * @brief Space resection using matched object and image points to estimate intrinsic / extrinsic camera parameters.
- *
- * This function refines the extrinsic and intrinsic parameters of the camera using spatial resection techniques.
- * It supports both fisheye and pinhole camera models and performs outlier rejection using solvePnPRansac.
- * Optionally, it refines the solution using solvePnPRefineLM or calibrateCamera based on the input flags.
- *
- * @param[in] in_matched_object_points Matched 3D object points (in world coordinates).
- * @param[in] in_matched_image_points_real Matched 2D image points (in image coordinates).
- * @param[in] true_image Original image matrix for size reference.
- * @param[in] in_pix_size Pixel size (used for scaling).
- * @param[in] camera_matrix Intrinsic camera matrix.
- * @param[in] dist_coeffs Camera distortion coefficients.
- * @param[out] rvec Rotation vector (output if solved).
- * @param[out] tvec Translation vector (output if solved).
- * @param[out] stdDev_In Standard deviation of intrinsic parameters.
- * @param[out] stdDev_Ext Standard deviation of extrinsic parameters.
- * @param[in] in_flag Flag indicating which parameters to optimize (extrinsics, intrinsics, or both).
- * @param[in] fisheye Boolean flag indicating whether a fisheye model is used.
- *
- * @return The reprojection error after calibration or -1 if an error occurs.
- */
- double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_points,
+double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_points,
 	 std::vector<cv::Point2d>& in_matched_image_points_real,
 	 cv::Mat& true_image,
 	 double in_pix_size,
@@ -273,27 +205,26 @@ void Matching::loadMatches(
 	 cv::Mat& stdDev_In,
 	 cv::Mat& stdDev_Ext,
 	 Flags_resec in_flag,
-	 bool fisheye)
- {
+	 bool fisheye) {
 	 
 	 // Early return if both extrinsic and intrinsic parameters are fixed
 	 if (in_flag == FIXED_EO_IO) {
-		 mLogFile->append(TAG + " Both EO and IO fixed.");
+		 _logfile->append(TAG + " Both EO and IO fixed.");
 		 return -1;
 	 }
 	 
-	 // 1. Validate input parameters and data
+	 // Validate input parameters and data
 	 if (camera_matrix.total() != 9 || dist_coeffs.empty() ||
 		 in_matched_object_points.size() < 4 || in_matched_image_points_real.size() < 4) {
-		 mLogFile->append(TAG + ", invalid inputs.");
+		 _logfile->append(TAG + ", invalid inputs.");
 		 return -1;
 	 }
 
-	 // 2. Define parameters for RANSAC
+	 // Define parameters for RANSAC
 	 constexpr int iterationsCount = 10000;
 	 const float solvePnPRansac_reproErr = fisheye ?
-		 mDataManager->get_filter_matches_ransac_fisheye() :
-		 mDataManager->get_filter_matches_ransac_pinhole();
+		 _data_manager->get_filter_matches_ransac_fisheye() :
+		 _data_manager->get_filter_matches_ransac_pinhole();
 
 	 std::vector<int> inliers;
 	 double repro_error = -1.0;
@@ -306,16 +237,16 @@ void Matching::loadMatches(
 		 cv::Rodrigues(rvec, rvec);
 	 }
 
-	 // 3. Run solvePnPRansac for initial pose estimation and outlier filtering
+	 // Run solvePnPRansac for initial pose estimation and outlier filtering
 	 if (!cv::solvePnPRansac(in_matched_object_points, in_matched_image_points_real,
 		 camera_matrix, dist_coeffs, rvec, tvec, true,
 		 iterationsCount, solvePnPRansac_reproErr, 0.9999,
 		 inliers, cv::SOLVEPNP_ITERATIVE)) {
-		 mLogFile->append(TAG + ", solvePnPRansac failed.");
+		 _logfile->append(TAG + ", solvePnPRansac failed.");
 		 return -1;
 	 }
 
-	 // 4. Collect inliers
+	 // Collect inliers
 	 std::vector<cv::Point3d> object_points_ransac;
 	 std::vector<cv::Point2d> image_points_real_ransac;
 	 for (int i : inliers) {
@@ -323,15 +254,11 @@ void Matching::loadMatches(
 		 object_points_ransac.push_back(in_matched_object_points[i]);
 	 }
 
-	 // 5. Optimize extrinsics or both intrinsic and extrinsic parameters
+	 // Optimize extrinsics or both intrinsic and extrinsic parameters
 	 cv::TermCriteria termCrit(cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 300, DBL_EPSILON);
-	 /*if (in_flag == CALC_EO) {
-		 mLogFile->append(TAG + " Optimizing only EO via solvePnPRefineLM.");
-		 cv::solvePnPRefineLM(object_points_ransac, image_points_real_ransac,
-			 camera_matrix, dist_coeffs, rvec, tvec, termCrit);
-	 }*/
+	 
 	 if (in_flag ==!CALC_EO) {
-		 mLogFile->append(TAG + " Optimizing both EO and IO.");
+		 _logfile->append(TAG + " Optimizing both EO and IO.");
 		 std::vector<std::vector<cv::Point3d>> obj_pts_vector = { object_points_ransac };
 		 std::vector<std::vector<cv::Point2d>> img_pts_vector = { image_points_real_ransac };
 
@@ -352,13 +279,13 @@ void Matching::loadMatches(
 		 }
 	 }
 
-	 // 6. Log the optimized translation and rotation vectors
+	 // Log the optimized translation and rotation vectors
 	 std::ostringstream t_vec_str, r_vec_str;
 	 t_vec_str << tvec;
 	 r_vec_str << rvec;
-	 mLogFile->append(TAG + " Optimized tvec / rvec: " + t_vec_str.str() + " / " + r_vec_str.str());
+	 _logfile->append(TAG + " Optimized tvec / rvec: " + t_vec_str.str() + " / " + r_vec_str.str());
 
-	 // 7. Compute reprojected points and standard deviations
+	 // Compute reprojected points and standard deviations
 	 std::vector<cv::Point2d> reprojected_points;
 	 cv::Mat jacobian;
 	 if (fisheye) {
@@ -368,7 +295,7 @@ void Matching::loadMatches(
 		 cv::projectPoints(object_points_ransac, rvec, tvec, camera_matrix, dist_coeffs, reprojected_points, jacobian);
 	 }
 
-	 // 8. Calculate standard deviations if not fisheye
+	 // Calculate standard deviations if not fisheye
 	 if (!fisheye && !jacobian.empty()) {
 		 cv::Mat sigma_extr = cv::Mat(jacobian.t() * jacobian, cv::Rect(0, 0, 6, 6)).inv();
 		 cv::Mat sigma_intr = cv::Mat(jacobian.t() * jacobian, cv::Rect(6, 6, 9, 9)).inv();
@@ -376,44 +303,22 @@ void Matching::loadMatches(
 		 cv::sqrt(sigma_intr.diag(), stdDev_In);
 	 }
 
-	 // 9. Compute reprojection error
+	 // Compute reprojection error
 	 repro_error = 0.0f;
 	 for (size_t i = 0; i < image_points_real_ransac.size(); ++i) {
 		 repro_error += cv::norm(image_points_real_ransac[i] - reprojected_points[i]);
 	 }
 	 repro_error /= object_points_ransac.size();
 
-	 // 10. Ensure rvec and tvec are single-channel
+	 // Ensure rvec and tvec are single-channel
 	 if (rvec.channels() == 3 || tvec.channels() == 3) {
 		 rvec = rvec.reshape(1);
 		 tvec = tvec.reshape(1);
 	 }
-
 	 return repro_error;
- }
+}
 
 
-
-
-
-/**
- * @brief Applies RANSAC to estimate the fundamental matrix and refines it using homography if needed.
- *
- * This function takes two sets of matching points and uses RANSAC to estimate the fundamental matrix.
- * It filters outliers, refines the results by recomputing the fundamental matrix with inliers, and
- * optionally applies homography for further refinement.
- *
- * @param _points1 Vector of 2D points from the first image.
- * @param _points2 Vector of 2D points from the second image.
- * @param confidence Confidence level for the RANSAC algorithm (typical values range between 0.95 to 0.99).
- * @param distance Distance threshold to decide if a point is an inlier based on the epipolar constraint.
- * @param refineF Boolean flag to indicate whether the fundamental matrix should be recomputed after inliers are found.
- *
- * @return cv::Mat The fundamental matrix estimated by RANSAC using the input points.
- *
- * @note The function assumes that the points in both input vectors are already matched.
- * It filters the inliers from the initial matches and optionally refines the result.
- */
 cv::Mat Matching::ransac_test(std::vector<cv::Point2d>& _points1, std::vector<cv::Point2d>& _points2, double confidence, double distance, bool refineF)
 {
 	// Copy input points into local vectors for processing
@@ -462,9 +367,6 @@ cv::Mat Matching::ransac_test(std::vector<cv::Point2d>& _points1, std::vector<cv
 				indices_inliers_fund.push_back(r);
 		}
 
-		// Debug
-		// std::cout << "RansacTest, Number of inliers (Fundamental Matrix): " << indices_inliers_fund.size() << std::endl;
-
 		// Filter the points that passed the RANSAC test by matching inliers
 		for (int i = 0; i < _points1.size(); i++) {
 			if (std::find(indices_inliers_fund.begin(), indices_inliers_fund.end(), i) != indices_inliers_fund.end()) {
@@ -478,9 +380,6 @@ cv::Mat Matching::ransac_test(std::vector<cv::Point2d>& _points1, std::vector<cv
 		_points2.clear();
 		_points1 = points1_good;
 		_points2 = points2_good;
-
-		// Debug
-		// std::cout << "RansacTest, Size After Fundamental Matrix Filtering: " << _points1.size() << ", " << _points2.size() << std::endl;
 
 		// Optionally refine the fundamental matrix using inlier points
 		if (refineF) {
@@ -539,34 +438,32 @@ cv::Mat Matching::ransac_test(std::vector<cv::Point2d>& _points1, std::vector<cv
 	char buf_pt1[24], buf_pt2[24];
 	_ultoa(_points1.size(), buf_pt1, 10);
 	_ultoa(_points2.size(), buf_pt2, 10);
-	mLogFile->append(TAG + "RansacTest, Final Number of Passed Points " + std::string(buf_pt1) + "," + std::string(buf_pt2) + "\n");
+	_logfile->append(TAG + "RansacTest, Final Number of Passed Points " + std::string(buf_pt1) + "," + std::string(buf_pt2) + "\n");
 
 	// Return the final fundamental matrix
 	return fundamental;
 }
 
 
-
-
-
 void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image_points, std::vector<cv::Point3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y, double shift_z, bool export_pcl, std::string file_name_image_points) {
 
 	std::stringstream log_statistics;
 
-	// undistort water line points and push back into image coordinate system
+	// Containers for undistorted image points in normalized and image coordinates
 	std::vector<cv::Point2d> img_pts_2D_undistort_normalized_coordinates;
 	std::vector<cv::Point2d> img_pts_2D_undistort_image_coordinates;
 
-	Model model = Model(mLogFile);
+	Model model = Model(_logfile); // Initialize model with logging
 	std::vector<cv::Vec3b> point_cloud_color;
 	std::vector<cv::Point2d> image_coordinates_color;
 	double distance_threshold_img_to_proj_img = 2.0; // pixels
 
 	if (input_image_points.size() != 0) {
-		// undistort 2D image points of water line
+
+		// Undistort input 2D image points to normalized coordinates
 		cv::undistortPoints(input_image_points, img_pts_2D_undistort_normalized_coordinates, camera_matrix, dist_coeffs);
 
-		// conversion to image coordinates
+		// Convert normalized coordinates back to image space using the camera matrix
 		for (cv::Point2d p : img_pts_2D_undistort_normalized_coordinates) {
 			img_pts_2D_undistort_image_coordinates.push_back(cv::Point2d(
 				camera_matrix.at<double>(0, 0) * p.x + camera_matrix.at<double>(0, 2),
@@ -574,49 +471,46 @@ void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image
 		}
 	}
 	else {
-		mLogFile->append(TAG + "no image points to reference provided, will only color point cloud");
+		_logfile->append(TAG + "no image points to reference provided, will only color point cloud");
 	}
 
-
-	// Get color and project 2D waterline points to object space using OpenCV's projectPoints
-	Model::ReferencedPoints referenced_points = model.getColorFor(synth_pts_3D, in_image_4_color, point_cloud_color, image_coordinates_color, 1.0, camera_matrix, dist_coeffs, rvec_cc_orig_copy, tvec_cc_orig_copy, input_image_points);
+	// Project the synthetic 3D points to image space and retrieve colors for each point
+	Model::ReferencedPoints referenced_points = model.get_color_for(synth_pts_3D, in_image_4_color, point_cloud_color, image_coordinates_color, 1.0, camera_matrix, dist_coeffs, rvec_cc_orig_copy, tvec_cc_orig_copy, input_image_points);
 	
 
-	// Print point cloud if required
+	// Export recolored 3D point cloud if required
 	if (export_pcl) {
-		mLogFile->append(TAG + "---- export 3D point cloud ----");
+		_logfile->append(TAG + "---- export 3D point cloud ----");
 		model.export_point_cloud_recolored(_working_dir_matching, synth_pts_3D, point_cloud_color, image_coordinates_color, shift_x, shift_y, shift_z);
 	}
 
-	// If projection succeeded, log statistics and export results
+	// Log and export results if 3D referencing succeeded
 	if (!referenced_points.corresponding_3D_image_pts_from_point_cloud.empty()) {
 		
-		// outlier removal 
+		// Filter outliers based on distance threshold
 		Matching::FilteredData filtered_data = filterPointsByDistance(input_image_points, referenced_points.corresponding_2D_image_pts_from_point_cloud, referenced_points.corresponding_3D_image_pts_from_point_cloud, distance_threshold_img_to_proj_img);
 		
 		cv::Mat copy_masterimage = in_image_4_color.clone();
-		// Draw original image points
+		// Draw input image points on the image
 		for (cv::Point2d p : input_image_points) {
-			cv::circle(copy_masterimage, p, 5, cv::Scalar(255, 255, 0), -1);
+			cv::circle(copy_masterimage, p, 5, cv::Scalar(255, 255, 0), -1); // Cyan circles for input points
 		}
-		// Draw projected image points
+		// Draw projected image points on the image
 		for (cv::Point2d p : filtered_data.image_data_projected) {
-			cv::circle(copy_masterimage, p, 4, cv::Scalar(255, 0, 255), -1);
+			cv::circle(copy_masterimage, p, 4, cv::Scalar(255, 0, 255), -1); // Magenta circles for projected points
 		}
 		cv::imwrite(fs::path(_working_dir_matching / "projected_original_image_points.png").string(), copy_masterimage);
 
-		// Construct the file path using std::filesystem
+		// Export 3D referenced points to a text file
 		std::filesystem::path file_path = _working_dir_matching / (file_name_image_points + "_projected.txt");
-
-		// Open the file stream
 		std::ofstream myfile(file_path);
 
-		// Check if the file opened successfully
+		// Check if file is opened successfull
 		if (!myfile.is_open()) {
 			throw std::runtime_error("Could not open the file: " + file_path.string());
 		}
 
-		// Write projected points and IDs to the file
+		// Write the 3D points with shifts applied and corresponding IDs
 		for (size_t i = 0; i < filtered_data.image_data_3D.size(); ++i) {
 			myfile << std::fixed << std::setprecision(4)
 				<< filtered_data.image_data_original_idx[i] << ","
@@ -624,39 +518,44 @@ void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image
 				<< filtered_data.image_data_3D[i].y + shift_y << ","
 				<< filtered_data.image_data_3D[i].z + shift_z << "\n";
 		}
-
-		// Close the file stream
 		myfile.close();
-		mLogFile->append(TAG + "count referenced image points: " + std::to_string(filtered_data.image_data_3D.size()));
-
-
-		
-	}
-	else {
-		mLogFile->append(TAG + "no water level detected");
+		_logfile->append(TAG + "count referenced image points: " + std::to_string(filtered_data.image_data_3D.size()));
 	}
 }
 
 
+Matching::FilteredData Matching::filterPointsByDistance(
+	const std::vector<cv::Point2d>& list1,
+	const std::vector<cv::Point2d>& list2,
+	const std::vector<cv::Point3d>& list2_3d,
+	double distanceThreshold) 
+{
+	std::vector<cv::Point2d> filtered_list1;       // Filtered points from list1
+	std::vector<cv::Point2d> filtered_list2;       // Filtered points from list2
+	std::vector<cv::Point3d> filtered_list2_3d;    // Filtered 3D points corresponding to list2
+	std::vector<int> filtered_idx;                 // Indices of points retained after filtering
+	int counter = 0;
+
+	// Loop through all pairs of 2D points in list1 and list2
+	for (size_t i = 0; i < list1.size(); ++i) {
+		const auto& point1 = list1[i];
+		const auto& point2 = list2[i];
+		const auto& point2_3D = list2_3d[i];
+
+		// Check if the Euclidean distance between points is within the threshold
+		if (euclideanDistance(point1, point2) < distanceThreshold) {
+			filtered_idx.push_back(counter);              // Store index of the point
+			filtered_list1.push_back(point1);             // Store point from list1
+			filtered_list2.push_back(point2);             // Store point from list2
+			filtered_list2_3d.push_back(point2_3D);       // Store corresponding 3D point
+		}
+
+		counter++;
+	}
+	return FilteredData{ filtered_idx, filtered_list1, filtered_list2, filtered_list2_3d };
+}
 
 
-
-
-
-
-
-/**
- * @brief Draws matches between real and synthetic images, and saves the result as an image file.
- *
- * This function visualizes the matches between keypoints from a real image and a synthetic image.
- * It draws lines connecting the corresponding points from both images and saves the result in the specified file.
- *
- * @param[in] in_real_image The real image (as an OpenCV matrix).
- * @param[in] in_synth_image The synthetic image (as an OpenCV matrix).
- * @param[in] in_real_matches_draw A vector of 2D keypoints from the real image.
- * @param[in] in_synth_matches_draw A vector of 2D keypoints from the synthetic image.
- * @param[in] fileName The name of the output file (without extension) where the result will be saved.
- */
 void Matching::write_visualization_matches(cv::Mat& in_real_image, cv::Mat& in_synth_image, std::vector<cv::Point2d>& in_real_matches_draw, std::vector<cv::Point2d>& in_synth_matches_draw, std::string fileName) {
 
 	#ifdef max
@@ -669,7 +568,7 @@ void Matching::write_visualization_matches(cv::Mat& in_real_image, cv::Mat& in_s
 		in_synth_image.type(),                                // Set the image type (same as the synthetic image)
 		cv::Scalar(0, 0, 0));                                 // Initialize with black background
 
-	mLogFile->append(TAG + "Visualizing matches between real and synthetic images");
+	_logfile->append(TAG + "Visualizing matches between real and synthetic images");
 
 	// Copy the real image to the left side of the combined image
 	for (int i = 0; i < matchesImage.rows; ++i) {
@@ -709,38 +608,13 @@ void Matching::write_visualization_matches(cv::Mat& in_real_image, cv::Mat& in_s
 
 	// Save the final image with the drawn matches
 	cv::imwrite(fs::path(_working_dir_matching / (fileName + ".jpg")).string(), matchesImage);
-
-
 }
 
 
-
-
-
-
-
-
-
-/**
- * @brief Outputs enhanced camera calibration results to the log file.
- *
- * This method logs the detailed camera parameters, including both intrinsic and extrinsic calibration
- * data, along with their associated standard deviations. The output is formatted and includes both pixel
- * and millimeter measurements based on the provided pixel size.
- *
- * @param in_camera_matrix  The camera intrinsic matrix (3x3).
- * @param in_dist_coeffs    The camera distortion coefficients.
- * @param in_rvec           The rotation vector obtained from the calibration process.
- * @param in_tvec           The translation vector obtained from the calibration process.
- * @param in_StdDev_IntO    Standard deviations of intrinsic parameters.
- * @param in_StdDev_ExtO    Standard deviations of extrinsic parameters.
- * @param in_PerViewErrors  Per-view reprojection errors.
- * @param in_pix_size       The size of a pixel in millimeters, used to convert pixel measurements.
- */
 void Matching::write_camera_calibration_statistics(cv::Mat& in_camera_matrix, cv::Mat& in_dist_coeffs, cv::Mat& in_rvec, cv::Mat& in_tvec, cv::Mat& in_StdDev_IntO, cv::Mat& in_StdDev_ExtO, cv::Mat& in_PerViewErrors, double in_pix_size) {
 	// Add a blank line for formatting in the log file and indicate the start of camera calibration results
-	mLogFile->append("");
-	mLogFile->append(TAG + "---- camera calibration results ----");
+	_logfile->append("");
+	_logfile->append(TAG + "---- camera calibration results ----");
 
 	// Access the data of the intrinsic camera matrix and standard deviations
 	// ocv_docu: A(0, 0) = param[0]; A(1, 1) = param[1]; A(0, 2) = param[2]; A(1, 2) = param[3]; std::copy(param + 4, param + 4 + 14, k);
@@ -748,50 +622,39 @@ void Matching::write_camera_calibration_statistics(cv::Mat& in_camera_matrix, cv
 	double* stdDev_In_data = (double*)(in_StdDev_IntO.data);
 
 	// Log the intrinsic parameters of the camera (focal lengths, optical center) in both pixels and mm
-	mLogFile->append("\n" + TAG + "------------- intrinsics -------------");
-	mLogFile->append(TAG + "fx: " + std::to_string(camera_matrix_data[0]) + " [px]/ " + std::to_string(camera_matrix_data[0] * in_pix_size) + "[mm], std_dev [px]: +/-" + std::to_string(stdDev_In_data[0]) + ", [mm]: +/-" + std::to_string(stdDev_In_data[0] * in_pix_size), 5);
-	mLogFile->append(TAG + "fy: " + std::to_string(camera_matrix_data[4]) + " [px]/ " + std::to_string(camera_matrix_data[4] * in_pix_size) + "[mm], std_dev [px]: +/-" + std::to_string(stdDev_In_data[1]) + ", [mm]: +/-" + std::to_string(stdDev_In_data[1] * in_pix_size), 5);
-	mLogFile->append(TAG + "cx: " + std::to_string(camera_matrix_data[2]) + " [px]/ " + std::to_string(camera_matrix_data[2] * in_pix_size) + "[mm], std_dev [px]: +/-" + std::to_string(stdDev_In_data[2]) + ", [mm]: +/-" + std::to_string(stdDev_In_data[2] * in_pix_size), 5);
-	mLogFile->append(TAG + "cy: " + std::to_string(camera_matrix_data[5]) + " [px]/ " + std::to_string(camera_matrix_data[5] * in_pix_size) + "[mm], std_dev [px]: +/-" + std::to_string(stdDev_In_data[3]) + ", [mm]: +/-" + std::to_string(stdDev_In_data[3] * in_pix_size), 5);
+	_logfile->append("\n" + TAG + "------------- intrinsics -------------");
+	_logfile->append(TAG + "fx: " + std::to_string(camera_matrix_data[0]) + " [px]/ " + std::to_string(camera_matrix_data[0] * in_pix_size) + "[mm], std_dev [px]: +/-" + std::to_string(stdDev_In_data[0]) + ", [mm]: +/-" + std::to_string(stdDev_In_data[0] * in_pix_size), 5);
+	_logfile->append(TAG + "fy: " + std::to_string(camera_matrix_data[4]) + " [px]/ " + std::to_string(camera_matrix_data[4] * in_pix_size) + "[mm], std_dev [px]: +/-" + std::to_string(stdDev_In_data[1]) + ", [mm]: +/-" + std::to_string(stdDev_In_data[1] * in_pix_size), 5);
+	_logfile->append(TAG + "cx: " + std::to_string(camera_matrix_data[2]) + " [px]/ " + std::to_string(camera_matrix_data[2] * in_pix_size) + "[mm], std_dev [px]: +/-" + std::to_string(stdDev_In_data[2]) + ", [mm]: +/-" + std::to_string(stdDev_In_data[2] * in_pix_size), 5);
+	_logfile->append(TAG + "cy: " + std::to_string(camera_matrix_data[5]) + " [px]/ " + std::to_string(camera_matrix_data[5] * in_pix_size) + "[mm], std_dev [px]: +/-" + std::to_string(stdDev_In_data[3]) + ", [mm]: +/-" + std::to_string(stdDev_In_data[3] * in_pix_size), 5);
 
 	// Access the distortion coefficients and log them along with their standard deviations
 	double* dist_coeffs_data = (double*)(in_dist_coeffs.data);
-	mLogFile->append("\n" + TAG + "------------- distortion coefficients -------------");
-	mLogFile->append(TAG + "k1: " + std::to_string(dist_coeffs_data[0]) + ", std_dev: +/-" + std::to_string(stdDev_In_data[4]), 8);
-	mLogFile->append(TAG + "k2: " + std::to_string(dist_coeffs_data[1]) + ", std_dev: +/-" + std::to_string(stdDev_In_data[5]), 8);
-	mLogFile->append(TAG + "p1: " + std::to_string(dist_coeffs_data[2]) + ", std_dev: +/-" + std::to_string(stdDev_In_data[6]), 8);
-	mLogFile->append(TAG + "p2: " + std::to_string(dist_coeffs_data[3]) + ", std_dev: +/-" + std::to_string(stdDev_In_data[7]), 8);
-	mLogFile->append(TAG + "k3: " + std::to_string(dist_coeffs_data[4]) + ", std_dev: +/-" + std::to_string(stdDev_In_data[8]), 8);
+	_logfile->append("\n" + TAG + "------------- distortion coefficients -------------");
+	_logfile->append(TAG + "k1: " + std::to_string(dist_coeffs_data[0]) + ", std_dev: +/-" + std::to_string(stdDev_In_data[4]), 8);
+	_logfile->append(TAG + "k2: " + std::to_string(dist_coeffs_data[1]) + ", std_dev: +/-" + std::to_string(stdDev_In_data[5]), 8);
+	_logfile->append(TAG + "p1: " + std::to_string(dist_coeffs_data[2]) + ", std_dev: +/-" + std::to_string(stdDev_In_data[6]), 8);
+	_logfile->append(TAG + "p2: " + std::to_string(dist_coeffs_data[3]) + ", std_dev: +/-" + std::to_string(stdDev_In_data[7]), 8);
+	_logfile->append(TAG + "k3: " + std::to_string(dist_coeffs_data[4]) + ", std_dev: +/-" + std::to_string(stdDev_In_data[8]), 8);
 
 	// Access the rotation and translation vectors along with their standard deviations
 	double* rvec_cc_1ch_data = (double*)(in_rvec.data);
 	double* tvec_cc_1ch_data = (double*)(in_tvec.data);
 	double* stdDev_Ext_data = (double*)(in_StdDev_ExtO.data);
-	mLogFile->append("\n" + TAG + "------------- extrinsics -------------");
-	mLogFile->append(TAG + "rotV r0: " + std::to_string(rvec_cc_1ch_data[0]) + ", std_dev: +/-" + std::to_string(stdDev_Ext_data[0]), 5);
-	mLogFile->append(TAG + "rotV r1: " + std::to_string(rvec_cc_1ch_data[1]) + ", std_dev: +/-" + std::to_string(stdDev_Ext_data[1]), 5);
-	mLogFile->append(TAG + "rotV r2: " + std::to_string(rvec_cc_1ch_data[2]) + ", std_dev: +/-" + std::to_string(stdDev_Ext_data[2]), 5);
-	mLogFile->append(TAG + "transV t0: " + std::to_string(tvec_cc_1ch_data[0]) + ", std_dev: +/-" + std::to_string(stdDev_Ext_data[3]), 5);
-	mLogFile->append(TAG + "transV t1: " + std::to_string(tvec_cc_1ch_data[1]) + ", std_dev: +/-" + std::to_string(stdDev_Ext_data[4]), 5);
-	mLogFile->append(TAG + "transV t2: " + std::to_string(tvec_cc_1ch_data[2]) + ", std_dev: +/-" + std::to_string(stdDev_Ext_data[5]), 5);
+	_logfile->append("\n" + TAG + "------------- extrinsics -------------");
+	_logfile->append(TAG + "rotV r0: " + std::to_string(rvec_cc_1ch_data[0]) + ", std_dev: +/-" + std::to_string(stdDev_Ext_data[0]), 5);
+	_logfile->append(TAG + "rotV r1: " + std::to_string(rvec_cc_1ch_data[1]) + ", std_dev: +/-" + std::to_string(stdDev_Ext_data[1]), 5);
+	_logfile->append(TAG + "rotV r2: " + std::to_string(rvec_cc_1ch_data[2]) + ", std_dev: +/-" + std::to_string(stdDev_Ext_data[2]), 5);
+	_logfile->append(TAG + "transV t0: " + std::to_string(tvec_cc_1ch_data[0]) + ", std_dev: +/-" + std::to_string(stdDev_Ext_data[3]), 5);
+	_logfile->append(TAG + "transV t1: " + std::to_string(tvec_cc_1ch_data[1]) + ", std_dev: +/-" + std::to_string(stdDev_Ext_data[4]), 5);
+	_logfile->append(TAG + "transV t2: " + std::to_string(tvec_cc_1ch_data[2]) + ", std_dev: +/-" + std::to_string(stdDev_Ext_data[5]), 5);
 
 	// Access the per-view errors and log the reprojection error
 	double* perViewErrors_data = (double*)(in_PerViewErrors.data);
-	mLogFile->append("\n" + TAG + "------------- additional information -------------");
-	mLogFile->append(TAG + "per-view error: " + std::to_string(perViewErrors_data[0]), 4);
+	_logfile->append("\n" + TAG + "------------- additional information -------------");
+	_logfile->append(TAG + "per-view error: " + std::to_string(perViewErrors_data[0]), 4);
 }
 
-
-
-/**
- * @brief Writes log statistics to a file and prints them to the console.
- *
- * This method extracts log data from a stringstream and writes it to a log file, while also printing each line
- * to the console for immediate feedback. The log file is saved in the working directory under the name
- * "image_points_projected.txt".
- *
- * @param log_statistics A stringstream containing the statistics to be logged.
- */
 
 void Matching::write_and_print_log_statistics(std::stringstream& log_statistics) const {
 	// Construct the file path in a cross-platform way
@@ -818,21 +681,6 @@ void Matching::write_and_print_log_statistics(std::stringstream& log_statistics)
 }
 
 
-
-/**
- * @brief Writes corresponding 3D object points and 2D image points (real and synthetic) to text files.
- *
- * This function writes the provided 3D object points and their corresponding 2D real and synthetic image points
- * to separate text files. It ensures that the number of points in all three vectors matches before writing.
- * The output files contain the points with a specific format, where each entry is prefixed with an identifier.
- *
- * @param[in,out] object_points_3D A vector of 3D points representing object coordinates.
- * @param[in,out] image_points_2D_real A vector of 2D points representing real image coordinates.
- * @param[in,out] image_points_2D_synth A vector of 2D points representing synthetic image coordinates.
- *
- * @note The function assumes that the three input vectors have the same size. If the sizes do not match,
- * the function will log an error and return without writing the files.
- */
 void Matching::write_corresponding_points_to_file(
 	const std::vector<cv::Point3d>& object_points_3D,
 	const std::vector<cv::Point2d>& image_points_2D_real,
@@ -846,7 +694,7 @@ void Matching::write_corresponding_points_to_file(
 	// Open files and check for success
 	std::ofstream myfile3D(file3DPath), myfile2D_real(file2DRealPath), myfile2D_synth(file2DSynthPath);
 	if (!myfile3D || !myfile2D_real || !myfile2D_synth) {
-		mLogFile->append(TAG + "Failed to open one or more output files. Aborting.");
+		_logfile->append(TAG + "Failed to open one or more output files. Aborting.");
 		return;
 	}
 
@@ -854,7 +702,7 @@ void Matching::write_corresponding_points_to_file(
 	if (object_points_3D.size() != image_points_2D_real.size() ||
 		object_points_3D.size() != image_points_2D_synth.size())
 	{
-		mLogFile->append(TAG + "Number of 3D & 2D points do not match. Aborting.");
+		_logfile->append(TAG + "Number of 3D & 2D points do not match. Aborting.");
 		return;
 	}
 
@@ -878,8 +726,7 @@ void Matching::write_corresponding_points_to_file(
 	}
 
 	// Log success messages
-	mLogFile->append(TAG + "Successfully written: corresp_points_3D.txt");
-	mLogFile->append(TAG + "Successfully written: corresp_points_2D_real.txt");
-	mLogFile->append(TAG + "Successfully written: corresp_points_2D_synth.txt");
+	_logfile->append(TAG + "Successfully written: corresp_points_3D.txt");
+	_logfile->append(TAG + "Successfully written: corresp_points_2D_real.txt");
+	_logfile->append(TAG + "Successfully written: corresp_points_2D_synth.txt");
 }
-

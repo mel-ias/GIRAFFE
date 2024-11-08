@@ -8,7 +8,7 @@ Model::Model(LogFile* _logfile) {
 }
 	
 
-std::vector<int> Model::findNearestNeighbors(
+std::vector<int> Model::find_knn(
 	const std::vector<cv::Point2d>& image_points, 
 	const std::vector<cv::Point2d>& image_pixels) {
 
@@ -43,7 +43,7 @@ std::vector<int> Model::findNearestNeighbors(
 }
 
 
-Model::ReferencedPoints Model::getColorFor(
+Model::ReferencedPoints Model::get_color_for(
 	std::vector<cv::Point3d>& point_cloud, // 3D point cloud to project
 	const cv::Mat& image_for_color, // Image from which to retrieve color
 	std::vector<cv::Vec3b>& point_cloud_colors, // Vector to store colors of projected points
@@ -88,7 +88,7 @@ Model::ReferencedPoints Model::getColorFor(
 	}
 
 	// Find nearest neighbors between original 2D points and projected points
-	std::vector<int> indices = findNearestNeighbors(image_points, image_pixels);
+	std::vector<int> indices = find_knn(image_points, image_pixels);
 
 	// Collect matched points
 	int img_pts_counter = 0;

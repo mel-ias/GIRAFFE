@@ -1,7 +1,7 @@
 #include "PointLoader.h"
 
 PointLoader::PointLoader(std::string path_pcl, DataManager* data_manager) {
-	logfile = data_manager->getLogFilePrinter();
+	logfile = data_manager->get_logfile();
 	logfile->append(""); // Add a blank line to log
 	logfile->append(TAG + "Initialisation point loader"); // Log initialization message
 

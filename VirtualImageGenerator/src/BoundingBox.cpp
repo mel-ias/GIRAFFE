@@ -11,15 +11,15 @@ BoundingBox::BoundingBox(LogFile* logfile) {
 	_xMax = _yMax = _zMax = 0.0;
 	_d = 0.0;
 
-	_r = 20.0; // frustum expansion - lateral
-	_dh = 25.0; // frustum expansion - height
+	_bb_offset_X0_xy = 20.0; // frustum expansion - lateral
+	_bb_offset_X0_z = 25.0; // frustum expansion - height
 	_tV = _tH = 0.57735; // view angles, vertical and horizontal, init with tan(30°)
 
 	// Initialize Frustum borders in world space
 	_xMax_world = _yMax_world = _zMax_world = 0.0;
 	_xMin_world = _yMin_world = _zMin_world = 0.0;
 
-	// Initialize camera position and Rz (rotation matrix)
+	// Initialize camera position
 	_X0_cam_world = new double[3];
 	_X0_cam_world[0] = 0.0;
 	_X0_cam_world[1] = 0.0;
@@ -54,11 +54,11 @@ void BoundingBox::set_view_angles(double H, double V){
 }
 
 
-void BoundingBox::set_X0_Cam_World(double x0, double y0, double z0){
+void BoundingBox::set_X0_Cam_World(double X0_x, double X0_y, double X0_z){
 
-	_X0_cam_world[0] = x0;
-	_X0_cam_world[1] = y0;
-	_X0_cam_world[2] = z0;
+	_X0_cam_world[0] = X0_x;
+	_X0_cam_world[1] = X0_y;
+	_X0_cam_world[2] = X0_z;
 	_logFilePrinter->append(TAG + "set X0 (XYZ) [m]: " + std::to_string(_X0_cam_world[0]) + "," + std::to_string(_X0_cam_world[1]) + "," + std::to_string(_X0_cam_world[2]));
 }
 
@@ -77,7 +77,7 @@ void BoundingBox::calculate_rotation_matrix_rzxy(double _azimuth, double _roll, 
 
 	// all column-major!
 	// Rzxy rotation order (ZXY rotation)
-	_Rzxy[0] = Cz * Cy - Sz * Sx * Sy;		_Rzxy[3] = -Sz * Cx;		_Rzxy[6] = Cz * Sy + Sz * Sx * Cy;
+	_Rzxy[0] = Cz * Cy - Sz * Sx * Sy;		_Rzxy[3] = -Sz * Cx;	_Rzxy[6] = Cz * Sy + Sz * Sx * Cy;
 	_Rzxy[1] = Sz * Cy + Cz * Sx * Sy;		_Rzxy[4] = Cz * Cx;		_Rzxy[7] = Sz * Sy - Cz * Sx * Cy;
 	_Rzxy[2] = -Cx * Sy;					_Rzxy[5] = Sx;			_Rzxy[8] = Cx * Cy;
 }
@@ -88,18 +88,18 @@ void BoundingBox::calculate_view_frustum(){
 	_logFilePrinter->append(TAG + "Calculate View Frustum");
 	
 	// Simplest case: zMin and zMax grow with d*tan(V)
-	_zMin = -_dh - _d*_tV;
-	_zMax = _dh + _d*_tV;
+	_zMin = -(_bb_offset_X0_z) - (_d * _tV);
+	_zMax = _bb_offset_X0_z + (_d * _tV);
 
 	// Calculate xmin, xmax, ymin, ymax using the 4 points of the frustum in the vertical plane (orthodirectional to optical axis)
-	_xMin = -_r - _d*_tH;
-	_xMax = -_xMin; // equivalent to r + d*tH
+	_xMin = -(_bb_offset_X0_xy) - (_d * _tH);
+	_xMax = -(_xMin); // equivalent to r + d*tH
 	_yMin = 0;
 	_yMax = _d;
 	
 	// Calculate rotated points of the view frustum
-	double P1[2] = {-_r * _Rzxy[0], -_r * _Rzxy[1]};  // Rzxy * (-r,0,0)
-	double P2[2] = {_r * _Rzxy[0], _r * _Rzxy[1]}; // Rzxy * (r,0,0)
+	double P1[2] = {-(_bb_offset_X0_xy) * _Rzxy[0], -(_bb_offset_X0_xy) * _Rzxy[1]};  // Rzxy * (-bb_offset_X0 (xy),0,0)
+	double P2[2] = {_bb_offset_X0_xy * _Rzxy[0], _bb_offset_X0_xy * _Rzxy[1]}; // Rzxy * (bb_offset_X0 (xy),0,0)
 	double P3[2] = { _xMin * _Rzxy[0] + _d * _Rzxy[3], _xMin * _Rzxy[1] + _d * _Rzxy[4] }; // Rzxy * (xMin,d,0)
 	double P4[2] = { _xMax * _Rzxy[0] + _d * _Rzxy[3], _xMax * _Rzxy[1] + _d * _Rzxy[4] }; // Rzxy * (xMax,d,0)
 
@@ -127,3 +127,4 @@ void BoundingBox::calculate_view_frustum(){
 	_logFilePrinter->append(TAG + "(xmin,ymin,zmin): (" + std::to_string(_xMin_world) + "," + std::to_string(_yMin_world) + "," + std::to_string(_zMin_world) + ")");
 	_logFilePrinter->append(TAG + "(xmax,ymax,zmax): (" + std::to_string(_xMax_world) + "," + std::to_string(_yMax_world) + "," + std::to_string(_zMax_world) + ")");
 }
+

@@ -338,10 +338,7 @@ int main(int argc, char** argv) {
 
 	// Set paths in the data manager
 	data_manager->set_path_working_directory(path);
-	data_manager->set_directory_executable(argv[0]);
-
 	log_printer->append(TAG + "Working directory set to: " + path.string());
-	log_printer->append(TAG + "Executable directory: " + std::string(argv[0]));
 
 
 	// ------------------
@@ -406,9 +403,9 @@ int main(int argc, char** argv) {
 		rMatObj = cv::Mat(3, 3, CV_64FC1); // Rotation matrix
 
 		// Set translation vector from projection center coordinates
-		tVecObj.push_back(data_manager->getProjectionCenter().x);
-		tVecObj.push_back(data_manager->getProjectionCenter().y);
-		tVecObj.push_back(data_manager->getProjectionCenter().z);
+		tVecObj.push_back(data_manager->get_X0().x);
+		tVecObj.push_back(data_manager->get_X0().y);
+		tVecObj.push_back(data_manager->get_X0().z);
 
 		// Set rotation matrix from data_manager rotation matrix pointer
 		double* rotM_ptr = data_manager->get_rotM(); // Pointer to 9-element rotation matrix (row-major order)
@@ -533,7 +530,7 @@ int main(int argc, char** argv) {
 		data_manager->set_X0_to_BBox(tVecObj.at<double>(0), tVecObj.at<double>(1), tVecObj.at<double>(2));
 
 		// Calculate view frustum based on bounding box and updated camera pose
-		data_manager->getBoundingBox()->calculate_view_frustum();
+		data_manager->get_frustum()->calculate_view_frustum();
 
 		
 		// ------------------------------

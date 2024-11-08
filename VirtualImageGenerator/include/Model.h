@@ -44,7 +44,7 @@ public:
 	 * @return A vector of indices, each corresponding to the closest point in `image_pixels` for
 	 *         each point in `image_points`.
 	 */
-	std::vector<int> findNearestNeighbors(
+	std::vector<int> find_knn(
 		const std::vector<cv::Point2d>& image_points,
 		const std::vector<cv::Point2d>& image_pixels);
 
@@ -55,7 +55,7 @@ public:
 	 * This function projects 3D points from a given point cloud into 2D image coordinates
 	 * using the provided camera parameters. It then extracts the color values from the
 	 * specified image for the projected points and associates them with a list of
-	 * waterline points.
+	 * image points.
 	 *
 	 * @param point_cloud A vector of 3D points representing the point cloud.
 	 * @param image_for_color The image from which color values will be extracted.
@@ -75,7 +75,7 @@ public:
 	 * @return A vector of pairs, where each pair contains a projected 3D point and
 	 *         the index of the corresponding image point.
 	 */
-	ReferencedPoints getColorFor(std::vector<cv::Point3d>& point_cloud,
+	ReferencedPoints get_color_for(std::vector<cv::Point3d>& point_cloud,
 		const cv::Mat& image_for_color,
 		std::vector<cv::Vec3b>& point_cloud_colors,
 		std::vector<cv::Point2d>& image_coords_colors,

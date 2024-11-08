@@ -72,7 +72,7 @@ public:
 	 * @param y0 Y coordinate of the camera in world coordinates.
 	 * @param z0 Z coordinate of the camera in world coordinates.
 	 */
-	void set_X0_Cam_World(double x0, double y0, double z0);
+	void set_X0_Cam_World(double X0_x, double X0_y, double Z0_z);
 	
 	/**
 	 * @brief Set the depth of the view frustum.
@@ -95,8 +95,8 @@ public:
 	 *
 	 * @param half width The horizontal half-width, typically derived from GPS accuracy or frustum width.
 	 */
-	void set_r(double half_width) {
-		_r = half_width;
+	void set_bb_offset_X0_xy(double half_width) {
+		_bb_offset_X0_xy = half_width;
 	}
 
 	/**
@@ -108,8 +108,8 @@ public:
 	 *
 	 * @param half_height The vertical half-height, representing half the vertical extent of the bounding box.
 	 */
-	void set_dh(double half_height) {
-		_dh = half_height;
+	void set_bb_offset_X0_z(double half_height) {
+		_bb_offset_X0_z = half_height;
 	}
 
 	/**
@@ -152,7 +152,7 @@ public:
 	double get_zmax_World()const { return _zMax_world; }
 	
 	double get_dist() const { return _d; }
-	double get_Correction_backward()const { return _r / _tH; }
+	double get_Correction_backward()const { return _bb_offset_X0_xy / _tH; }
 	
 	double* get_Rzxy() const { return _Rzxy; }
 	double* get_X0_Cam_World()const { return _X0_cam_world; }
@@ -175,8 +175,8 @@ private:
 	double _zMin_world, _zMax_world;
 
 	// Frustum parameters
-	double _r;      // Radius (half-width) in local camera system
-	double _dh;     // Half-height in local camera system
+	double _bb_offset_X0_xy;      // Radius (half-width) in local camera system
+	double _bb_offset_X0_z;     // Half-height in local camera system
 	double _d;      // Distance from the camera
 	double _tV, _tH; // Tangent of vertical and horizontal field of view angles to calculate frustum from bounding box
 	double _zMin, _zMax; // Min and max z values in local camera system
