@@ -65,7 +65,6 @@ public:
 
 		// --- from json ---
 		_file_name_true_image = "noFileName";
-		_file_name_image_points = "noFileName";		
 
 		// parameters for IOP / about camera
 		_principal_distance = 1.0;
@@ -100,7 +99,7 @@ public:
 		_pts_synth_3D_double = new std::vector<cv::Point3d>;
 		_pts_color_RGB_int = new std::vector<cv::Scalar>;
 		_point_cloud_recolored = new std::vector<Recolored_Point_Cloud>;
-		_pts_image_points_2D = new std::vector<cv::Point2d>;	
+		_pts_image_points_2D = new std::vector<std::vector<cv::Point2d>>;	
 	}
 
 	// D'tor
@@ -144,10 +143,18 @@ public:
 		}
 
 		// Retrieve file name of the image points to be referenced
-		if (j["file_name_image_points"] != nullptr) {
+		/*if (j["file_name_image_points"] != nullptr) {
 			_file_name_image_points = j.at("file_name_image_points").get<std::string>();
 			_logfile_json << "Set 'file_name' of image points file: " << _file_name_image_points << std::endl;
 		}
+		else {
+			_logfile_json << "No value for 'file_name_image_points' in json." << std::endl;
+		}*/
+
+		// Retrieve file name of the image points to be referenced
+		if (j.contains("file_name_image_points") && j["file_name_image_points"].is_array()) {
+			_file_name_image_points = j["file_name_image_points"].get<std::vector<std::string>>();
+		} 
 		else {
 			_logfile_json << "No value for 'file_name_image_points' in json." << std::endl;
 		}
@@ -241,16 +248,37 @@ public:
 		true_image = cv::imread(path_file_trueImage.string());
 		_logfile_json << "Loaded true image from path: " << path_file_trueImage << ". Image size: " << true_image.size() << std::endl;
 
-		// Load image points to be scaled
-		if (_file_name_image_points != "noFileName") {
-			fs::path path_file_image_points = fs::path(path_file_json).parent_path() / _file_name_image_points;
-			std::ifstream inputStream(path_file_image_points);
-			double x, y, z;
-			char sep;
-			while (inputStream >> x >> sep >> y >> sep >> z) {
-				_pts_image_points_2D->emplace_back(x, y);
+		// Lade Bildpunkte zur Skalierung aus mehreren Dateien
+		if (!_file_name_image_points.empty()) {
+			for (const auto& file_name : _file_name_image_points) {
+				fs::path path_file_image_points = fs::path(path_file_json).parent_path() / file_name;
+				std::ifstream inputStream(path_file_image_points);
+
+				if (!inputStream.is_open()) {
+					_logfile_json << "Failed to open file: " << path_file_image_points << std::endl;
+					continue;
+				}
+
+				// Vektor zur Speicherung der Punkte aus der aktuellen Datei
+				std::vector<cv::Point2d> points_from_file;
+				double x, y, z;
+				char sep;
+
+				// Lese Punkte aus der Datei und füge sie in den Vektor ein
+				while (inputStream >> x >> sep >> y >> sep >> z) {
+					points_from_file.emplace_back(x, y);
+				}
+
+				// Füge die Punkte dieser Datei dem Hauptvektor hinzu
+				_pts_image_points_2D->push_back(points_from_file);
+
+				// Ausgabe in das Logfile
+				_logfile_json << "Loaded " << points_from_file.size()
+					<< " image points from: " << path_file_image_points << std::endl;
 			}
-			_logfile_json << "Loaded image points from path. Count: " << _pts_image_points_2D->size() << std::endl;
+
+			// Gesamtanzahl der geladenen Bildpunkte über alle Dateien
+			_logfile_json << "Total image points count: " << _pts_image_points_2D->size() << std::endl;
 		}
 		else {
 			_logfile_json << "No image points to be scaled given." << std::endl;
@@ -417,9 +445,9 @@ public:
 	}
 
 	// set/get file name of image points file (only file name with extension, not path!)
-	std::string get_file_name_image_points() { return _file_name_image_points; }
-	void set_file_name_image_points(std::string name) { 
-		_file_name_image_points = name; 
+	std::vector<std::string> get_file_name_image_points() { return _file_name_image_points; }
+	void set_file_name_image_points(std::vector<std::string> names) { 
+		_file_name_image_points = names; 
 	}
 	
 	// logfile
@@ -441,7 +469,7 @@ public:
 	std::vector<cv::Point3d>* get_pts_synth_3D_double() { return _pts_synth_3D_double; }
 	std::vector<cv::Scalar>* get_pts_color_RGB_int() { return _pts_color_RGB_int; }
 	std::vector<Recolored_Point_Cloud>* get_point_cloud_recolored() { return _point_cloud_recolored; }
-	std::vector<cv::Point2d>* get_image_points_2D_ptr() { return _pts_image_points_2D; } // pointer to image points to be referenced
+	std::vector<std::vector<cv::Point2d>>* get_image_points_2D_ptr() { return _pts_image_points_2D; } // pointer to image points to be referenced
 
 	// coordinate shifts
 	double get_shift_x() const { return _shift_x; }
@@ -513,7 +541,8 @@ private:
 	fs::path _path_file_output_lightglue_matches;
 	fs::path _path_python_script_lightglue;
 
-	std::string _file_name_true_image, _file_name_image_points;
+	std::string _file_name_true_image;
+	std::vector<std::string> _file_name_image_points;
 
 	// logfile
 	LogFile* _logfile;
@@ -547,6 +576,6 @@ private:
 	std::vector<cv::Point2d>* _pts_synth_2D_double; // for matching
 	std::vector<cv::Point3d>* _pts_synth_3D_double; // for matching
 	std::vector<cv::Scalar>* _pts_color_RGB_int; 	// for matching
-	std::vector<cv::Point2d>* _pts_image_points_2D; // image points to be referenced
+	std::vector<std::vector<cv::Point2d>>* _pts_image_points_2D; // image points to be referenced
 	std::vector<Recolored_Point_Cloud>* _point_cloud_recolored; // point cloud recolored from image points
 };

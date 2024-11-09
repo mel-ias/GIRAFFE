@@ -420,14 +420,11 @@ int main(int argc, char** argv) {
 					path_matching_out,
 					data_manager->get_true_image(),
 					data_manager->get_synth_image(),
-					*data_manager->get_image_points_2D_ptr(),
 					*data_manager->get_pts_synth_2D_double(),
 					*data_manager->get_pts_synth_3D_double(),
 					matched_object_points,
 					matched_image_points_real,
 					matched_image_points_synth,
-					//scale_true_img,
-					//scale_synth_img,
 					_max_pixel_distance_synth_3D_derivation);
 				
 				// Perform spatial resection to determine camera and exterior orientation, check if values are valid

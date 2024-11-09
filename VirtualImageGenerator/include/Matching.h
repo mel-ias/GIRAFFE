@@ -80,7 +80,7 @@ public:
 	 * @param[in] file_name_image_points     Filename prefix for exporting projected points.
 	 */
 	void image_points_3D_referencing(
-		std::vector<cv::Point2d>& in_wl_pts_2D, 
+		std::vector<std::vector<cv::Point2d>>& input_image_points,
 		std::vector<cv::Point3d>& synth_pts_3D,
 		cv::Mat& in_image_4_color, 
 		cv::Mat& camera_matrix, 
@@ -91,7 +91,7 @@ public:
 		double shift_vector_y,
 		double shift_vector_z, 
 		bool print_pcl, 
-		std::string file_name_image_points);
+		std::vector<std::string> file_name_image_points);
 
 
 	/**
@@ -103,7 +103,6 @@ public:
 	 * @param 			in_path_FMatrixOutput	  	input string path to matching results from Visual SFM.
 	 * @param [in]		in_real_image				  	matrix of real image.
 	 * @param [in]		in_synth_image				  	matrix of rendered image.
-	 * @param [in]		in_img_pts_2D					image points to be referenced
 	 * @param [in]		in_synth_pts_2D				  	image points of the rendered image
 	 * @param [in]		in_synth_pts_3D				  	object points that corresponds to the image	points of the rendered image
 	 * @param [out]	out_matched_object_points	  	image points from the real image having corresponding keypoints inside the rendered image with valid 3D correspondence
@@ -114,7 +113,6 @@ public:
 		std::string in_path_matching_output,
 		cv::Mat& in_real_image,
 		cv::Mat& in_synth_image,
-		std::vector<cv::Point2d>& in_img_pts_2D,
 		std::vector<cv::Point2d>& in_synth_pts_2D,
 		std::vector<cv::Point3d>& in_synth_pts_3D,
 		std::vector<cv::Point3d>& out_matched_object_points,

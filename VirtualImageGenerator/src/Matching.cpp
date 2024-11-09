@@ -130,7 +130,6 @@ void Matching::loadMatches(
 	std::string in_path_matching_output,
 	cv::Mat& in_real_image,
 	cv::Mat& in_synth_image,
-	std::vector<cv::Point2d>& in_wl_pts_2D,
 	std::vector<cv::Point2d>& in_synth_pts_2D,
 	std::vector<cv::Point3d>& in_synth_pts_3D,
 	std::vector<cv::Point3d>& out_matched_object_points,
@@ -300,7 +299,7 @@ double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_poi
 		 return -1;
 	 }
 
-	
+	 // init inlier vector
 	 std::vector<int> inliers;
 
 	 // Optional: Set a deterministic random seed to make RANSAC reproducible
@@ -312,10 +311,11 @@ double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_poi
 	 }
 
 	 // Run solvePnPRansac for initial pose estimation and outlier filtering
+	 // use AP3P which seems to be more robust against uncertainities in the IOP and EOP than LM-Solver but less accurate
 	 if (!cv::solvePnPRansac(in_matched_object_points, in_matched_image_points_real,
 		 camera_matrix, dist_coeffs, rvec, tvec, true,
 		 100, 8.0f, 0.99, //default parameters
-		 inliers, cv::SOLVEPNP_ITERATIVE)) 
+		 inliers, cv::SOLVEPNP_AP3P)) 
 	 {
 		 _logfile->append(TAG + "solvePnPRansac failed.");
 		 return -1;
@@ -499,82 +499,93 @@ cv::Mat Matching::ransac_test(std::vector<cv::Point2d>& _points1, std::vector<cv
 }
 
 
-
-void Matching::image_points_3D_referencing(std::vector<cv::Point2d>& input_image_points, std::vector<cv::Point3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y, double shift_z, bool export_pcl, std::string file_name_image_points) {
+void Matching::image_points_3D_referencing(std::vector<std::vector<cv::Point2d>>& input_image_points, std::vector<cv::Point3d>& synth_pts_3D, cv::Mat& in_image_4_color, cv::Mat& camera_matrix, cv::Mat& dist_coeffs, cv::Mat& rvec_cc_orig_copy, cv::Mat& tvec_cc_orig_copy, double shift_x, double shift_y, double shift_z, bool export_pcl, std::vector<std::string> file_name_image_points) {
 
 	std::stringstream log_statistics;
-
-	// Containers for undistorted image points in normalized and image coordinates
-	std::vector<cv::Point2d> img_pts_2D_undistort_normalized_coordinates;
-	std::vector<cv::Point2d> img_pts_2D_undistort_image_coordinates;
 
 	Model model = Model(_logfile); // Initialize model with logging
 	std::vector<cv::Vec3b> point_cloud_color;
 	std::vector<cv::Point2d> image_coordinates_color;
 	double distance_threshold_img_to_proj_img = 2.0; // pixels
 
-	if (input_image_points.size() != 0) {
+	// Process each set of input image points separately
+	for (size_t idx = 0; idx < input_image_points.size(); ++idx) {
+		std::vector<cv::Point2d> img_pts_2D_undistort_normalized_coordinates;
+		std::vector<cv::Point2d> img_pts_2D_undistort_image_coordinates;
 
-		// Undistort input 2D image points to normalized coordinates
-		cv::undistortPoints(input_image_points, img_pts_2D_undistort_normalized_coordinates, camera_matrix, dist_coeffs);
+		const auto& points_set = input_image_points[idx];
 
-		// Convert normalized coordinates back to image space using the camera matrix
-		for (cv::Point2d p : img_pts_2D_undistort_normalized_coordinates) {
-			img_pts_2D_undistort_image_coordinates.push_back(cv::Point2d(
-				camera_matrix.at<double>(0, 0) * p.x + camera_matrix.at<double>(0, 2),
-				camera_matrix.at<double>(1, 1) * p.y + camera_matrix.at<double>(1, 2)));
+		if (!points_set.empty()) {
+			// Undistort input 2D image points to normalized coordinates
+			cv::undistortPoints(points_set, img_pts_2D_undistort_normalized_coordinates, camera_matrix, dist_coeffs);
+
+			// Convert normalized coordinates back to image space using the camera matrix
+			for (const cv::Point2d& p : img_pts_2D_undistort_normalized_coordinates) {
+				img_pts_2D_undistort_image_coordinates.emplace_back(
+					camera_matrix.at<double>(0, 0) * p.x + camera_matrix.at<double>(0, 2),
+					camera_matrix.at<double>(1, 1) * p.y + camera_matrix.at<double>(1, 2)
+				);
+			}
 		}
-	}
-	else {
-		_logfile->append(TAG + "no image points to reference provided, will only color point cloud");
-	}
-
-	// Project the synthetic 3D points to image space and retrieve colors for each point
-	Model::ReferencedPoints referenced_points = model.get_color_for(synth_pts_3D, in_image_4_color, point_cloud_color, image_coordinates_color, 1.0, camera_matrix, dist_coeffs, rvec_cc_orig_copy, tvec_cc_orig_copy, input_image_points);
-	
-
-	// Export recolored 3D point cloud if required
-	if (export_pcl) {
-		_logfile->append(TAG + "---- export 3D point cloud ----");
-		model.export_point_cloud_recolored(_working_dir_matching, synth_pts_3D, point_cloud_color, image_coordinates_color, shift_x, shift_y, shift_z);
-	}
-
-	// Log and export results if 3D referencing succeeded
-	if (!referenced_points.corresponding_3D_image_pts_from_point_cloud.empty()) {
-		
-		// Filter outliers based on distance threshold
-		Matching::FilteredData filtered_data = filter_pts_by_distance(input_image_points, referenced_points.corresponding_2D_image_pts_from_point_cloud, referenced_points.corresponding_3D_image_pts_from_point_cloud, distance_threshold_img_to_proj_img);
-		
-		cv::Mat copy_masterimage = in_image_4_color.clone();
-		// Draw input image points on the image
-		for (cv::Point2d p : input_image_points) {
-			cv::circle(copy_masterimage, p, 5, cv::Scalar(255, 255, 0), -1); // Cyan circles for input points
-		}
-		// Draw projected image points on the image
-		for (cv::Point2d p : filtered_data.image_data_projected) {
-			cv::circle(copy_masterimage, p, 4, cv::Scalar(255, 0, 255), -1); // Magenta circles for projected points
-		}
-		cv::imwrite(fs::path(_working_dir_matching / "projected_original_image_points.png").string(), copy_masterimage);
-
-		// Export 3D referenced points to a text file
-		std::filesystem::path file_path = _working_dir_matching / (file_name_image_points + "_projected.txt");
-		std::ofstream myfile(file_path);
-
-		// Check if file is opened successfull
-		if (!myfile.is_open()) {
-			throw std::runtime_error("Could not open the file: " + file_path.string());
+		else {
+			_logfile->append(TAG + "no image points to reference provided for set " + std::to_string(idx) + ", will only color point cloud");
+			continue; // Skip further processing if no points are provided in this set
 		}
 
-		// Write the 3D points with shifts applied and corresponding IDs
-		for (size_t i = 0; i < filtered_data.image_data_3D.size(); ++i) {
-			myfile << std::fixed << std::setprecision(4)
-				<< filtered_data.image_data_original_idx[i] << ","
-				<< filtered_data.image_data_3D[i].x + shift_x << ","
-				<< filtered_data.image_data_3D[i].y + shift_y << ","
-				<< filtered_data.image_data_3D[i].z + shift_z << "\n";
+		// Project the synthetic 3D points to image space and retrieve colors for each point
+		Model::ReferencedPoints referenced_points = model.get_color_for(synth_pts_3D, in_image_4_color, point_cloud_color, image_coordinates_color, 1.0, camera_matrix, dist_coeffs, rvec_cc_orig_copy, tvec_cc_orig_copy, points_set);
+
+		// Export recolored 3D point cloud if required
+		if (export_pcl && idx == 0) {
+			_logfile->append(TAG + "---- export 3D point cloud ----");
+			model.export_point_cloud_recolored(_working_dir_matching, synth_pts_3D, point_cloud_color, image_coordinates_color, shift_x, shift_y, shift_z);
 		}
-		myfile.close();
-		_logfile->append(TAG + "count referenced image points: " + std::to_string(filtered_data.image_data_3D.size()));
+
+		// Check if 3D referencing succeeded for the current set
+		if (!referenced_points.corresponding_3D_image_pts_from_point_cloud.empty()) {
+			// Filter outliers based on distance threshold
+			Matching::FilteredData filtered_data = filter_pts_by_distance(points_set, referenced_points.corresponding_2D_image_pts_from_point_cloud, referenced_points.corresponding_3D_image_pts_from_point_cloud, distance_threshold_img_to_proj_img);
+
+			// Clone master image for drawing points
+			cv::Mat copy_masterimage = in_image_4_color.clone();
+
+			// Draw input image points on the image
+			for (const cv::Point2d& p : points_set) {
+				cv::circle(copy_masterimage, p, 5, cv::Scalar(255, 255, 0), -1); // Cyan circles for input points
+			}
+
+			// Draw projected image points on the image
+			for (const cv::Point2d& p : filtered_data.image_data_projected) {
+				cv::circle(copy_masterimage, p, 4, cv::Scalar(255, 0, 255), -1); // Magenta circles for projected points
+			}
+
+			// Save the output image with a unique identifier
+			std::string output_image_filename = file_name_image_points[idx] + "_projected_" + std::to_string(idx) + ".png";
+			cv::imwrite(fs::path(_working_dir_matching / output_image_filename).string(), copy_masterimage);
+
+			// Export 3D referenced points to a text file with a unique identifier
+			std::string output_text_filename = file_name_image_points[idx] + "_projected_" + std::to_string(idx) + ".txt";
+			std::filesystem::path file_path = _working_dir_matching / output_text_filename;
+			std::ofstream myfile(file_path);
+
+			// Check if file is opened successfully
+			if (!myfile.is_open()) {
+				throw std::runtime_error("Could not open the file: " + file_path.string());
+			}
+
+			// Write the 3D points with shifts applied and corresponding IDs
+			for (size_t i = 0; i < filtered_data.image_data_3D.size(); ++i) {
+				myfile << std::fixed << std::setprecision(4)
+					<< filtered_data.image_data_original_idx[i] << ","
+					<< filtered_data.image_data_3D[i].x + shift_x << ","
+					<< filtered_data.image_data_3D[i].y + shift_y << ","
+					<< filtered_data.image_data_3D[i].z + shift_z << "\n";
+			}
+			myfile.close();
+
+			// Log the count of referenced image points for the current set
+			_logfile->append(TAG + "count referenced image points for set " + std::to_string(idx) + ": " + std::to_string(filtered_data.image_data_3D.size()));
+		}
 	}
 }
 
