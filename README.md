@@ -7,7 +7,7 @@ How to setup
 1. create a new virtual python environemnt as prerequisite to run lightglue (ref) in the cloned project directory and follow the installation instruction from lightglue (https://github.com/cvg/LightGlue):
 ´´´
 python -m venv .venv
-.venv/Scripts/activate.bat
+.venv\Scripts\activate.bat
 git clone https://github.com/cvg/LightGlue.git && cd LightGlue
 python -m pip install .
 ´´´
