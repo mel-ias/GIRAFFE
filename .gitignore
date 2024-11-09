@@ -344,3 +344,4 @@ healthchecksdb
 /GIRAFFE/build
 /GIRAFFE/copy_to_release
 /GIRAFFE/how_to_build.txt
+/LightGlue/.venv
