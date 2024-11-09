@@ -276,7 +276,7 @@ private:
 
 
 	// Function to calculate the Euclidean distance between two cv::Point2d points
-	double euclideanDistance(const cv::Point2d& p1, const cv::Point2d& p2) {
+	double euclidean_distance(const cv::Point2d& p1, const cv::Point2d& p2) {
 		return std::sqrt(std::pow(p1.x - p2.x, 2) + std::pow(p1.y - p2.y, 2));
 	}
 

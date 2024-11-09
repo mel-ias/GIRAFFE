@@ -1,0 +1,60 @@
+\doxysection{Perspective\+Image Class Reference}
+\hypertarget{class_perspective_image}{}\label{class_perspective_image}\index{PerspectiveImage@{PerspectiveImage}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{class_perspective_image_ada58ceebbe82143e8b7c2933c1edbc1e}{Perspective\+Image}} (\mbox{\hyperlink{class_data_manager}{Data\+Manager}} \texorpdfstring{$\ast$}{*}data\+Manager)
+\begin{DoxyCompactList}\small\item\em Constructor for the \doxylink{class_perspective_image}{Perspective\+Image} class. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{class_perspective_image_a3ff9b97c2bf00f439a623dccd86ac11f}{\texorpdfstring{$\sim$}{\string~}\+Perspective\+Image}} ()
+\begin{DoxyCompactList}\small\item\em Destructor for the \doxylink{class_perspective_image}{Perspective\+Image} class. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_perspective_image_ab3d0a60cdfda6bdbdee53bbb8103073f}{generate\+Image}} ()
+\begin{DoxyCompactList}\small\item\em Generates a synthetic image based on the point cloud and bounding box data. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{class_perspective_image_ada58ceebbe82143e8b7c2933c1edbc1e}\index{PerspectiveImage@{PerspectiveImage}!PerspectiveImage@{PerspectiveImage}}
+\index{PerspectiveImage@{PerspectiveImage}!PerspectiveImage@{PerspectiveImage}}
+\doxysubsubsection{\texorpdfstring{PerspectiveImage()}{PerspectiveImage()}}
+{\footnotesize\ttfamily \label{class_perspective_image_ada58ceebbe82143e8b7c2933c1edbc1e} 
+Perspective\+Image\+::\+Perspective\+Image (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{class_data_manager}{Data\+Manager}} \texorpdfstring{$\ast$}{*}}]{data\+Manager}{}\end{DoxyParamCaption})}
+
+
+
+Constructor for the \doxylink{class_perspective_image}{Perspective\+Image} class. 
+
+Initializes the \doxylink{class_perspective_image}{Perspective\+Image} with a \doxylink{class_data_manager}{Data\+Manager} instance, setting up logging, and initializing the point loader and other necessary components.
+
+
+\begin{DoxyParams}{Parameters}
+{\em \+\_\+data\+Manager} & Pointer to a \doxylink{class_data_manager}{Data\+Manager} instance used for retrieving paths and settings. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_perspective_image_a3ff9b97c2bf00f439a623dccd86ac11f}\index{PerspectiveImage@{PerspectiveImage}!````~PerspectiveImage@{\texorpdfstring{$\sim$}{\string~}PerspectiveImage}}
+\index{````~PerspectiveImage@{\texorpdfstring{$\sim$}{\string~}PerspectiveImage}!PerspectiveImage@{PerspectiveImage}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}PerspectiveImage()}{\string~PerspectiveImage()}}
+{\footnotesize\ttfamily \label{class_perspective_image_a3ff9b97c2bf00f439a623dccd86ac11f} 
+Perspective\+Image\+::\texorpdfstring{$\sim$}{\string~}\+Perspective\+Image (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Destructor for the \doxylink{class_perspective_image}{Perspective\+Image} class. 
+
+Cleans up dynamically allocated resources, specifically the point loader instance. 
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_perspective_image_ab3d0a60cdfda6bdbdee53bbb8103073f}\index{PerspectiveImage@{PerspectiveImage}!generateImage@{generateImage}}
+\index{generateImage@{generateImage}!PerspectiveImage@{PerspectiveImage}}
+\doxysubsubsection{\texorpdfstring{generateImage()}{generateImage()}}
+{\footnotesize\ttfamily \label{class_perspective_image_ab3d0a60cdfda6bdbdee53bbb8103073f} 
+void Perspective\+Image\+::generate\+Image (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Generates a synthetic image based on the point cloud and bounding box data. 
+
+Sets up the calculator with the point loader, initializes the bounding box, reads binary point cloud data, and then processes and saves the generated image. 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/Perspective\+Image.\+h\item 
+src/Perspective\+Image.\+cpp\end{DoxyCompactItemize}

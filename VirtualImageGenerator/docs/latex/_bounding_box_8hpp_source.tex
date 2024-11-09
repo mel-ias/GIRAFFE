@@ -1,0 +1,102 @@
+\doxysection{Bounding\+Box.\+hpp}
+\hypertarget{_bounding_box_8hpp_source}{}\label{_bounding_box_8hpp_source}\index{include/BoundingBox.hpp@{include/BoundingBox.hpp}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ BOUNDINGBOX\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ BOUNDINGBOX\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#define\ \_USE\_MATH\_DEFINES}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}LogFilePrinter.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ \_CRT\_SECURE\_NO\_WARNINGS}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#\ define\ \_CRT\_SECURE\_NO\_WARNINGS}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_bounding_box}{BoundingBox}}}
+\DoxyCodeLine{00017\ \{}
+\DoxyCodeLine{00018\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00026\ \ \ \ \ \mbox{\hyperlink{class_bounding_box_a4bab853e4c84f26b72cbd3c5ae7f0053}{BoundingBox}}(\mbox{\hyperlink{class_log_file}{LogFile}}*\ logfile);}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00032\ \ \ \ \ \mbox{\hyperlink{class_bounding_box_a587de78331711c6eb6d15de867b73991}{\string~BoundingBox}}();}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_bounding_box_a286e98e5e5ce151a3638795ce9a8d22f}{calculate\_rotation\_matrix\_rzxy}}(\textcolor{keywordtype}{double}\ azimuth,\ \textcolor{keywordtype}{double}\ roll,\ \textcolor{keywordtype}{double}\ pitch);}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_bounding_box_a1a5c1560ea37dfa00f93f546df7e5e85}{calculate\_view\_frustum}}();}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_bounding_box_a93dfe6bed5b2c1d622e0c3d847515834}{set\_X0\_Cam\_World}}(\textcolor{keywordtype}{double}\ X0\_x,\ \textcolor{keywordtype}{double}\ X0\_y,\ \textcolor{keywordtype}{double}\ Z0\_z);}
+\DoxyCodeLine{00076\ \ \ \ \ }
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_bounding_box_ad6c84e671c3cbcba0e0695ced7c24605}{set\_frustum\_depth}}(\textcolor{keywordtype}{double}\ distance)\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \_d\ =\ distance;}
+\DoxyCodeLine{00087\ \ \ \ \ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_bounding_box_aedeb5ba3d620fc03fae3b183773046a0}{set\_bb\_offset\_X0\_xy}}(\textcolor{keywordtype}{double}\ half\_width)\ \{}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \_bb\_offset\_X0\_xy\ =\ half\_width;}
+\DoxyCodeLine{00100\ \ \ \ \ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_bounding_box_a1d78038db145ca409b24ef7fe79f2817}{set\_bb\_offset\_X0\_z}}(\textcolor{keywordtype}{double}\ half\_height)\ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \_bb\_offset\_X0\_z\ =\ half\_height;}
+\DoxyCodeLine{00113\ \ \ \ \ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_bounding_box_a14515a340160d6c770a68598af671ac5}{set\_view\_angles}}(\textcolor{keywordtype}{double}\ H,\ \textcolor{keywordtype}{double}\ V\ =\ 0.0f);}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_bounding_box_acf95089a4c1c161818072e6f332878c0}{set\_Rzxy}}(\textcolor{keywordtype}{double}*\ Rz)\ \{\ \_Rzxy\ =\ Rz;\ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_xMin()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_xMin;\ \}}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_xMax()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_xMax;\ \}}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_yMin()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_yMin;\ \}}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_yMax()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_yMax;\ \}}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_zMax()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_zMax;\ \}}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_zMin()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_zMin;\ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_xmin\_World()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_xMin\_world;\ \}}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_ymin\_World()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_yMin\_world;\ \}}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_zmin\_World()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_zMin\_world;\ \}}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_xmax\_World()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_xMax\_world;\ \}}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_ymax\_World()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_yMax\_world;\ \}}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_zmax\_World()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_zMax\_world;\ \}}
+\DoxyCodeLine{00153\ \ \ \ \ }
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_dist()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_d;\ \}}
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_Correction\_backward()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_bb\_offset\_X0\_xy\ /\ \_tH;\ \}}
+\DoxyCodeLine{00156\ \ \ \ \ }
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keywordtype}{double}*\ get\_Rzxy()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_Rzxy;\ \}}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordtype}{double}*\ get\_X0\_Cam\_World()\textcolor{keyword}{const\ }\{\ \textcolor{keywordflow}{return}\ \_X0\_cam\_world;\ \}}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{comment}{//\ logger\ +\ TAG}}
+\DoxyCodeLine{00163\ \ \ \ \ \mbox{\hyperlink{class_log_file}{LogFile}}*\ \_logFilePrinter;}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ TAG\ =\ \textcolor{stringliteral}{"{}View\ Frustum:\(\backslash\)t"{}};}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ Rotation\ matrix\ in\ ZXY\ order\ (column-\/major)}}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordtype}{double}*\ \_Rzxy;}
+\DoxyCodeLine{00168\ \ \ \ \ }
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{comment}{//\ Translation\ vector\ (camera\ origin\ in\ world\ coordinates)}}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordtype}{double}*\ \_X0\_cam\_world;}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//\ Frustum\ extents\ in\ world\ coordinates}}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordtype}{double}\ \_xMin\_world,\ \_xMax\_world;}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordtype}{double}\ \_yMin\_world,\ \_yMax\_world;}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordtype}{double}\ \_zMin\_world,\ \_zMax\_world;}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{comment}{//\ Frustum\ parameters}}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keywordtype}{double}\ \_bb\_offset\_X0\_xy;\ \ \ \ \ \ \textcolor{comment}{//\ Radius\ (half-\/width)\ in\ local\ camera\ system}}
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keywordtype}{double}\ \_bb\_offset\_X0\_z;\ \ \ \ \ \textcolor{comment}{//\ Half-\/height\ in\ local\ camera\ system}}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keywordtype}{double}\ \_d;\ \ \ \ \ \ \textcolor{comment}{//\ Distance\ from\ the\ camera}}
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordtype}{double}\ \_tV,\ \_tH;\ \textcolor{comment}{//\ Tangent\ of\ vertical\ and\ horizontal\ field\ of\ view\ angles\ to\ calculate\ frustum\ from\ bounding\ box}}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordtype}{double}\ \_zMin,\ \_zMax;\ \textcolor{comment}{//\ Min\ and\ max\ z\ values\ in\ local\ camera\ system}}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keywordtype}{double}\ \_xMin,\ \_xMax;\ \textcolor{comment}{//\ Min\ and\ max\ x\ values\ in\ local\ camera\ system}}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keywordtype}{double}\ \_yMin,\ \_yMax;\ \textcolor{comment}{//\ Min\ and\ max\ y\ values\ in\ local\ camera\ system}}
+\DoxyCodeLine{00185\ \};}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ BOUNDINGBOX\_H\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00188\ }
+
+\end{DoxyCode}

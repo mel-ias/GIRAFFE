@@ -1,0 +1,56 @@
+\doxysection{Point\+Loader.\+h}
+\hypertarget{_point_loader_8h_source}{}\label{_point_loader_8h_source}\index{include/PointLoader.h@{include/PointLoader.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <fstream>}\ \ \textcolor{comment}{//\ for\ std::ifstream}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <future>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <cfloat>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}LaserPoint.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}ImCalculator.hpp"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}BoundingBox.hpp"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}DataManager.h"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}LogfilePrinter.h"{}}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#define\ \_USE\_MATH\_DEFINES}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ class\ to\ load\ a\ pointcloud}}
+\DoxyCodeLine{00024\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_point_loader}{PointLoader}}\ \{}
+\DoxyCodeLine{00025\ \textcolor{keyword}{public}:\ \ \ \ }
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00034\ \ \ \ \ \mbox{\hyperlink{class_point_loader_a166e378611ae0917c2709cd26ef9adbf}{PointLoader}}(std::string\ path\_pcl,\ \mbox{\hyperlink{class_data_manager}{DataManager}}*\ data\_manager);}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{class_point_loader_a19fcfaa4db4ddcff1c4bee8de0299855}{\string~PointLoader}}();}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_point_loader_a295e03d27ab8ac414b650164a9c091b9}{check\_filetype\_pw}}();}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_point_loader_a03186b2e59ce37f1b71f970d9c4ffe64}{display\_progress\_bar}}(\textcolor{keywordtype}{int}\ percent);}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{class_point_loader_a01c9dcc2df9d93628f5aeb544d599764}{read\_binary\_file}}();}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{comment}{//\ SETTER}}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_imc(\mbox{\hyperlink{class_im_calculator}{ImCalculator}}*\ imc)\ \{\ \_imc\ =\ imc;\ \}}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_bb(\mbox{\hyperlink{class_bounding_box}{BoundingBox}}*\ bb)\ \{\ \_bb\ =\ bb;\ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00070\ \ \ \ }
+\DoxyCodeLine{00071\ \ \ \ \ \mbox{\hyperlink{class_log_file}{LogFile}}*\ logfile;\ \textcolor{comment}{//\ Pointer\ to\ a\ LogFile\ object\ for\ logging\ messages\ and\ errors.}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ TAG\ =\ \textcolor{stringliteral}{"{}PointLoader:\(\backslash\)t"{}};}
+\DoxyCodeLine{00073\ \ \ \ \ std::string\ \_path\_point\_cloud\ =\ \textcolor{stringliteral}{"{}"{}};\ \textcolor{comment}{//\ File\ path\ to\ the\ point\ cloud\ data\ to\ be\ loaded.}}
+\DoxyCodeLine{00074\ \ \ \ \ std::ifstream*\ \_input\_stream;\ \textcolor{comment}{//\ Pointer\ to\ an\ input\ file\ stream\ used\ to\ read\ binary\ data\ from\ the\ point\ cloud\ file.}}
+\DoxyCodeLine{00075\ \ \ \ \ \mbox{\hyperlink{class_im_calculator}{ImCalculator}}\ *\_imc\ =\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ Pointer\ to\ the\ perspective\ image\ calculator\ (ImCalculator)\ used\ to\ project\ points.\ Note:\ PointLoader\ does\ not\ own\ this\ pointer,\ so\ it\ should\ not\ delete\ it.\ Ensure\ that\ the\ object\ referenced\ by\ this\ pointer\ is\ managed\ elsewhere\ in\ the\ code.}}
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{class_bounding_box}{BoundingBox}}\ *\_bb\ =\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ Pointer\ to\ a\ BoundingBox\ object\ that\ defines\ the\ spatial\ limits\ for\ filtering\ points.\ Note:\ PointLoader\ does\ not\ own\ this\ pointer,\ so\ it\ should\ not\ delete\ it.\ The\ BoundingBox\ is\ used\ to\ determine\ which\ points\ are\ projected.}}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keywordtype}{double}\ \_shift\_x,\ \_shift\_y,\ \_shift\_z;\ \textcolor{comment}{//Shift\ values\ for\ the\ x,\ y,\ and\ z\ coordinates,\ obtained\ from\ the\ DataManager.}}
+\DoxyCodeLine{00078\ \};}
+
+\end{DoxyCode}

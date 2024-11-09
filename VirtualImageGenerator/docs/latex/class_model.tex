@@ -1,0 +1,119 @@
+\doxysection{Model Class Reference}
+\hypertarget{class_model}{}\label{class_model}\index{Model@{Model}}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{struct_model_1_1_referenced_points}{Referenced\+Points}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{class_model_a406fabf63ee2228f4438cbeb9742e923}\label{class_model_a406fabf63ee2228f4438cbeb9742e923} 
+{\bfseries Model} (\mbox{\hyperlink{class_log_file}{Log\+File}} \texorpdfstring{$\ast$}{*}\+\_\+logfile)
+\item 
+std\+::vector$<$ int $>$ \mbox{\hyperlink{class_model_ac7da364136a4f0990c4f19155e1f3ab4}{find\+\_\+knn}} (const std\+::vector$<$ cv\+::\+Point2d $>$ \&image\+\_\+points, const std\+::vector$<$ cv\+::\+Point2d $>$ \&image\+\_\+pixels)
+\begin{DoxyCompactList}\small\item\em Finds the nearest neighbor indices in {\ttfamily image\+\_\+pixels} for each point in {\ttfamily image\+\_\+points}. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{struct_model_1_1_referenced_points}{Referenced\+Points}} \mbox{\hyperlink{class_model_a6b4bc1f73ca3642679d52db67cd3e4f8}{get\+\_\+color\+\_\+for}} (std\+::vector$<$ cv\+::\+Point3d $>$ \&point\+\_\+cloud, const cv\+::\+Mat \&image\+\_\+for\+\_\+color, std\+::vector$<$ cv\+::\+Vec3b $>$ \&point\+\_\+cloud\+\_\+colors, std\+::vector$<$ cv\+::\+Point2d $>$ \&image\+\_\+coords\+\_\+colors, const bool fix\+\_\+aspect\+\_\+ratio, const cv\+::\+Mat \&camera\+\_\+matrix, const cv\+::\+Mat \&dist\+\_\+coeffs, const cv\+::\+Mat \&rvec, const cv\+::\+Mat \&tvec, const std\+::vector$<$ cv\+::\+Point2d $>$ \&image\+\_\+points)
+\begin{DoxyCompactList}\small\item\em Projects a point cloud onto an image and retrieves colors from the image. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_model_a49caa916e007b12f4b991d5b2a942b71}{export\+\_\+point\+\_\+cloud\+\_\+recolored}} (const fs\+::path \&path\+\_\+working\+\_\+directory, const std\+::vector$<$ cv\+::\+Point3d $>$ \&point\+\_\+cloud, const std\+::vector$<$ cv\+::\+Vec3b $>$ \&point\+\_\+cloud\+\_\+colors, const std\+::vector$<$ cv\+::\+Point2d $>$ \&image\+\_\+coords\+\_\+colors, const double shifter\+\_\+x, const double shifter\+\_\+y, const double shifter\+\_\+z)
+\begin{DoxyCompactList}\small\item\em Exports a recolored point cloud to a text file with optional coordinate shifting. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_model_a49caa916e007b12f4b991d5b2a942b71}\index{Model@{Model}!export\_point\_cloud\_recolored@{export\_point\_cloud\_recolored}}
+\index{export\_point\_cloud\_recolored@{export\_point\_cloud\_recolored}!Model@{Model}}
+\doxysubsubsection{\texorpdfstring{export\_point\_cloud\_recolored()}{export\_point\_cloud\_recolored()}}
+{\footnotesize\ttfamily \label{class_model_a49caa916e007b12f4b991d5b2a942b71} 
+void Model\+::export\+\_\+point\+\_\+cloud\+\_\+recolored (\begin{DoxyParamCaption}\item[{const fs\+::path \&}]{path\+\_\+working\+\_\+directory}{, }\item[{const std\+::vector$<$ cv\+::\+Point3d $>$ \&}]{point\+\_\+cloud}{, }\item[{const std\+::vector$<$ cv\+::\+Vec3b $>$ \&}]{point\+\_\+cloud\+\_\+colors}{, }\item[{const std\+::vector$<$ cv\+::\+Point2d $>$ \&}]{image\+\_\+coords\+\_\+colors}{, }\item[{const double}]{shifter\+\_\+x}{, }\item[{const double}]{shifter\+\_\+y}{, }\item[{const double}]{shifter\+\_\+z}{}\end{DoxyParamCaption})}
+
+
+
+Exports a recolored point cloud to a text file with optional coordinate shifting. 
+
+This function saves the 3D points of a point cloud along with their associated colors and image coordinates to a text file. The coordinates can be shifted by specified amounts along the X, Y, and Z axes. Only points with non-\/zero colors are included in the output.
+
+
+\begin{DoxyParams}{Parameters}
+{\em working\+Directory} & The directory where the output file will be saved. \\
+\hline
+{\em w\+D\+\_\+name} & The base name for the output file (without extension). \\
+\hline
+{\em point\+\_\+cloud} & A vector of 3D points representing the point cloud. \\
+\hline
+{\em point\+\_\+cloud\+\_\+colors} & A vector of colors corresponding to each point in the point cloud (in BGR format). \\
+\hline
+{\em image\+\_\+coords\+\_\+colors} & A vector of 2D image coordinates corresponding to each point in the point cloud. \\
+\hline
+{\em shifter\+\_\+x} & The amount to shift the X coordinates of the points. \\
+\hline
+{\em shifter\+\_\+y} & The amount to shift the Y coordinates of the points. \\
+\hline
+{\em shifter\+\_\+z} & The amount to shift the Z coordinates of the points. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_model_ac7da364136a4f0990c4f19155e1f3ab4}\index{Model@{Model}!find\_knn@{find\_knn}}
+\index{find\_knn@{find\_knn}!Model@{Model}}
+\doxysubsubsection{\texorpdfstring{find\_knn()}{find\_knn()}}
+{\footnotesize\ttfamily \label{class_model_ac7da364136a4f0990c4f19155e1f3ab4} 
+std\+::vector$<$ int $>$ Model\+::find\+\_\+knn (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ cv\+::\+Point2d $>$ \&}]{image\+\_\+points}{, }\item[{const std\+::vector$<$ cv\+::\+Point2d $>$ \&}]{image\+\_\+pixels}{}\end{DoxyParamCaption})}
+
+
+
+Finds the nearest neighbor indices in {\ttfamily image\+\_\+pixels} for each point in {\ttfamily image\+\_\+points}. 
+
+Uses a KD-\/tree to efficiently locate the nearest neighbor in {\ttfamily image\+\_\+pixels} for each 2D point in {\ttfamily image\+\_\+points}, based on Euclidean distance. The KD-\/tree is constructed using FLANN.
+
+
+\begin{DoxyParams}{Parameters}
+{\em image\+\_\+points} & Vector of 2D points for which nearest neighbors are sought. \\
+\hline
+{\em image\+\_\+pixels} & Vector of 2D points representing the search space. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A vector of indices, each corresponding to the closest point in {\ttfamily image\+\_\+pixels} for each point in {\ttfamily image\+\_\+points}. 
+\end{DoxyReturn}
+\Hypertarget{class_model_a6b4bc1f73ca3642679d52db67cd3e4f8}\index{Model@{Model}!get\_color\_for@{get\_color\_for}}
+\index{get\_color\_for@{get\_color\_for}!Model@{Model}}
+\doxysubsubsection{\texorpdfstring{get\_color\_for()}{get\_color\_for()}}
+{\footnotesize\ttfamily \label{class_model_a6b4bc1f73ca3642679d52db67cd3e4f8} 
+\mbox{\hyperlink{struct_model_1_1_referenced_points}{Model\+::\+Referenced\+Points}} Model\+::get\+\_\+color\+\_\+for (\begin{DoxyParamCaption}\item[{std\+::vector$<$ cv\+::\+Point3d $>$ \&}]{point\+\_\+cloud}{, }\item[{const cv\+::\+Mat \&}]{image\+\_\+for\+\_\+color}{, }\item[{std\+::vector$<$ cv\+::\+Vec3b $>$ \&}]{point\+\_\+cloud\+\_\+colors}{, }\item[{std\+::vector$<$ cv\+::\+Point2d $>$ \&}]{image\+\_\+coords\+\_\+colors}{, }\item[{const bool}]{fix\+\_\+aspect\+\_\+ratio}{, }\item[{const cv\+::\+Mat \&}]{camera\+\_\+matrix}{, }\item[{const cv\+::\+Mat \&}]{dist\+\_\+coeffs}{, }\item[{const cv\+::\+Mat \&}]{rvec}{, }\item[{const cv\+::\+Mat \&}]{tvec}{, }\item[{const std\+::vector$<$ cv\+::\+Point2d $>$ \&}]{image\+\_\+points}{}\end{DoxyParamCaption})}
+
+
+
+Projects a point cloud onto an image and retrieves colors from the image. 
+
+This function projects 3D points from a given point cloud into 2D image coordinates using the provided camera parameters. It then extracts the color values from the specified image for the projected points and associates them with a list of image points.
+
+
+\begin{DoxyParams}{Parameters}
+{\em point\+\_\+cloud} & A vector of 3D points representing the point cloud. \\
+\hline
+{\em image\+\_\+for\+\_\+color} & The image from which color values will be extracted. \\
+\hline
+{\em point\+\_\+cloud\+\_\+colors} & A reference to a vector where the colors corresponding to the projected points will be stored. \\
+\hline
+{\em image\+\_\+coords\+\_\+colors} & A reference to a vector where the valid image coordinates of the projected points will be stored. \\
+\hline
+{\em fix\+\_\+aspect\+\_\+ratio} & A boolean flag indicating whether to maintain the aspect ratio during the projection. \\
+\hline
+{\em camera\+Matrix} & The intrinsic camera matrix used for projecting the points. \\
+\hline
+{\em dist\+Coeffs} & The distortion coefficients for correcting the image. \\
+\hline
+{\em rvec} & The rotation vector for the camera pose. \\
+\hline
+{\em tvec} & The translation vector for the camera pose. \\
+\hline
+{\em image\+\_\+points} & A vector of 2D points representing the image points to be matched with the projected points.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A vector of pairs, where each pair contains a projected 3D point and the index of the corresponding image point. 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/Model.\+h\item 
+src/Model.\+cpp\end{DoxyCompactItemize}

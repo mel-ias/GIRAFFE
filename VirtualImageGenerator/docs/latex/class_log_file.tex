@@ -1,0 +1,128 @@
+\doxysection{Log\+File Class Reference}
+\hypertarget{class_log_file}{}\label{class_log_file}\index{LogFile@{LogFile}}
+
+
+This class handles logging operations, including appending log entries to an internal log buffer and printing or saving the log to disk.  
+
+
+
+
+{\ttfamily \#include $<$Logfile\+Printer.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{class_log_file_ad11b3baf5602575c1396f726d3598188}{Log\+File}} ()
+\item 
+\mbox{\hyperlink{class_log_file_a440a7de2dcbb9facb68e56dc47cb9dea}{\texorpdfstring{$\sim$}{\string~}\+Log\+File}} ()
+\item 
+void \mbox{\hyperlink{class_log_file_a3253aa6b100c4d955d514cb411d32ec6}{print\+\_\+content\+\_\+disk}} (std\+::string path\+\_\+working\+\_\+directory)
+\begin{DoxyCompactList}\small\item\em Saves the entire log content to a specified file on disk. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}} (const std\+::stringstream \&logfile, int precision=3)
+\begin{DoxyCompactList}\small\item\em Appends a stringstream log entry to the internal log buffer and prints it. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_log_file_abb4f9bbf890f800a4adbf401c7dffce4}{append}} (const std\+::string \&logfile, int precision=3)
+\begin{DoxyCompactList}\small\item\em Appends a string log entry to the internal log buffer and prints it. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_log_file_ac42d62c5b527e79a5e2e770e97d1cbb2}{append}} (const char \texorpdfstring{$\ast$}{*}logfile, int precision=3)
+\begin{DoxyCompactList}\small\item\em Appends a C-\/style string log entry to the internal log buffer and prints it. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+This class handles logging operations, including appending log entries to an internal log buffer and printing or saving the log to disk. 
+
+It provides methods for appending log messages in different formats (string, stringstream, or C-\/style string) with a specified precision, as well as saving the log content to a file. 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{class_log_file_ad11b3baf5602575c1396f726d3598188}\index{LogFile@{LogFile}!LogFile@{LogFile}}
+\index{LogFile@{LogFile}!LogFile@{LogFile}}
+\doxysubsubsection{\texorpdfstring{LogFile()}{LogFile()}}
+{\footnotesize\ttfamily \label{class_log_file_ad11b3baf5602575c1396f726d3598188} 
+Log\+File\+::\+Log\+File (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Default constructor \Hypertarget{class_log_file_a440a7de2dcbb9facb68e56dc47cb9dea}\index{LogFile@{LogFile}!````~LogFile@{\texorpdfstring{$\sim$}{\string~}LogFile}}
+\index{````~LogFile@{\texorpdfstring{$\sim$}{\string~}LogFile}!LogFile@{LogFile}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}LogFile()}{\string~LogFile()}}
+{\footnotesize\ttfamily \label{class_log_file_a440a7de2dcbb9facb68e56dc47cb9dea} 
+Log\+File\+::\texorpdfstring{$\sim$}{\string~}\+Log\+File (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Default destructor 
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_log_file_ac42d62c5b527e79a5e2e770e97d1cbb2}\index{LogFile@{LogFile}!append@{append}}
+\index{append@{append}!LogFile@{LogFile}}
+\doxysubsubsection{\texorpdfstring{append()}{append()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily \label{class_log_file_ac42d62c5b527e79a5e2e770e97d1cbb2} 
+void Log\+File\+::append (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}}]{logfile}{, }\item[{int}]{precision}{ = {\ttfamily 3}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Appends a C-\/style string log entry to the internal log buffer and prints it. 
+
+This function appends a {\ttfamily const char\texorpdfstring{$\ast$}{*}} log message to the log buffer ({\ttfamily logfile\+\_\+all}), prints the message to the console, and ensures numerical values are printed with a specified precision.
+
+
+\begin{DoxyParams}{Parameters}
+{\em logfile} & The C-\/style string log message to append. \\
+\hline
+{\em precision} & The precision to be used for numeric values (default is 3). \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_log_file_abb4f9bbf890f800a4adbf401c7dffce4}\index{LogFile@{LogFile}!append@{append}}
+\index{append@{append}!LogFile@{LogFile}}
+\doxysubsubsection{\texorpdfstring{append()}{append()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily \label{class_log_file_abb4f9bbf890f800a4adbf401c7dffce4} 
+void Log\+File\+::append (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{logfile}{, }\item[{int}]{precision}{ = {\ttfamily 3}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Appends a string log entry to the internal log buffer and prints it. 
+
+This function appends a {\ttfamily std\+::string} log message to the log buffer ({\ttfamily logfile\+\_\+all}), prints the message to the console, and ensures numerical values are printed with a specified precision.
+
+
+\begin{DoxyParams}{Parameters}
+{\em logfile} & The log message to append. \\
+\hline
+{\em precision} & The precision to be used for numeric values (default is 3). \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}\index{LogFile@{LogFile}!append@{append}}
+\index{append@{append}!LogFile@{LogFile}}
+\doxysubsubsection{\texorpdfstring{append()}{append()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily \label{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74} 
+void Log\+File\+::append (\begin{DoxyParamCaption}\item[{const std\+::stringstream \&}]{logfile}{, }\item[{int}]{precision}{ = {\ttfamily 3}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Appends a stringstream log entry to the internal log buffer and prints it. 
+
+This function appends the content of a {\ttfamily std\+::stringstream} to the log buffer ({\ttfamily logfile\+\_\+all}), prints the content to the console, and ensures that numerical values are printed with a specified precision.
+
+
+\begin{DoxyParams}{Parameters}
+{\em logfile} & The stringstream containing the log message. \\
+\hline
+{\em precision} & The precision to be used for numeric values (default is 3). \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_log_file_a3253aa6b100c4d955d514cb411d32ec6}\index{LogFile@{LogFile}!print\_content\_disk@{print\_content\_disk}}
+\index{print\_content\_disk@{print\_content\_disk}!LogFile@{LogFile}}
+\doxysubsubsection{\texorpdfstring{print\_content\_disk()}{print\_content\_disk()}}
+{\footnotesize\ttfamily \label{class_log_file_a3253aa6b100c4d955d514cb411d32ec6} 
+void Log\+File\+::print\+\_\+content\+\_\+disk (\begin{DoxyParamCaption}\item[{std\+::string}]{path\+\_\+working\+\_\+directory}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Saves the entire log content to a specified file on disk. 
+
+This function writes the contents of the internal {\ttfamily logfile\+\_\+all} stringstream to a file located in the provided directory. The file is overwritten.
+
+
+\begin{DoxyParams}{Parameters}
+{\em \+\_\+working\+Dir} & The directory where the log file will be saved. \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/Logfile\+Printer.\+h\end{DoxyCompactItemize}

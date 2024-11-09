@@ -1,0 +1,93 @@
+\doxysection{Utils Class Reference}
+\hypertarget{class_utils}{}\label{class_utils}\index{Utils@{Utils}}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static bool \mbox{\hyperlink{class_utils_a078f0ad4c5212fd3a2b05862d8c223c9}{is\+\_\+dir}} (const std\+::string \&dir)
+\begin{DoxyCompactList}\small\item\em Checks if a directory exists. \end{DoxyCompactList}\item 
+static int \mbox{\hyperlink{class_utils_a1af7801c7551a0c2ad03fbb72bc772e9}{calculate\+\_\+file\+\_\+size}} (const fs\+::path \&path)
+\begin{DoxyCompactList}\small\item\em Calculates the size of a file in bytes. \end{DoxyCompactList}\item 
+static bool \mbox{\hyperlink{class_utils_ab3f69947b7449a5a9f485a6fa7b98010}{is\+\_\+file}} (const fs\+::path \&name)
+\begin{DoxyCompactList}\small\item\em Checks if a file exists. \end{DoxyCompactList}\item 
+static std\+::string \mbox{\hyperlink{class_utils_a5cbb4420de455e81333014fa0095e2c0}{get\+\_\+working\+\_\+dir}} ()
+\begin{DoxyCompactList}\small\item\em Retrieves the current working directory as a string. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_utils_a1af7801c7551a0c2ad03fbb72bc772e9}\index{Utils@{Utils}!calculate\_file\_size@{calculate\_file\_size}}
+\index{calculate\_file\_size@{calculate\_file\_size}!Utils@{Utils}}
+\doxysubsubsection{\texorpdfstring{calculate\_file\_size()}{calculate\_file\_size()}}
+{\footnotesize\ttfamily \label{class_utils_a1af7801c7551a0c2ad03fbb72bc772e9} 
+static int Utils\+::calculate\+\_\+file\+\_\+size (\begin{DoxyParamCaption}\item[{const fs\+::path \&}]{path}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Calculates the size of a file in bytes. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em path} & Path to the file as a filesystem path. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Size of the file in bytes, or -\/1 if the file could not be opened. 
+\end{DoxyReturn}
+\Hypertarget{class_utils_a5cbb4420de455e81333014fa0095e2c0}\index{Utils@{Utils}!get\_working\_dir@{get\_working\_dir}}
+\index{get\_working\_dir@{get\_working\_dir}!Utils@{Utils}}
+\doxysubsubsection{\texorpdfstring{get\_working\_dir()}{get\_working\_dir()}}
+{\footnotesize\ttfamily \label{class_utils_a5cbb4420de455e81333014fa0095e2c0} 
+static std\+::string Utils\+::get\+\_\+working\+\_\+dir (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Retrieves the current working directory as a string. 
+
+\begin{DoxyReturn}{Returns}
+The current working directory. 
+\end{DoxyReturn}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em std\+::runtime\+\_\+error} & if the working directory cannot be retrieved. \\
+\hline
+\end{DoxyExceptions}
+\Hypertarget{class_utils_a078f0ad4c5212fd3a2b05862d8c223c9}\index{Utils@{Utils}!is\_dir@{is\_dir}}
+\index{is\_dir@{is\_dir}!Utils@{Utils}}
+\doxysubsubsection{\texorpdfstring{is\_dir()}{is\_dir()}}
+{\footnotesize\ttfamily \label{class_utils_a078f0ad4c5212fd3a2b05862d8c223c9} 
+static bool Utils\+::is\+\_\+dir (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{dir}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Checks if a directory exists. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em dir} & Path to the directory as a string. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+True if the directory exists, false otherwise. 
+\end{DoxyReturn}
+\Hypertarget{class_utils_ab3f69947b7449a5a9f485a6fa7b98010}\index{Utils@{Utils}!is\_file@{is\_file}}
+\index{is\_file@{is\_file}!Utils@{Utils}}
+\doxysubsubsection{\texorpdfstring{is\_file()}{is\_file()}}
+{\footnotesize\ttfamily \label{class_utils_ab3f69947b7449a5a9f485a6fa7b98010} 
+static bool Utils\+::is\+\_\+file (\begin{DoxyParamCaption}\item[{const fs\+::path \&}]{name}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Checks if a file exists. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em name} & Path to the file as a filesystem path. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+True if the file exists, false otherwise. 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/Utils.\+h\end{DoxyCompactItemize}

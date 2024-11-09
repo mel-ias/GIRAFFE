@@ -1,0 +1,251 @@
+\doxysection{Bounding\+Box Class Reference}
+\hypertarget{class_bounding_box}{}\label{class_bounding_box}\index{BoundingBox@{BoundingBox}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{class_bounding_box_a4bab853e4c84f26b72cbd3c5ae7f0053}{Bounding\+Box}} (\mbox{\hyperlink{class_log_file}{Log\+File}} \texorpdfstring{$\ast$}{*}logfile)
+\begin{DoxyCompactList}\small\item\em Constructor for the View\+Frustum class. Initializes the view frustum parameters and logs the initialization steps. \end{DoxyCompactList}\item 
+\Hypertarget{class_bounding_box_a587de78331711c6eb6d15de867b73991}\label{class_bounding_box_a587de78331711c6eb6d15de867b73991} 
+{\bfseries \texorpdfstring{$\sim$}{\string~}\+Bounding\+Box} ()
+\begin{DoxyCompactList}\small\item\em Destructor for the View\+Frustum class. Cleans up allocated memory for camera position and rotation matrix. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_bounding_box_a286e98e5e5ce151a3638795ce9a8d22f}{calculate\+\_\+rotation\+\_\+matrix\+\_\+rzxy}} (double azimuth, double roll, double pitch)
+\begin{DoxyCompactList}\small\item\em Set the camera\textquotesingle{}s orientation based on azimuth, roll, and pitch angles. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_bounding_box_a1a5c1560ea37dfa00f93f546df7e5e85}{calculate\+\_\+view\+\_\+frustum}} ()
+\begin{DoxyCompactList}\small\item\em Recalculate the view frustum based on the current camera parameters. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_bounding_box_a93dfe6bed5b2c1d622e0c3d847515834}{set\+\_\+\+X0\+\_\+\+Cam\+\_\+\+World}} (double X0\+\_\+x, double X0\+\_\+y, double Z0\+\_\+z)
+\begin{DoxyCompactList}\small\item\em Define the camera\textquotesingle{}s world position for view frustum calculation. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_bounding_box_ad6c84e671c3cbcba0e0695ced7c24605}{set\+\_\+frustum\+\_\+depth}} (double distance)
+\begin{DoxyCompactList}\small\item\em Set the depth of the view frustum. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_bounding_box_aedeb5ba3d620fc03fae3b183773046a0}{set\+\_\+bb\+\_\+offset\+\_\+\+X0\+\_\+xy}} (double half\+\_\+width)
+\begin{DoxyCompactList}\small\item\em Set the horizontal half-\/width of the bounding box. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_bounding_box_a1d78038db145ca409b24ef7fe79f2817}{set\+\_\+bb\+\_\+offset\+\_\+\+X0\+\_\+z}} (double half\+\_\+height)
+\begin{DoxyCompactList}\small\item\em Set the vertical half-\/height of the bounding box. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_bounding_box_a14515a340160d6c770a68598af671ac5}{set\+\_\+view\+\_\+angles}} (double H, double V=0.\+0f)
+\begin{DoxyCompactList}\small\item\em Set the camera\textquotesingle{}s view angle. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_bounding_box_acf95089a4c1c161818072e6f332878c0}{set\+\_\+\+Rzxy}} (double \texorpdfstring{$\ast$}{*}Rz)
+\begin{DoxyCompactList}\small\item\em Set the 3x3 rotation matrix in ZXY order. \end{DoxyCompactList}\item 
+\Hypertarget{class_bounding_box_adce6b00d7c3a79e9af6fc6297b99e3bf}\label{class_bounding_box_adce6b00d7c3a79e9af6fc6297b99e3bf} 
+double {\bfseries get\+\_\+x\+Min} () const
+\item 
+\Hypertarget{class_bounding_box_ae1ef90e59603331546b5a07246e20b93}\label{class_bounding_box_ae1ef90e59603331546b5a07246e20b93} 
+double {\bfseries get\+\_\+x\+Max} () const
+\item 
+\Hypertarget{class_bounding_box_abed1563160e091ec6c629f699bacee9c}\label{class_bounding_box_abed1563160e091ec6c629f699bacee9c} 
+double {\bfseries get\+\_\+y\+Min} () const
+\item 
+\Hypertarget{class_bounding_box_a87ddc45fe57d03fe0995547c3455bb25}\label{class_bounding_box_a87ddc45fe57d03fe0995547c3455bb25} 
+double {\bfseries get\+\_\+y\+Max} () const
+\item 
+\Hypertarget{class_bounding_box_a0da1955cc3d3551df1926890d3e11e7a}\label{class_bounding_box_a0da1955cc3d3551df1926890d3e11e7a} 
+double {\bfseries get\+\_\+z\+Max} () const
+\item 
+\Hypertarget{class_bounding_box_a433a9a5082a9dc9ec28e5825cf97368c}\label{class_bounding_box_a433a9a5082a9dc9ec28e5825cf97368c} 
+double {\bfseries get\+\_\+z\+Min} () const
+\item 
+\Hypertarget{class_bounding_box_ab3f408398a53c5da9c042029c35c15ea}\label{class_bounding_box_ab3f408398a53c5da9c042029c35c15ea} 
+double {\bfseries get\+\_\+xmin\+\_\+\+World} () const
+\item 
+\Hypertarget{class_bounding_box_a863c70d175155e82a5396b2168fa493e}\label{class_bounding_box_a863c70d175155e82a5396b2168fa493e} 
+double {\bfseries get\+\_\+ymin\+\_\+\+World} () const
+\item 
+\Hypertarget{class_bounding_box_a80235c5f416e42afa3b508cee92de075}\label{class_bounding_box_a80235c5f416e42afa3b508cee92de075} 
+double {\bfseries get\+\_\+zmin\+\_\+\+World} () const
+\item 
+\Hypertarget{class_bounding_box_a4e96eaaedbdc84dc406601b9a3d231c5}\label{class_bounding_box_a4e96eaaedbdc84dc406601b9a3d231c5} 
+double {\bfseries get\+\_\+xmax\+\_\+\+World} () const
+\item 
+\Hypertarget{class_bounding_box_a985ddf4e5f786063c025bb5801225c33}\label{class_bounding_box_a985ddf4e5f786063c025bb5801225c33} 
+double {\bfseries get\+\_\+ymax\+\_\+\+World} () const
+\item 
+\Hypertarget{class_bounding_box_ac606c5137bcea2925370b581b8a0b749}\label{class_bounding_box_ac606c5137bcea2925370b581b8a0b749} 
+double {\bfseries get\+\_\+zmax\+\_\+\+World} () const
+\item 
+\Hypertarget{class_bounding_box_af29970a80d7292c6b5a3ef242e1e620d}\label{class_bounding_box_af29970a80d7292c6b5a3ef242e1e620d} 
+double {\bfseries get\+\_\+dist} () const
+\item 
+\Hypertarget{class_bounding_box_a49bec6e002cbbf6d7b2b34123f3ffdeb}\label{class_bounding_box_a49bec6e002cbbf6d7b2b34123f3ffdeb} 
+double {\bfseries get\+\_\+\+Correction\+\_\+backward} () const
+\item 
+\Hypertarget{class_bounding_box_a0d474e8cd0cfb6739dba01a6545441ff}\label{class_bounding_box_a0d474e8cd0cfb6739dba01a6545441ff} 
+double \texorpdfstring{$\ast$}{*} {\bfseries get\+\_\+\+Rzxy} () const
+\item 
+\Hypertarget{class_bounding_box_aafd6b4e15b86e6785516e762c5e08f22}\label{class_bounding_box_aafd6b4e15b86e6785516e762c5e08f22} 
+double \texorpdfstring{$\ast$}{*} {\bfseries get\+\_\+\+X0\+\_\+\+Cam\+\_\+\+World} () const
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{class_bounding_box_a4bab853e4c84f26b72cbd3c5ae7f0053}\index{BoundingBox@{BoundingBox}!BoundingBox@{BoundingBox}}
+\index{BoundingBox@{BoundingBox}!BoundingBox@{BoundingBox}}
+\doxysubsubsection{\texorpdfstring{BoundingBox()}{BoundingBox()}}
+{\footnotesize\ttfamily \label{class_bounding_box_a4bab853e4c84f26b72cbd3c5ae7f0053} 
+Bounding\+Box\+::\+Bounding\+Box (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{class_log_file}{Log\+File}} \texorpdfstring{$\ast$}{*}}]{logfile}{}\end{DoxyParamCaption})}
+
+
+
+Constructor for the View\+Frustum class. Initializes the view frustum parameters and logs the initialization steps. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em logfile} & Pointer to a \doxylink{class_log_file}{Log\+File} object for logging messages. \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_bounding_box_a286e98e5e5ce151a3638795ce9a8d22f}\index{BoundingBox@{BoundingBox}!calculate\_rotation\_matrix\_rzxy@{calculate\_rotation\_matrix\_rzxy}}
+\index{calculate\_rotation\_matrix\_rzxy@{calculate\_rotation\_matrix\_rzxy}!BoundingBox@{BoundingBox}}
+\doxysubsubsection{\texorpdfstring{calculate\_rotation\_matrix\_rzxy()}{calculate\_rotation\_matrix\_rzxy()}}
+{\footnotesize\ttfamily \label{class_bounding_box_a286e98e5e5ce151a3638795ce9a8d22f} 
+void Bounding\+Box\+::calculate\+\_\+rotation\+\_\+matrix\+\_\+rzxy (\begin{DoxyParamCaption}\item[{double}]{azimuth}{, }\item[{double}]{roll}{, }\item[{double}]{pitch}{}\end{DoxyParamCaption})}
+
+
+
+Set the camera\textquotesingle{}s orientation based on azimuth, roll, and pitch angles. 
+
+This function computes the rotation matrix (Rzxy) using the provided azimuth, roll, and pitch angles. The rotation follows a ZXY rotation order\+:
+\begin{DoxyEnumerate}
+\item Azimuth (z-\/axis)
+\item Pitch (x-\/axis)
+\item Roll (y-\/axis) \href{http://www.songho.ca/opengl/gl_anglestoaxes.html}{\texttt{ http\+://www.\+songho.\+ca/opengl/gl\+\_\+anglestoaxes.\+html}}
+\end{DoxyEnumerate}
+
+The rotation matrix is column-\/major, and the function updates the class member Rz.
+
+
+\begin{DoxyParams}{Parameters}
+{\em \+\_\+azimuth} & The azimuth angle (in degrees). \\
+\hline
+{\em \+\_\+roll} & The roll angle (in degrees). \\
+\hline
+{\em \+\_\+pitch} & The pitch angle (in degrees). \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_bounding_box_a1a5c1560ea37dfa00f93f546df7e5e85}\index{BoundingBox@{BoundingBox}!calculate\_view\_frustum@{calculate\_view\_frustum}}
+\index{calculate\_view\_frustum@{calculate\_view\_frustum}!BoundingBox@{BoundingBox}}
+\doxysubsubsection{\texorpdfstring{calculate\_view\_frustum()}{calculate\_view\_frustum()}}
+{\footnotesize\ttfamily \label{class_bounding_box_a1a5c1560ea37dfa00f93f546df7e5e85} 
+void Bounding\+Box\+::calculate\+\_\+view\+\_\+frustum (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Recalculate the view frustum based on the current camera parameters. 
+
+This function recalculates the view frustum dimensions using the camera\textquotesingle{}s position, azimuth, distance, and other geometric properties. It updates the view frustum\textquotesingle{}s world and local coordinates, as well as the min/max values in the x, y, and z directions.
+
+The view frustum is computed in the local camera coordinate system and then transformed to the global world space using the rotation matrix Rz and translation by X0\+\_\+\+Cam\+\_\+\+World. \Hypertarget{class_bounding_box_aedeb5ba3d620fc03fae3b183773046a0}\index{BoundingBox@{BoundingBox}!set\_bb\_offset\_X0\_xy@{set\_bb\_offset\_X0\_xy}}
+\index{set\_bb\_offset\_X0\_xy@{set\_bb\_offset\_X0\_xy}!BoundingBox@{BoundingBox}}
+\doxysubsubsection{\texorpdfstring{set\_bb\_offset\_X0\_xy()}{set\_bb\_offset\_X0\_xy()}}
+{\footnotesize\ttfamily \label{class_bounding_box_aedeb5ba3d620fc03fae3b183773046a0} 
+void Bounding\+Box\+::set\+\_\+bb\+\_\+offset\+\_\+\+X0\+\_\+xy (\begin{DoxyParamCaption}\item[{double}]{half\+\_\+width}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Set the horizontal half-\/width of the bounding box. 
+
+This function sets the horizontal half-\/width {\ttfamily half\+\_\+width}, which represents half of the width of the bounding box close to the camera\textquotesingle{}s projection center, corresponding to the horizontal extent of the bounding box or frustum in the horizontal plane.
+
+
+\begin{DoxyParams}{Parameters}
+{\em half} & width The horizontal half-\/width, typically derived from GPS accuracy or frustum width. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_bounding_box_a1d78038db145ca409b24ef7fe79f2817}\index{BoundingBox@{BoundingBox}!set\_bb\_offset\_X0\_z@{set\_bb\_offset\_X0\_z}}
+\index{set\_bb\_offset\_X0\_z@{set\_bb\_offset\_X0\_z}!BoundingBox@{BoundingBox}}
+\doxysubsubsection{\texorpdfstring{set\_bb\_offset\_X0\_z()}{set\_bb\_offset\_X0\_z()}}
+{\footnotesize\ttfamily \label{class_bounding_box_a1d78038db145ca409b24ef7fe79f2817} 
+void Bounding\+Box\+::set\+\_\+bb\+\_\+offset\+\_\+\+X0\+\_\+z (\begin{DoxyParamCaption}\item[{double}]{half\+\_\+height}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Set the vertical half-\/height of the bounding box. 
+
+This function sets the vertical half-\/height {\ttfamily half\+\_\+height}, which defines half the vertical extent of the bounding box close to the camera\textquotesingle{}s projection center, corresponding to the vertical extent of the frustum.
+
+
+\begin{DoxyParams}{Parameters}
+{\em half\+\_\+height} & The vertical half-\/height, representing half the vertical extent of the bounding box. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_bounding_box_ad6c84e671c3cbcba0e0695ced7c24605}\index{BoundingBox@{BoundingBox}!set\_frustum\_depth@{set\_frustum\_depth}}
+\index{set\_frustum\_depth@{set\_frustum\_depth}!BoundingBox@{BoundingBox}}
+\doxysubsubsection{\texorpdfstring{set\_frustum\_depth()}{set\_frustum\_depth()}}
+{\footnotesize\ttfamily \label{class_bounding_box_ad6c84e671c3cbcba0e0695ced7c24605} 
+void Bounding\+Box\+::set\+\_\+frustum\+\_\+depth (\begin{DoxyParamCaption}\item[{double}]{distance}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Set the depth of the view frustum. 
+
+This function sets the depth of the view frustum to the given distance from the camera. All points within the specified distance from the camera will be inside the view frustum.
+
+
+\begin{DoxyParams}{Parameters}
+{\em distance} & The distance from the camera, defining the new depth of the view frustum. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_bounding_box_acf95089a4c1c161818072e6f332878c0}\index{BoundingBox@{BoundingBox}!set\_Rzxy@{set\_Rzxy}}
+\index{set\_Rzxy@{set\_Rzxy}!BoundingBox@{BoundingBox}}
+\doxysubsubsection{\texorpdfstring{set\_Rzxy()}{set\_Rzxy()}}
+{\footnotesize\ttfamily \label{class_bounding_box_acf95089a4c1c161818072e6f332878c0} 
+void Bounding\+Box\+::set\+\_\+\+Rzxy (\begin{DoxyParamCaption}\item[{double \texorpdfstring{$\ast$}{*}}]{Rz}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Set the 3x3 rotation matrix in ZXY order. 
+
+This function sets the rotation matrix {\ttfamily Rzxy}, which defines the transformation for the bounding box. The rotation matrix is applied using the ZXY order of rotations\+: first around the Z-\/axis (azimuth), followed by the X-\/axis (pitch), and finally the Y-\/axis (roll).
+
+The matrix is expected to be in column-\/major order, and the transformation is used to rotate the bounding box from the world coordinates to the local camera coordinates.
+
+
+\begin{DoxyParams}{Parameters}
+{\em \+\_\+\+Rz} & A pointer to a 3x3 rotation matrix in column-\/major order, representing ZXY rotations. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_bounding_box_a14515a340160d6c770a68598af671ac5}\index{BoundingBox@{BoundingBox}!set\_view\_angles@{set\_view\_angles}}
+\index{set\_view\_angles@{set\_view\_angles}!BoundingBox@{BoundingBox}}
+\doxysubsubsection{\texorpdfstring{set\_view\_angles()}{set\_view\_angles()}}
+{\footnotesize\ttfamily \label{class_bounding_box_a14515a340160d6c770a68598af671ac5} 
+void Bounding\+Box\+::set\+\_\+view\+\_\+angles (\begin{DoxyParamCaption}\item[{double}]{H}{, }\item[{double}]{V}{ = {\ttfamily 0.0f}}\end{DoxyParamCaption})}
+
+
+
+Set the camera\textquotesingle{}s view angle. 
+
+This function sets the horizontal and vertical angles of view for the view frustum.
+
+
+\begin{DoxyParams}{Parameters}
+{\em H} & Horizontal angle in degrees (must be between 0 and 60 degrees). \\
+\hline
+{\em V} & Vertical angle in degrees (must be between 0 and 60 degrees, defaulted to H if invalid). \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_bounding_box_a93dfe6bed5b2c1d622e0c3d847515834}\index{BoundingBox@{BoundingBox}!set\_X0\_Cam\_World@{set\_X0\_Cam\_World}}
+\index{set\_X0\_Cam\_World@{set\_X0\_Cam\_World}!BoundingBox@{BoundingBox}}
+\doxysubsubsection{\texorpdfstring{set\_X0\_Cam\_World()}{set\_X0\_Cam\_World()}}
+{\footnotesize\ttfamily \label{class_bounding_box_a93dfe6bed5b2c1d622e0c3d847515834} 
+void Bounding\+Box\+::set\+\_\+\+X0\+\_\+\+Cam\+\_\+\+World (\begin{DoxyParamCaption}\item[{double}]{X0\+\_\+x}{, }\item[{double}]{X0\+\_\+y}{, }\item[{double}]{Z0\+\_\+z}{}\end{DoxyParamCaption})}
+
+
+
+Define the camera\textquotesingle{}s world position for view frustum calculation. 
+
+This function sets the camera position in the world coordinates. The view frustum is then translated by the provided position.
+
+
+\begin{DoxyParams}{Parameters}
+{\em x0} & X coordinate of the camera in world coordinates. \\
+\hline
+{\em y0} & Y coordinate of the camera in world coordinates. \\
+\hline
+{\em z0} & Z coordinate of the camera in world coordinates. \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/Bounding\+Box.\+hpp\item 
+src/Bounding\+Box.\+cpp\end{DoxyCompactItemize}

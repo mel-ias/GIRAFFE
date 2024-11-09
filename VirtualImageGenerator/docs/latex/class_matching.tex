@@ -1,0 +1,245 @@
+\doxysection{Matching Class Reference}
+\hypertarget{class_matching}{}\label{class_matching}\index{Matching@{Matching}}
+\doxysubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{class_matching_a3d7c0ca020d3d81fbd6f7f3e36e72e4b}\label{class_matching_a3d7c0ca020d3d81fbd6f7f3e36e72e4b} 
+enum {\bfseries Flags\+\_\+resec} \{ {\bfseries CALC\+\_\+\+EO\+\_\+\+IO}
+, {\bfseries CALC\+\_\+\+EO}
+, {\bfseries FIXED\+\_\+\+EO\+\_\+\+IO}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{class_matching_a904a31abfaa75c60e0f5ad5f3d8dec26}{Matching}} ()
+\begin{DoxyCompactList}\small\item\em Default constructor for the \doxylink{class_matching}{Matching} class. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{class_matching_aa41444d8996166ec4443f062c819f258}{\texorpdfstring{$\sim$}{\string~}\+Matching}} ()
+\begin{DoxyCompactList}\small\item\em Destructor for the \doxylink{class_matching}{Matching} class. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_matching_ad46c19a938d4f2859d7bab8b8d8fe581}{init}} (\mbox{\hyperlink{class_data_manager}{Data\+Manager}} \texorpdfstring{$\ast$}{*}\+\_\+data\+Manager)
+\begin{DoxyCompactList}\small\item\em Initializes the \doxylink{class_matching}{Matching} class by setting up the log file, data manager, and working directory. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_matching_a2b622b19397d9c38190af3c96c41dead}{image\+\_\+points\+\_\+3\+D\+\_\+referencing}} (std\+::vector$<$ std\+::vector$<$ cv\+::\+Point2d $>$ $>$ \&input\+\_\+image\+\_\+points, std\+::vector$<$ cv\+::\+Point3d $>$ \&synth\+\_\+pts\+\_\+3D, cv\+::\+Mat \&in\+\_\+image\+\_\+4\+\_\+color, cv\+::\+Mat \&camera\+\_\+matrix, cv\+::\+Mat \&dist\+\_\+coeffs, cv\+::\+Mat \&rvec\+\_\+cc\+\_\+orig\+\_\+copy, cv\+::\+Mat \&tvec\+\_\+cc\+\_\+orig\+\_\+copy, double shift\+\_\+vector\+\_\+x, double shift\+\_\+vector\+\_\+y, double shift\+\_\+vector\+\_\+z, bool print\+\_\+pcl, std\+::vector$<$ std\+::string $>$ file\+\_\+name\+\_\+image\+\_\+points)
+\begin{DoxyCompactList}\small\item\em Projects 2D image points to 3D space, colors a synthetic point cloud, and optionally exports the point cloud and projections. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_matching_a2133ca96caa31c4d99116419f5ede974}{load\+Matches}} (std\+::string in\+\_\+path\+\_\+matching\+\_\+output, cv\+::\+Mat \&in\+\_\+real\+\_\+image, cv\+::\+Mat \&in\+\_\+synth\+\_\+image, std\+::vector$<$ cv\+::\+Point2d $>$ \&in\+\_\+synth\+\_\+pts\+\_\+2D, std\+::vector$<$ cv\+::\+Point3d $>$ \&in\+\_\+synth\+\_\+pts\+\_\+3D, std\+::vector$<$ cv\+::\+Point3d $>$ \&out\+\_\+matched\+\_\+object\+\_\+points, std\+::vector$<$ cv\+::\+Point2d $>$ \&out\+\_\+matched\+\_\+image\+\_\+points\+\_\+real, std\+::vector$<$ cv\+::\+Point2d $>$ \&out\+\_\+matched\+\_\+image\+\_\+points\+\_\+synth, float neighbour\+\_\+distance\+\_\+allowed\+\_\+pointcloud=2.\+5)
+\item 
+bool \mbox{\hyperlink{class_matching_a7b89ece5a34d4f0cf706bdfcece2c73b}{is\+\_\+distribution\+\_\+good}} (const std\+::vector$<$ cv\+::\+Point2f $>$ \&image\+Points, const cv\+::\+Size \&image\+Size, int grid\+Rows=4, int grid\+Cols=4, int min\+Points\+Per\+Cell=3)
+\begin{DoxyCompactList}\small\item\em Prüft, ob die Verteilung der Punkte über das Bild ausreichend ist. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_matching_a46023981f65071254bdb8cbfff388c43}{run\+\_\+calibration}} (std\+::vector$<$ std\+::vector$<$ cv\+::\+Point3f $>$ $>$ object\+Points, std\+::vector$<$ std\+::vector$<$ cv\+::\+Point2f $>$ $>$ image\+Points, cv\+::\+Size \&image\+Size, cv\+::\+Mat \&camera\+Matrix, cv\+::\+Mat \&dist\+Coeffs, bool use\+Fisheye)
+\begin{DoxyCompactList}\small\item\em Calibrates a camera using 3D-\/2D point correspondences and computes intrinsic and extrinsic parameters. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{class_matching_afd02f70fca84c530a6c59788e6e33774}{space\+\_\+resection}} (std\+::vector$<$ cv\+::\+Point3d $>$ \&in\+\_\+matched\+\_\+object\+\_\+points, std\+::vector$<$ cv\+::\+Point2d $>$ \&in\+\_\+matched\+\_\+image\+\_\+points\+\_\+real, cv\+::\+Mat \&real\+\_\+canvas, double in\+\_\+pix\+\_\+size, cv\+::\+Mat \&camera\+\_\+matrix, cv\+::\+Mat \&dist\+\_\+coeffs, cv\+::\+Mat \&rvec, cv\+::\+Mat \&tvec, cv\+::\+Mat \&std\+Dev\+\_\+\+In, cv\+::\+Mat \&std\+Dev\+\_\+\+Ext, Flags\+\_\+resec in\+\_\+flag, bool fisheye)
+\begin{DoxyCompactList}\small\item\em Space resection using matched object and image points to estimate intrinsic / extrinsic camera parameters. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{class_matching_a904a31abfaa75c60e0f5ad5f3d8dec26}\index{Matching@{Matching}!Matching@{Matching}}
+\index{Matching@{Matching}!Matching@{Matching}}
+\doxysubsubsection{\texorpdfstring{Matching()}{Matching()}}
+{\footnotesize\ttfamily \label{class_matching_a904a31abfaa75c60e0f5ad5f3d8dec26} 
+Matching\+::\+Matching (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Default constructor for the \doxylink{class_matching}{Matching} class. 
+
+Initializes the \doxylink{class_matching}{Matching} class members to default values. Sets the data manager and log file pointers to nullptr and initializes the working directory path as an empty string. \Hypertarget{class_matching_aa41444d8996166ec4443f062c819f258}\index{Matching@{Matching}!````~Matching@{\texorpdfstring{$\sim$}{\string~}Matching}}
+\index{````~Matching@{\texorpdfstring{$\sim$}{\string~}Matching}!Matching@{Matching}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}Matching()}{\string~Matching()}}
+{\footnotesize\ttfamily \label{class_matching_aa41444d8996166ec4443f062c819f258} 
+Matching\+::\texorpdfstring{$\sim$}{\string~}\+Matching (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+Destructor for the \doxylink{class_matching}{Matching} class. 
+
+Ensures any allocated resources are properly cleaned up when a \doxylink{class_matching}{Matching} object is destroyed. 
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_matching_a2b622b19397d9c38190af3c96c41dead}\index{Matching@{Matching}!image\_points\_3D\_referencing@{image\_points\_3D\_referencing}}
+\index{image\_points\_3D\_referencing@{image\_points\_3D\_referencing}!Matching@{Matching}}
+\doxysubsubsection{\texorpdfstring{image\_points\_3D\_referencing()}{image\_points\_3D\_referencing()}}
+{\footnotesize\ttfamily \label{class_matching_a2b622b19397d9c38190af3c96c41dead} 
+void Matching\+::image\+\_\+points\+\_\+3\+D\+\_\+referencing (\begin{DoxyParamCaption}\item[{std\+::vector$<$ std\+::vector$<$ cv\+::\+Point2d $>$ $>$ \&}]{input\+\_\+image\+\_\+points}{, }\item[{std\+::vector$<$ cv\+::\+Point3d $>$ \&}]{synth\+\_\+pts\+\_\+3D}{, }\item[{cv\+::\+Mat \&}]{in\+\_\+image\+\_\+4\+\_\+color}{, }\item[{cv\+::\+Mat \&}]{camera\+\_\+matrix}{, }\item[{cv\+::\+Mat \&}]{dist\+\_\+coeffs}{, }\item[{cv\+::\+Mat \&}]{rvec\+\_\+cc\+\_\+orig\+\_\+copy}{, }\item[{cv\+::\+Mat \&}]{tvec\+\_\+cc\+\_\+orig\+\_\+copy}{, }\item[{double}]{shift\+\_\+vector\+\_\+x}{, }\item[{double}]{shift\+\_\+vector\+\_\+y}{, }\item[{double}]{shift\+\_\+vector\+\_\+z}{, }\item[{bool}]{print\+\_\+pcl}{, }\item[{std\+::vector$<$ std\+::string $>$}]{file\+\_\+name\+\_\+image\+\_\+points}{}\end{DoxyParamCaption})}
+
+
+
+Projects 2D image points to 3D space, colors a synthetic point cloud, and optionally exports the point cloud and projections. 
+
+This function undistorts 2D input image points, references them against a synthetic 3D point cloud, colors the points based on an input image, and optionally exports the recolored point cloud and projected 2D points. The function logs the process and results.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em input\+\_\+image\+\_\+points} & Vector of 2D input image points. \\
+\hline
+\mbox{\texttt{ in}}  & {\em synth\+\_\+pts\+\_\+3D} & Vector of synthetic 3D points in the point cloud. \\
+\hline
+\mbox{\texttt{ in}}  & {\em in\+\_\+image\+\_\+4\+\_\+color} & Input image used for coloring the points. \\
+\hline
+\mbox{\texttt{ in}}  & {\em camera\+\_\+matrix} & Camera matrix for projection. \\
+\hline
+\mbox{\texttt{ in}}  & {\em dist\+\_\+coeffs} & Distortion coefficients for undistorting points. \\
+\hline
+\mbox{\texttt{ in}}  & {\em rvec\+\_\+cc\+\_\+orig\+\_\+copy} & Rotation vector for coordinate transformation. \\
+\hline
+\mbox{\texttt{ in}}  & {\em tvec\+\_\+cc\+\_\+orig\+\_\+copy} & Translation vector for coordinate transformation. \\
+\hline
+\mbox{\texttt{ in}}  & {\em shift\+\_\+x} & X-\/axis shift for exported points. \\
+\hline
+\mbox{\texttt{ in}}  & {\em shift\+\_\+y} & Y-\/axis shift for exported points. \\
+\hline
+\mbox{\texttt{ in}}  & {\em shift\+\_\+z} & Z-\/axis shift for exported points. \\
+\hline
+\mbox{\texttt{ in}}  & {\em export\+\_\+pcl} & Flag indicating whether to export the point cloud. \\
+\hline
+\mbox{\texttt{ in}}  & {\em file\+\_\+name\+\_\+image\+\_\+points} & Filename prefix for exporting projected points. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_matching_ad46c19a938d4f2859d7bab8b8d8fe581}\index{Matching@{Matching}!init@{init}}
+\index{init@{init}!Matching@{Matching}}
+\doxysubsubsection{\texorpdfstring{init()}{init()}}
+{\footnotesize\ttfamily \label{class_matching_ad46c19a938d4f2859d7bab8b8d8fe581} 
+void Matching\+::init (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{class_data_manager}{Data\+Manager}} \texorpdfstring{$\ast$}{*}}]{\+\_\+data\+Manager}{}\end{DoxyParamCaption})}
+
+
+
+Initializes the \doxylink{class_matching}{Matching} class by setting up the log file, data manager, and working directory. 
+
+This function sets up the internal log file from the provided \doxylink{class_data_manager}{Data\+Manager}, logs the initialization process, and establishes a working directory for the matching operation. If the directory does not already exist, it is created within the specified working directory path.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em \+\_\+data\+Manager} & Pointer to the \doxylink{class_data_manager}{Data\+Manager} object that provides access to logging and file paths. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_matching_a7b89ece5a34d4f0cf706bdfcece2c73b}\index{Matching@{Matching}!is\_distribution\_good@{is\_distribution\_good}}
+\index{is\_distribution\_good@{is\_distribution\_good}!Matching@{Matching}}
+\doxysubsubsection{\texorpdfstring{is\_distribution\_good()}{is\_distribution\_good()}}
+{\footnotesize\ttfamily \label{class_matching_a7b89ece5a34d4f0cf706bdfcece2c73b} 
+bool Matching\+::is\+\_\+distribution\+\_\+good (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ cv\+::\+Point2f $>$ \&}]{image\+Points}{, }\item[{const cv\+::\+Size \&}]{image\+Size}{, }\item[{int}]{grid\+Rows}{ = {\ttfamily 4}, }\item[{int}]{grid\+Cols}{ = {\ttfamily 4}, }\item[{int}]{min\+Points\+Per\+Cell}{ = {\ttfamily 3}}\end{DoxyParamCaption})}
+
+
+
+Prüft, ob die Verteilung der Punkte über das Bild ausreichend ist. 
+
+Diese Funktion teilt das Bild in ein Raster und überprüft, ob jede Zelle eine Mindestanzahl an Punkten enthält, um eine gute Verteilung zu gewährleisten.
+
+
+\begin{DoxyParams}{Parameters}
+{\em image\+Points} & 2D-\/\+Punkte im Bild. \\
+\hline
+{\em image\+Size} & Größe des Bildes. \\
+\hline
+{\em grid\+Rows} & Anzahl der Zeilen im Raster. \\
+\hline
+{\em grid\+Cols} & Anzahl der Spalten im Raster. \\
+\hline
+{\em min\+Points\+Per\+Cell} & Mindestanzahl an Punkten pro Zelle. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+True, wenn die Verteilung gut ist, false andernfalls. 
+\end{DoxyReturn}
+\Hypertarget{class_matching_a2133ca96caa31c4d99116419f5ede974}\index{Matching@{Matching}!loadMatches@{loadMatches}}
+\index{loadMatches@{loadMatches}!Matching@{Matching}}
+\doxysubsubsection{\texorpdfstring{loadMatches()}{loadMatches()}}
+{\footnotesize\ttfamily \label{class_matching_a2133ca96caa31c4d99116419f5ede974} 
+void Matching\+::load\+Matches (\begin{DoxyParamCaption}\item[{std\+::string}]{in\+\_\+path\+\_\+matching\+\_\+output}{, }\item[{cv\+::\+Mat \&}]{in\+\_\+real\+\_\+image}{, }\item[{cv\+::\+Mat \&}]{in\+\_\+synth\+\_\+image}{, }\item[{std\+::vector$<$ cv\+::\+Point2d $>$ \&}]{in\+\_\+synth\+\_\+pts\+\_\+2D}{, }\item[{std\+::vector$<$ cv\+::\+Point3d $>$ \&}]{in\+\_\+synth\+\_\+pts\+\_\+3D}{, }\item[{std\+::vector$<$ cv\+::\+Point3d $>$ \&}]{out\+\_\+matched\+\_\+object\+\_\+points}{, }\item[{std\+::vector$<$ cv\+::\+Point2d $>$ \&}]{out\+\_\+matched\+\_\+image\+\_\+points\+\_\+real}{, }\item[{std\+::vector$<$ cv\+::\+Point2d $>$ \&}]{out\+\_\+matched\+\_\+image\+\_\+points\+\_\+synth}{, }\item[{float}]{neighbour\+\_\+distance\+\_\+allowed\+\_\+pointcloud}{ = {\ttfamily 2.5}}\end{DoxyParamCaption})}
+
+@summary public function read f-\/inlier matches from Sift\+GPU (included in Visual SFM console application)
+
+
+\begin{DoxyParams}[1]{Parameters}
+ & {\em in\+\_\+path\+\_\+\+FMatrix\+Output} & input string path to matching results from Visual SFM. \\
+\hline
+\mbox{\texttt{ in}}  & {\em in\+\_\+real\+\_\+image} & matrix of real image. \\
+\hline
+\mbox{\texttt{ in}}  & {\em in\+\_\+synth\+\_\+image} & matrix of rendered image. \\
+\hline
+\mbox{\texttt{ in}}  & {\em in\+\_\+synth\+\_\+pts\+\_\+2D} & image points of the rendered image \\
+\hline
+\mbox{\texttt{ in}}  & {\em in\+\_\+synth\+\_\+pts\+\_\+3D} & object points that corresponds to the image points of the rendered image \\
+\hline
+\mbox{\texttt{ out}}  & {\em out\+\_\+matched\+\_\+object\+\_\+points} & image points from the real image having corresponding keypoints inside the rendered image with valid 3D correspondence \\
+\hline
+\mbox{\texttt{ out}}  & {\em out\+\_\+matched\+\_\+image\+\_\+points\+\_\+real} & image points from the rendered image having corresponding keypoints inside the real image with valid 3D correspondence \\
+\hline
+\mbox{\texttt{ out}}  & {\em out\+\_\+matched\+\_\+image\+\_\+points\+\_\+synth} & object points that have corresponding points within the real and the rendered image. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_matching_a46023981f65071254bdb8cbfff388c43}\index{Matching@{Matching}!run\_calibration@{run\_calibration}}
+\index{run\_calibration@{run\_calibration}!Matching@{Matching}}
+\doxysubsubsection{\texorpdfstring{run\_calibration()}{run\_calibration()}}
+{\footnotesize\ttfamily \label{class_matching_a46023981f65071254bdb8cbfff388c43} 
+bool Matching\+::run\+\_\+calibration (\begin{DoxyParamCaption}\item[{std\+::vector$<$ std\+::vector$<$ cv\+::\+Point3f $>$ $>$}]{object\+Points}{, }\item[{std\+::vector$<$ std\+::vector$<$ cv\+::\+Point2f $>$ $>$}]{image\+Points}{, }\item[{cv\+::\+Size \&}]{image\+Size}{, }\item[{cv\+::\+Mat \&}]{camera\+Matrix}{, }\item[{cv\+::\+Mat \&}]{dist\+Coeffs}{, }\item[{bool}]{use\+Fisheye}{}\end{DoxyParamCaption})}
+
+
+
+Calibrates a camera using 3D-\/2D point correspondences and computes intrinsic and extrinsic parameters. 
+
+This function performs camera calibration given a set of 3D object points and their corresponding 2D image points. It can calibrate either a standard pinhole camera model or a fisheye lens model, based on the {\ttfamily use\+Fisheye} parameter. The function outputs the camera\textquotesingle{}s intrinsic matrix ({\ttfamily camera\+Matrix}), distortion coefficients ({\ttfamily dist\+Coeffs}), and optionally rotation ({\ttfamily rvecs}) and translation ({\ttfamily tvecs}) vectors for each image.
+
+
+\begin{DoxyParams}{Parameters}
+{\em object\+Points} & 3D points in the world coordinate space for each image. \\
+\hline
+{\em image\+Points} & 2D points in the image plane corresponding to {\ttfamily object\+Points}. \\
+\hline
+{\em image\+Size} & Size of the images used for calibration. \\
+\hline
+{\em camera\+Matrix} & Output matrix containing intrinsic camera parameters. \\
+\hline
+{\em dist\+Coeffs} & Output vector of distortion coefficients. \\
+\hline
+{\em use\+Fisheye} & If true, enables fisheye lens calibration; otherwise, standard pinhole model calibration is used. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+True if the calibration succeeded, false otherwise. 
+\end{DoxyReturn}
+\Hypertarget{class_matching_afd02f70fca84c530a6c59788e6e33774}\index{Matching@{Matching}!space\_resection@{space\_resection}}
+\index{space\_resection@{space\_resection}!Matching@{Matching}}
+\doxysubsubsection{\texorpdfstring{space\_resection()}{space\_resection()}}
+{\footnotesize\ttfamily \label{class_matching_afd02f70fca84c530a6c59788e6e33774} 
+double Matching\+::space\+\_\+resection (\begin{DoxyParamCaption}\item[{std\+::vector$<$ cv\+::\+Point3d $>$ \&}]{in\+\_\+matched\+\_\+object\+\_\+points}{, }\item[{std\+::vector$<$ cv\+::\+Point2d $>$ \&}]{in\+\_\+matched\+\_\+image\+\_\+points\+\_\+real}{, }\item[{cv\+::\+Mat \&}]{real\+\_\+canvas}{, }\item[{double}]{in\+\_\+pix\+\_\+size}{, }\item[{cv\+::\+Mat \&}]{camera\+\_\+matrix}{, }\item[{cv\+::\+Mat \&}]{dist\+\_\+coeffs}{, }\item[{cv\+::\+Mat \&}]{rvec}{, }\item[{cv\+::\+Mat \&}]{tvec}{, }\item[{cv\+::\+Mat \&}]{std\+Dev\+\_\+\+In}{, }\item[{cv\+::\+Mat \&}]{std\+Dev\+\_\+\+Ext}{, }\item[{Flags\+\_\+resec}]{in\+\_\+flag}{, }\item[{bool}]{fisheye}{}\end{DoxyParamCaption})}
+
+
+
+Space resection using matched object and image points to estimate intrinsic / extrinsic camera parameters. 
+
+This function refines the extrinsic and intrinsic parameters of the camera using spatial resection techniques. It supports both fisheye and pinhole camera models and performs outlier rejection using solve\+Pn\+PRansac. Optionally, it refines the solution using solve\+Pn\+PRefine\+LM or calibrate\+Camera based on the input flags.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em in\+\_\+matched\+\_\+object\+\_\+points} & Matched 3D object points (in world coordinates). \\
+\hline
+\mbox{\texttt{ in}}  & {\em in\+\_\+matched\+\_\+image\+\_\+points\+\_\+real} & Matched 2D image points (in image coordinates). \\
+\hline
+\mbox{\texttt{ in}}  & {\em true\+\_\+image} & Original image matrix for size reference. \\
+\hline
+\mbox{\texttt{ in}}  & {\em in\+\_\+pix\+\_\+size} & Pixel size (used for scaling). \\
+\hline
+\mbox{\texttt{ in}}  & {\em camera\+\_\+matrix} & Intrinsic camera matrix. \\
+\hline
+\mbox{\texttt{ in}}  & {\em dist\+\_\+coeffs} & Camera distortion coefficients. \\
+\hline
+\mbox{\texttt{ out}}  & {\em rvec} & Rotation vector (output if solved). \\
+\hline
+\mbox{\texttt{ out}}  & {\em tvec} & Translation vector (output if solved). \\
+\hline
+\mbox{\texttt{ out}}  & {\em std\+Dev\+\_\+\+In} & Standard deviation of intrinsic parameters. \\
+\hline
+\mbox{\texttt{ out}}  & {\em std\+Dev\+\_\+\+Ext} & Standard deviation of extrinsic parameters. \\
+\hline
+\mbox{\texttt{ in}}  & {\em in\+\_\+flag} & Flag indicating which parameters to optimize (extrinsics, intrinsics, or both). \\
+\hline
+\mbox{\texttt{ in}}  & {\em fisheye} & Boolean flag indicating whether a fisheye model is used.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The reprojection error after calibration or -\/1 if an error occurs. 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/Matching.\+h\item 
+src/Matching.\+cpp\end{DoxyCompactItemize}

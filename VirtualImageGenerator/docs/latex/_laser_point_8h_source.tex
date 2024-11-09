@@ -1,0 +1,33 @@
+\doxysection{Laser\+Point.\+h}
+\hypertarget{_laser_point_8h_source}{}\label{_laser_point_8h_source}\index{include/LaserPoint.h@{include/LaserPoint.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_laser_point}{LaserPoint}}\ \{}
+\DoxyCodeLine{00017\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00024\ \ \ \ \ \mbox{\hyperlink{class_laser_point_a5696479ecef631d5de41090e0221689c}{LaserPoint}}()}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ :\ \_id(0),\ \_xyz(new\ double[3]\ \{0.0,\ 0.0,\ 0.0\}),\ color\{\ 0,\ 0,\ 0\ \}\ \{\ \textcolor{comment}{//\ Initialize\ color\ to\ black}}
+\DoxyCodeLine{00026\ \ \ \ \ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{class_laser_point_ac60079744f49d2c8427712bcf44a85ee}{\string~LaserPoint}}()\ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_xyz\ !=\ \textcolor{keyword}{nullptr})}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ \_xyz;\ \textcolor{comment}{//\ Free\ the\ dynamically\ allocated\ memory\ for\ \_xyz\ array}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \_xyz\ =\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ Set\ pointer\ to\ nullptr\ to\ avoid\ dangling\ pointer\ issues}}
+\DoxyCodeLine{00038\ \ \ \ \ \}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \_id;\ \textcolor{comment}{//\ Unique\ identifier\ for\ the\ point}}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keywordtype}{double}*\ \_xyz;\ \textcolor{comment}{//\ Array\ containing\ the\ 3D\ coordinates\ of\ the\ point\ (x,\ y,\ z)}}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ color[3];\ \textcolor{comment}{//\ Color\ of\ the\ point,\ represented\ by\ an\ RGB\ triplet\ (Red,\ Green,\ Blue)}}
+\DoxyCodeLine{00045\ \};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ }
+
+\end{DoxyCode}

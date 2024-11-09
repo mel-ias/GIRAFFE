@@ -1,0 +1,57 @@
+\doxysection{Perspective\+Image.\+h}
+\hypertarget{_perspective_image_8h_source}{}\label{_perspective_image_8h_source}\index{include/PerspectiveImage.h@{include/PerspectiveImage.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#ifdef\ \_CH\_}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#pragma\ package\ <opencv>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#ifndef\ \_EiC}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include"{}opencv2\(\backslash\)opencv.hpp"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <ctype.h>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <limits>}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include"{}BoundingBox.hpp"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include"{}PointLoader.h"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include"{}ImCalculator.hpp"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include"{}DataManager.h"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include"{}LogfilePrinter.h"{}}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_perspective_image}{PerspectiveImage}}\{}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00036\ \ \ \ \ \mbox{\hyperlink{class_perspective_image_ada58ceebbe82143e8b7c2933c1edbc1e}{PerspectiveImage}}(\mbox{\hyperlink{class_data_manager}{DataManager}}*\ dataManager);}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{class_perspective_image_a3ff9b97c2bf00f439a623dccd86ac11f}{\string~PerspectiveImage}}();}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_perspective_image_ab3d0a60cdfda6bdbdee53bbb8103073f}{generateImage}}();}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ std::string\ \textcolor{keyword}{const}\ TAG\ =\ \textcolor{stringliteral}{"{}PerspImage:\(\backslash\)t"{}};\ \ \textcolor{comment}{//\ Tag\ used\ for\ logging\ messages\ specific\ to\ PerspectiveImage}}
+\DoxyCodeLine{00058\ \ \ \ \ }
+\DoxyCodeLine{00059\ \ \ \ \ cv::Mat\ \_real\_image;\ \textcolor{comment}{//\ Matrix\ to\ hold\ the\ real\ image\ captured\ by\ the\ system}}
+\DoxyCodeLine{00060\ \ \ \ \ cv::Mat\ \_synth\_image;\ \textcolor{comment}{//\ Matrix\ to\ store\ the\ generated\ synthetic\ image}}
+\DoxyCodeLine{00061\ \ \ \ \ std::vector<cv::Point>\ \_captured\_point;\ \textcolor{comment}{//\ Stores\ coordinates\ of\ captured\ points,\ used\ globally}}
+\DoxyCodeLine{00062\ \ \ \ \ std::vector<cv::Point2d>\ \_image\_point;\ \ \textcolor{comment}{//\ Holds\ 2D\ coordinates\ of\ image\ points\ to\ be\ referenced}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \mbox{\hyperlink{class_data_manager}{DataManager}}*\ \_data\_manager;\ \textcolor{comment}{//\ Pointer\ to\ DataManager\ for\ accessing\ application-\/wide\ data\ and\ configurations}}
+\DoxyCodeLine{00065\ \ \ \ \ \mbox{\hyperlink{class_point_loader}{PointLoader}}*\ \_point\_loader;\ \textcolor{comment}{//\ Pointer\ to\ the\ PointLoader\ instance\ used\ for\ loading\ point\ cloud\ data}}
+\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{class_im_calculator}{ImCalculator}}\ \_calculator;\ \textcolor{comment}{//\ Instance\ of\ ImCalculator,\ responsible\ for\ generating\ synthetic\ images}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \mbox{\hyperlink{class_log_file}{LogFile}}*\ logfile;\ \textcolor{comment}{//\ Pointer\ to\ LogFile\ for\ logging\ messages\ during\ processing}}
+\DoxyCodeLine{00069\ \ \ \ \ }
+\DoxyCodeLine{00070\ \};}
+
+\end{DoxyCode}

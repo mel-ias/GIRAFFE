@@ -1,0 +1,97 @@
+\doxysection{Point\+Loader Class Reference}
+\hypertarget{class_point_loader}{}\label{class_point_loader}\index{PointLoader@{PointLoader}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{class_point_loader_a166e378611ae0917c2709cd26ef9adbf}{Point\+Loader}} (std\+::string path\+\_\+pcl, \mbox{\hyperlink{class_data_manager}{Data\+Manager}} \texorpdfstring{$\ast$}{*}data\+\_\+manager)
+\begin{DoxyCompactList}\small\item\em Constructor for the \doxylink{class_point_loader}{Point\+Loader} class. Initializes the \doxylink{class_point_loader}{Point\+Loader} with a path to the point cloud and sets up logging and shift values. \end{DoxyCompactList}\item 
+\Hypertarget{class_point_loader_a19fcfaa4db4ddcff1c4bee8de0299855}\label{class_point_loader_a19fcfaa4db4ddcff1c4bee8de0299855} 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Point\+Loader} ()
+\begin{DoxyCompactList}\small\item\em Destructor for the \doxylink{class_point_loader}{Point\+Loader} class. Cleans up resources by deallocating the input stream pointer. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_point_loader_a295e03d27ab8ac414b650164a9c091b9}{check\+\_\+filetype\+\_\+pw}} ()
+\begin{DoxyCompactList}\small\item\em Checks if the point cloud file has a "{}.\+pw"{} extension. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_point_loader_a03186b2e59ce37f1b71f970d9c4ffe64}{display\+\_\+progress\+\_\+bar}} (int percent)
+\begin{DoxyCompactList}\small\item\em Displays a progress bar in the console for a given percentage. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{class_point_loader_a01c9dcc2df9d93628f5aeb544d599764}{read\+\_\+binary\+\_\+file}} ()
+\begin{DoxyCompactList}\small\item\em Reads a binary file containing point cloud data, applies filtering and transformations, and projects the points in a multi-\/threaded manner. \end{DoxyCompactList}\item 
+\Hypertarget{class_point_loader_acd067365a2a78bede61714aa828a9c7b}\label{class_point_loader_acd067365a2a78bede61714aa828a9c7b} 
+void {\bfseries set\+\_\+imc} (\mbox{\hyperlink{class_im_calculator}{Im\+Calculator}} \texorpdfstring{$\ast$}{*}imc)
+\item 
+\Hypertarget{class_point_loader_ad014c6afd4b8d669abd17c10dd5aab80}\label{class_point_loader_ad014c6afd4b8d669abd17c10dd5aab80} 
+void {\bfseries set\+\_\+bb} (\mbox{\hyperlink{class_bounding_box}{Bounding\+Box}} \texorpdfstring{$\ast$}{*}bb)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{class_point_loader_a166e378611ae0917c2709cd26ef9adbf}\index{PointLoader@{PointLoader}!PointLoader@{PointLoader}}
+\index{PointLoader@{PointLoader}!PointLoader@{PointLoader}}
+\doxysubsubsection{\texorpdfstring{PointLoader()}{PointLoader()}}
+{\footnotesize\ttfamily \label{class_point_loader_a166e378611ae0917c2709cd26ef9adbf} 
+Point\+Loader\+::\+Point\+Loader (\begin{DoxyParamCaption}\item[{std\+::string}]{path\+\_\+pcl}{, }\item[{\mbox{\hyperlink{class_data_manager}{Data\+Manager}} \texorpdfstring{$\ast$}{*}}]{data\+\_\+manager}{}\end{DoxyParamCaption})}
+
+
+
+Constructor for the \doxylink{class_point_loader}{Point\+Loader} class. Initializes the \doxylink{class_point_loader}{Point\+Loader} with a path to the point cloud and sets up logging and shift values. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em path\+\_\+pcl} & Path to the point cloud file. \\
+\hline
+{\em data\+Manager} & Pointer to the \doxylink{class_data_manager}{Data\+Manager} object for logging and accessing shift values. \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_point_loader_a295e03d27ab8ac414b650164a9c091b9}\index{PointLoader@{PointLoader}!check\_filetype\_pw@{check\_filetype\_pw}}
+\index{check\_filetype\_pw@{check\_filetype\_pw}!PointLoader@{PointLoader}}
+\doxysubsubsection{\texorpdfstring{check\_filetype\_pw()}{check\_filetype\_pw()}}
+{\footnotesize\ttfamily \label{class_point_loader_a295e03d27ab8ac414b650164a9c091b9} 
+bool Point\+Loader\+::check\+\_\+filetype\+\_\+pw (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Checks if the point cloud file has a "{}.\+pw"{} extension. 
+
+\begin{DoxyReturn}{Returns}
+True if the file extension is "{}.\+pw"{}, false otherwise. 
+\end{DoxyReturn}
+\Hypertarget{class_point_loader_a03186b2e59ce37f1b71f970d9c4ffe64}\index{PointLoader@{PointLoader}!display\_progress\_bar@{display\_progress\_bar}}
+\index{display\_progress\_bar@{display\_progress\_bar}!PointLoader@{PointLoader}}
+\doxysubsubsection{\texorpdfstring{display\_progress\_bar()}{display\_progress\_bar()}}
+{\footnotesize\ttfamily \label{class_point_loader_a03186b2e59ce37f1b71f970d9c4ffe64} 
+void Point\+Loader\+::display\+\_\+progress\+\_\+bar (\begin{DoxyParamCaption}\item[{int}]{percent}{}\end{DoxyParamCaption})}
+
+
+
+Displays a progress bar in the console for a given percentage. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em percent} & The current percentage (0-\/100) to display in the progress bar. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_point_loader_a01c9dcc2df9d93628f5aeb544d599764}\index{PointLoader@{PointLoader}!read\_binary\_file@{read\_binary\_file}}
+\index{read\_binary\_file@{read\_binary\_file}!PointLoader@{PointLoader}}
+\doxysubsubsection{\texorpdfstring{read\_binary\_file()}{read\_binary\_file()}}
+{\footnotesize\ttfamily \label{class_point_loader_a01c9dcc2df9d93628f5aeb544d599764} 
+int Point\+Loader\+::read\+\_\+binary\+\_\+file (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Reads a binary file containing point cloud data, applies filtering and transformations, and projects the points in a multi-\/threaded manner. 
+
+\begin{DoxyReturn}{Returns}
+int Returns 0 if successful, or -\/1 if an error occurs. 
+\end{DoxyReturn}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em std\+::logic\+\_\+error} & If no perspective image or bounding box is found. \\
+\hline
+\end{DoxyExceptions}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/Point\+Loader.\+h\item 
+src/Point\+Loader.\+cpp\end{DoxyCompactItemize}

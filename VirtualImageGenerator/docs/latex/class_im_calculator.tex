@@ -1,0 +1,141 @@
+\doxysection{Im\+Calculator Class Reference}
+\hypertarget{class_im_calculator}{}\label{class_im_calculator}\index{ImCalculator@{ImCalculator}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{class_im_calculator_a679198a753de48d5a3850e1256c8d94e}{init}} (\mbox{\hyperlink{class_data_manager}{Data\+Manager}} \texorpdfstring{$\ast$}{*}\+\_\+data\+Manager)
+\begin{DoxyCompactList}\small\item\em Initializes the \doxylink{class_im_calculator}{Im\+Calculator} with necessary parameters, including camera settings and directory setup. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_im_calculator_a3b0fe3ae72de03d46a5ddca7643b399e}{project\+Point}} (\mbox{\hyperlink{class_laser_point}{Laser\+Point}} \texorpdfstring{$\ast$}{*}lp)
+\begin{DoxyCompactList}\small\item\em Projects a 3D point onto the 2D image plane and updates mask and image data accordingly. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_im_calculator_a4cf23c39f46c312e1bde13f45e3076e5}{init\+\_\+image}} (\mbox{\hyperlink{class_bounding_box}{Bounding\+Box}} \texorpdfstring{$\ast$}{*}b)
+\begin{DoxyCompactList}\small\item\em Initializes the image with the given bounding box. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_im_calculator_a72dbd78647602fcf07d21aecaa6ff197}{write\+\_\+images}} ()
+\begin{DoxyCompactList}\small\item\em Generates output images based on distance and filtering operations. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_im_calculator_a60a13c5de1fd2f168c5c05d519a59370}{save\+\_\+images}} ()
+\begin{DoxyCompactList}\small\item\em Saves all generated synthetic images, including distance maps and pyramids, in the \doxylink{class_im_calculator}{Im\+Calculator} directory. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_im_calculator_af1329e53df5d5e3aafd7e4d060f8bd30}{fill\+\_\+vectors}} ()
+\begin{DoxyCompactList}\small\item\em Fills 2D, 3D, and color vectors with data from the coordinate image. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_im_calculator_a2e8fc2f5a0fd46e4476f4c786a0637fe}{fill\+\_\+image}} (int radius\+\_\+mask\+\_\+fill=10)
+\begin{DoxyCompactList}\small\item\em Fills masked regions in the input image with colors from provided synthetic points. \end{DoxyCompactList}\item 
+\Hypertarget{class_im_calculator_ac9d3c0113b0667f508344e6d8b47bc18}\label{class_im_calculator_ac9d3c0113b0667f508344e6d8b47bc18} 
+cv\+::\+Mat \texorpdfstring{$\ast$}{*} {\bfseries get\+\_\+image} ()
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_im_calculator_a2e8fc2f5a0fd46e4476f4c786a0637fe}\index{ImCalculator@{ImCalculator}!fill\_image@{fill\_image}}
+\index{fill\_image@{fill\_image}!ImCalculator@{ImCalculator}}
+\doxysubsubsection{\texorpdfstring{fill\_image()}{fill\_image()}}
+{\footnotesize\ttfamily \label{class_im_calculator_a2e8fc2f5a0fd46e4476f4c786a0637fe} 
+void Im\+Calculator\+::fill\+\_\+image (\begin{DoxyParamCaption}\item[{int}]{radius\+\_\+mask\+\_\+fill}{ = {\ttfamily 10}}\end{DoxyParamCaption})}
+
+
+
+Fills masked regions in the input image with colors from provided synthetic points. 
+
+This function generates a mask based on non-\/white pixels in the image, fills specified points with corresponding colors, and interpolates colors to fill in remaining masked regions.
+
+
+\begin{DoxyParams}{Parameters}
+{\em radius\+\_\+mask\+\_\+fill} & The radius used for filling the mask around non-\/white areas. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_im_calculator_af1329e53df5d5e3aafd7e4d060f8bd30}\index{ImCalculator@{ImCalculator}!fill\_vectors@{fill\_vectors}}
+\index{fill\_vectors@{fill\_vectors}!ImCalculator@{ImCalculator}}
+\doxysubsubsection{\texorpdfstring{fill\_vectors()}{fill\_vectors()}}
+{\footnotesize\ttfamily \label{class_im_calculator_af1329e53df5d5e3aafd7e4d060f8bd30} 
+void Im\+Calculator\+::fill\+\_\+vectors (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Fills 2D, 3D, and color vectors with data from the coordinate image. 
+
+This function retrieves synthetic 2D coordinates, 3D coordinates, and RGB colors from a coordinate image managed by the data manager. It checks that each vector has been initialized before use, clears any existing data, and then populates the vectors with new data from the coordinate image. \Hypertarget{class_im_calculator_a679198a753de48d5a3850e1256c8d94e}\index{ImCalculator@{ImCalculator}!init@{init}}
+\index{init@{init}!ImCalculator@{ImCalculator}}
+\doxysubsubsection{\texorpdfstring{init()}{init()}}
+{\footnotesize\ttfamily \label{class_im_calculator_a679198a753de48d5a3850e1256c8d94e} 
+void Im\+Calculator\+::init (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{class_data_manager}{Data\+Manager}} \texorpdfstring{$\ast$}{*}}]{\+\_\+data\+Manager}{}\end{DoxyParamCaption})}
+
+
+
+Initializes the \doxylink{class_im_calculator}{Im\+Calculator} with necessary parameters, including camera settings and directory setup. 
+
+This function sets up the \doxylink{class_im_calculator}{Im\+Calculator} by initializing the log file, setting up distance limits, reserving space for pyramid masks, and configuring camera settings based on data from the provided \doxylink{class_data_manager}{Data\+Manager}. It also ensures that the output directory exists.
+
+
+\begin{DoxyParams}{Parameters}
+{\em \+\_\+data\+Manager} & Pointer to the \doxylink{class_data_manager}{Data\+Manager} providing required parameters and file paths. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_im_calculator_a4cf23c39f46c312e1bde13f45e3076e5}\index{ImCalculator@{ImCalculator}!init\_image@{init\_image}}
+\index{init\_image@{init\_image}!ImCalculator@{ImCalculator}}
+\doxysubsubsection{\texorpdfstring{init\_image()}{init\_image()}}
+{\footnotesize\ttfamily \label{class_im_calculator_a4cf23c39f46c312e1bde13f45e3076e5} 
+void Im\+Calculator\+::init\+\_\+image (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{class_bounding_box}{Bounding\+Box}} \texorpdfstring{$\ast$}{*}}]{b}{}\end{DoxyParamCaption})}
+
+
+
+Initializes the image with the given bounding box. 
+
+This function calculates the image plane based on the bounding box and pixel size, then initializes the images (e.\+g., {\ttfamily \+\_\+image}, {\ttfamily \+\_\+mask}, {\ttfamily \+\_\+dist\+Image}, pyramids) with the calculated columns and rows.
+
+
+\begin{DoxyParams}{Parameters}
+{\em b} & The bounding box containing the minimum and maximum values for x, y, and z. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_im_calculator_a3b0fe3ae72de03d46a5ddca7643b399e}\index{ImCalculator@{ImCalculator}!projectPoint@{projectPoint}}
+\index{projectPoint@{projectPoint}!ImCalculator@{ImCalculator}}
+\doxysubsubsection{\texorpdfstring{projectPoint()}{projectPoint()}}
+{\footnotesize\ttfamily \label{class_im_calculator_a3b0fe3ae72de03d46a5ddca7643b399e} 
+void Im\+Calculator\+::project\+Point (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{class_laser_point}{Laser\+Point}} \texorpdfstring{$\ast$}{*}}]{lp}{}\end{DoxyParamCaption})}
+
+
+
+Projects a 3D point onto the 2D image plane and updates mask and image data accordingly. 
+
+This function transforms a given 3D point from world coordinates into camera space, projects it onto the 2D image plane, and updates the pixel values and depth mask if the point is closer than any existing value at that pixel. Pyramid masks at lower resolutions are also updated to enable multi-\/scale processing.
+
+
+\begin{DoxyParams}{Parameters}
+{\em lp} & Pointer to the \doxylink{class_laser_point}{Laser\+Point} object containing the 3D coordinates and color information. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_im_calculator_a60a13c5de1fd2f168c5c05d519a59370}\index{ImCalculator@{ImCalculator}!save\_images@{save\_images}}
+\index{save\_images@{save\_images}!ImCalculator@{ImCalculator}}
+\doxysubsubsection{\texorpdfstring{save\_images()}{save\_images()}}
+{\footnotesize\ttfamily \label{class_im_calculator_a60a13c5de1fd2f168c5c05d519a59370} 
+void Im\+Calculator\+::save\+\_\+images (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Saves all generated synthetic images, including distance maps and pyramids, in the \doxylink{class_im_calculator}{Im\+Calculator} directory. 
+
+This function handles the saving of synthetic images created during processing. It first releases and reinitializes the mask, writes the distance images and their pyramid levels to files, and saves the synthetic color image if available. If the image is in grayscale, it converts intensity values to an 8-\/bit format for storage.
+
+
+\begin{DoxyItemize}
+\item Saves the distance image ({\ttfamily dist\+\_\+image.\+png}) and distance pyramids ({\ttfamily dist\+\_\+image\+\_\+p\+X.\+png} for each level).
+\item Saves the color or grayscale synthetic image in the directory as specified by {\ttfamily \+\_\+working\+\_\+dir\+\_\+imcalculator}.
+\item Logs each save operation and includes a check for whether the image is color or grayscale. 
+\end{DoxyItemize}\Hypertarget{class_im_calculator_a72dbd78647602fcf07d21aecaa6ff197}\index{ImCalculator@{ImCalculator}!write\_images@{write\_images}}
+\index{write\_images@{write\_images}!ImCalculator@{ImCalculator}}
+\doxysubsubsection{\texorpdfstring{write\_images()}{write\_images()}}
+{\footnotesize\ttfamily \label{class_im_calculator_a72dbd78647602fcf07d21aecaa6ff197} 
+void Im\+Calculator\+::write\+\_\+images (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Generates output images based on distance and filtering operations. 
+
+This function calculates and saves the original distance image, applies filtering to remove overlapping background pixels, and recalculates both the distance image and distance pyramids.
+
+\begin{DoxyWarning}{Warning}
+Call this function only after all points have been projected. 
+\end{DoxyWarning}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/Im\+Calculator.\+hpp\item 
+src/Im\+Calculator.\+cpp\end{DoxyCompactItemize}

@@ -1,0 +1,70 @@
+\doxysection{Model.\+h}
+\hypertarget{_model_8h_source}{}\label{_model_8h_source}\index{include/Model.h@{include/Model.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include"{}LogfilePrinter.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <opencv2/opencv.hpp>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <unordered\_set>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <tuple>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <unordered\_set>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <iomanip>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <filesystem>}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{namespace\ }fs\ =\ std::filesystem;}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_model}{Model}}}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00024\ \ \ \ \ \mbox{\hyperlink{class_model}{Model}}(\mbox{\hyperlink{class_log_file}{LogFile}}*\ \_logfile);}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \mbox{\hyperlink{class_model}{\string~Model}}()\ =\ \textcolor{keywordflow}{default};\ \ \textcolor{comment}{//\ Destruktor\ muss\ jetzt\ nichts\ manuell\ freigeben}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_model_1_1_referenced_points}{ReferencedPoints}}\ \{\ }
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\ original\_2D\_image\_pts;\ }
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\ corresponding\_2D\_image\_pts\_from\_point\_cloud;}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ std::vector<cv::Point3d>\ corresponding\_3D\_image\_pts\_from\_point\_cloud;}
+\DoxyCodeLine{00033\ \ \ \ \ \};\ }
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00047\ \ \ \ \ std::vector<int>\ \mbox{\hyperlink{class_model_ac7da364136a4f0990c4f19155e1f3ab4}{find\_knn}}(}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Point2d>\&\ image\_points,}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Point2d>\&\ image\_pixels);}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00078\ \ \ \ \ \mbox{\hyperlink{struct_model_1_1_referenced_points}{ReferencedPoints}}\ \mbox{\hyperlink{class_model_a6b4bc1f73ca3642679d52db67cd3e4f8}{get\_color\_for}}(std::vector<cv::Point3d>\&\ point\_cloud,}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ cv::Mat\&\ image\_for\_color,}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ std::vector<cv::Vec3b>\&\ point\_cloud\_colors,}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\&\ image\_coords\_colors,}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ fix\_aspect\_ratio,}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ cv::Mat\&\ camera\_matrix,}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ cv::Mat\&\ dist\_coeffs,}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ cv::Mat\&\ rvec,}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ cv::Mat\&\ tvec,}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Point2d>\&\ image\_points);}
+\DoxyCodeLine{00088\ \ \ \ \ }
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_model_a49caa916e007b12f4b991d5b2a942b71}{export\_point\_cloud\_recolored}}(}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ fs::path\&\ path\_working\_directory,}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Point3d>\&\ point\_cloud,}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Vec3b>\&\ point\_cloud\_colors,}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Point2d>\&\ image\_coords\_colors,}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ shifter\_x,}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ shifter\_y,}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ shifter\_z);}
+\DoxyCodeLine{00117\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00118\ \ \ \ \ \mbox{\hyperlink{class_log_file}{LogFile}}*\ logfile;}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ TAG\ =\ \textcolor{stringliteral}{"{}Modell\_OCV:\(\backslash\)t\(\backslash\)t"{}};}
+\DoxyCodeLine{00120\ \};}
+
+\end{DoxyCode}

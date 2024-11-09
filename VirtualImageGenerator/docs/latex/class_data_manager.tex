@@ -1,0 +1,173 @@
+\doxysection{Data\+Manager Class Reference}
+\hypertarget{class_data_manager}{}\label{class_data_manager}\index{DataManager@{DataManager}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{class_data_manager_a01eb9b29579afe80a67118fe4838f8ac}\label{class_data_manager_a01eb9b29579afe80a67118fe4838f8ac} 
+{\bfseries Data\+Manager} (\mbox{\hyperlink{class_log_file}{Log\+File}} \texorpdfstring{$\ast$}{*}log\+File)
+\item 
+void \mbox{\hyperlink{class_data_manager_a236515e2c8f7dededbde24f3496b362c}{read\+\_\+json\+\_\+file}} (std\+::string path\+\_\+file\+\_\+json)
+\begin{DoxyCompactList}\small\item\em Reads and parses JSON configuration data from a specified file path, and updates internal parameters accordingly. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_data_manager_af5e615a1c23bf6021c3e8f6df8474a7d}{run\+\_\+lightglue\+\_\+image\+\_\+matching}} (const cv\+::\+Mat \&in\+\_\+true\+\_\+image, const cv\+::\+Mat \&in\+\_\+synth\+\_\+image)
+\begin{DoxyCompactList}\small\item\em Runs Light\+Glue-\/based image matching on the provided true and synthetic images. \end{DoxyCompactList}\item 
+\Hypertarget{class_data_manager_a4493357a88a6d55c9e961ef2e1142a21}\label{class_data_manager_a4493357a88a6d55c9e961ef2e1142a21} 
+fs\+::path {\bfseries get\+\_\+path\+\_\+file\+\_\+pointcloud} () const
+\item 
+\Hypertarget{class_data_manager_a80c72497c71dce14105f33c4d0664a92}\label{class_data_manager_a80c72497c71dce14105f33c4d0664a92} 
+fs\+::path {\bfseries get\+\_\+path\+\_\+working\+\_\+directory} () const
+\item 
+\Hypertarget{class_data_manager_ac8503f47457bdc8e50573ad1a6d8cd50}\label{class_data_manager_ac8503f47457bdc8e50573ad1a6d8cd50} 
+fs\+::path {\bfseries get\+\_\+path\+\_\+python\+\_\+script\+\_\+lightglue} () const
+\item 
+\Hypertarget{class_data_manager_ae02d871377b62abef251686ef1a49885}\label{class_data_manager_ae02d871377b62abef251686ef1a49885} 
+fs\+::path {\bfseries get\+\_\+path\+\_\+lightglue\+\_\+kpts} ()
+\item 
+\Hypertarget{class_data_manager_a0f2293e3951c0ecd307dc53e515eece0}\label{class_data_manager_a0f2293e3951c0ecd307dc53e515eece0} 
+void {\bfseries set\+\_\+path\+\_\+working\+\_\+directory} (const fs\+::path \&path\+\_\+dir)
+\item 
+\Hypertarget{class_data_manager_a4dc6dba7be4d08fe1616abbca1e5bc62}\label{class_data_manager_a4dc6dba7be4d08fe1616abbca1e5bc62} 
+void {\bfseries set\+\_\+path\+\_\+file\+\_\+pointcloud} (const fs\+::path \&path)
+\item 
+\Hypertarget{class_data_manager_a8ea6a8d9e61eb5b3dc503deee41045cc}\label{class_data_manager_a8ea6a8d9e61eb5b3dc503deee41045cc} 
+void {\bfseries set\+\_\+path\+\_\+python\+\_\+script\+\_\+lightglue} (const fs\+::path \&path\+\_\+python\+\_\+lightglue)
+\item 
+\Hypertarget{class_data_manager_a840c8895c435244246e777ba40abc1b8}\label{class_data_manager_a840c8895c435244246e777ba40abc1b8} 
+std\+::vector$<$ std\+::string $>$ {\bfseries get\+\_\+file\+\_\+name\+\_\+image\+\_\+points} ()
+\item 
+\Hypertarget{class_data_manager_afdc508c1dd9a13cdb7e8ec9ed29532e0}\label{class_data_manager_afdc508c1dd9a13cdb7e8ec9ed29532e0} 
+void {\bfseries set\+\_\+file\+\_\+name\+\_\+image\+\_\+points} (std\+::vector$<$ std\+::string $>$ names)
+\item 
+\Hypertarget{class_data_manager_a07915ea139192b2c42d8e25941ec637d}\label{class_data_manager_a07915ea139192b2c42d8e25941ec637d} 
+\mbox{\hyperlink{class_log_file}{Log\+File}} \texorpdfstring{$\ast$}{*} {\bfseries get\+\_\+logfile} ()
+\item 
+\Hypertarget{class_data_manager_a0f92dc7b784a4a8f11331a02ceffc494}\label{class_data_manager_a0f92dc7b784a4a8f11331a02ceffc494} 
+cv\+::\+Mat \& {\bfseries get\+\_\+synth\+\_\+image} ()
+\item 
+\Hypertarget{class_data_manager_a37b99d50527562db2dd0bfe33ea3722a}\label{class_data_manager_a37b99d50527562db2dd0bfe33ea3722a} 
+cv\+::\+Mat \& {\bfseries get\+\_\+true\+\_\+image} ()
+\item 
+\Hypertarget{class_data_manager_a1f596cfd7f7ef8cab374935d60fe0555}\label{class_data_manager_a1f596cfd7f7ef8cab374935d60fe0555} 
+\mbox{\hyperlink{class_coordinate_image}{Coordinate\+Image}} \texorpdfstring{$\ast$}{*} {\bfseries get\+\_\+coordinate\+\_\+image} ()
+\item 
+\Hypertarget{class_data_manager_abdbc4497b03360a36c0ca8c96dd1a802}\label{class_data_manager_abdbc4497b03360a36c0ca8c96dd1a802} 
+std\+::string {\bfseries get\+\_\+filename\+\_\+true\+\_\+image} ()
+\item 
+\Hypertarget{class_data_manager_acdb03b16c532a619ba146c90063d7160}\label{class_data_manager_acdb03b16c532a619ba146c90063d7160} 
+cv\+::\+Size {\bfseries get\+\_\+size\+\_\+true\+\_\+image} ()
+\item 
+\Hypertarget{class_data_manager_ade7b164897fa0d789cf4f28ed3fb7ceb}\label{class_data_manager_ade7b164897fa0d789cf4f28ed3fb7ceb} 
+void {\bfseries set\+\_\+synth\+\_\+image} (cv\+::\+Mat \&synth\+\_\+img)
+\item 
+\Hypertarget{class_data_manager_a3b3c7faf3f74f5215ce5d0afe76d8b28}\label{class_data_manager_a3b3c7faf3f74f5215ce5d0afe76d8b28} 
+void {\bfseries set\+\_\+true\+\_\+image} (cv\+::\+Mat \&true\+\_\+img)
+\item 
+\Hypertarget{class_data_manager_acf1cbc8f76e0c94a3cbc4cc488904770}\label{class_data_manager_acf1cbc8f76e0c94a3cbc4cc488904770} 
+void {\bfseries set\+\_\+coordinate\+\_\+image} (int column, int row)
+\item 
+\Hypertarget{class_data_manager_a5ec2437ff57a0705c5a9b890a6556d51}\label{class_data_manager_a5ec2437ff57a0705c5a9b890a6556d51} 
+std\+::vector$<$ cv\+::\+Point2d $>$ \texorpdfstring{$\ast$}{*} {\bfseries get\+\_\+pts\+\_\+synth\+\_\+2\+D\+\_\+double} ()
+\item 
+\Hypertarget{class_data_manager_a92ab7de0cbce5998a4d3f1bc51a8925b}\label{class_data_manager_a92ab7de0cbce5998a4d3f1bc51a8925b} 
+std\+::vector$<$ cv\+::\+Point3d $>$ \texorpdfstring{$\ast$}{*} {\bfseries get\+\_\+pts\+\_\+synth\+\_\+3\+D\+\_\+double} ()
+\item 
+\Hypertarget{class_data_manager_a6e09167d2cffbd06c98191c22ed982ed}\label{class_data_manager_a6e09167d2cffbd06c98191c22ed982ed} 
+std\+::vector$<$ cv\+::\+Scalar $>$ \texorpdfstring{$\ast$}{*} {\bfseries get\+\_\+pts\+\_\+color\+\_\+\+RGB\+\_\+int} ()
+\item 
+\Hypertarget{class_data_manager_a513473af16e2e9ae16e2a0ab4ae6d119}\label{class_data_manager_a513473af16e2e9ae16e2a0ab4ae6d119} 
+std\+::vector$<$ \mbox{\hyperlink{struct_recolored___point___cloud}{Recolored\+\_\+\+Point\+\_\+\+Cloud}} $>$ \texorpdfstring{$\ast$}{*} {\bfseries get\+\_\+point\+\_\+cloud\+\_\+recolored} ()
+\item 
+\Hypertarget{class_data_manager_a18d40537f64e8ae0efb2c45bbfcc9500}\label{class_data_manager_a18d40537f64e8ae0efb2c45bbfcc9500} 
+std\+::vector$<$ std\+::vector$<$ cv\+::\+Point2d $>$ $>$ \texorpdfstring{$\ast$}{*} {\bfseries get\+\_\+image\+\_\+points\+\_\+2\+D\+\_\+ptr} ()
+\item 
+\Hypertarget{class_data_manager_a1d835e0abd18a884c21baeded1fa5e5f}\label{class_data_manager_a1d835e0abd18a884c21baeded1fa5e5f} 
+double {\bfseries get\+\_\+shift\+\_\+x} () const
+\item 
+\Hypertarget{class_data_manager_a374f0859f719d999e3d3bf1343c65617}\label{class_data_manager_a374f0859f719d999e3d3bf1343c65617} 
+double {\bfseries get\+\_\+shift\+\_\+y} () const
+\item 
+\Hypertarget{class_data_manager_ae32d423ee7e1d3fda408727eb206685c}\label{class_data_manager_ae32d423ee7e1d3fda408727eb206685c} 
+double {\bfseries get\+\_\+shift\+\_\+z} () const
+\item 
+\Hypertarget{class_data_manager_a76cd23d85fa001ad81f8d793e1fb2959}\label{class_data_manager_a76cd23d85fa001ad81f8d793e1fb2959} 
+\mbox{\hyperlink{class_bounding_box}{Bounding\+Box}} \texorpdfstring{$\ast$}{*} {\bfseries get\+\_\+frustum} ()
+\item 
+\Hypertarget{class_data_manager_ab06f4501709878ccf9be004ca449d31f}\label{class_data_manager_ab06f4501709878ccf9be004ca449d31f} 
+double \& {\bfseries get\+\_\+pixel\+\_\+size} ()
+\item 
+\Hypertarget{class_data_manager_a776e6882eab3346ab4a3c21dfcec8f19}\label{class_data_manager_a776e6882eab3346ab4a3c21dfcec8f19} 
+double \& {\bfseries get\+\_\+principal\+\_\+distance} ()
+\item 
+\Hypertarget{class_data_manager_a7124eab2115e89631264c59f0de2ab4c}\label{class_data_manager_a7124eab2115e89631264c59f0de2ab4c} 
+double \& {\bfseries get\+\_\+min\+\_\+dist\+\_\+to\+\_\+\+X0} ()
+\item 
+\Hypertarget{class_data_manager_afd149a4cb3064b7dd732f1d85044307e}\label{class_data_manager_afd149a4cb3064b7dd732f1d85044307e} 
+cv\+::\+Point3d {\bfseries get\+\_\+\+X0} ()
+\item 
+\Hypertarget{class_data_manager_a6a17c242cb00a8ea5803113fa88270f9}\label{class_data_manager_a6a17c242cb00a8ea5803113fa88270f9} 
+void {\bfseries set\+\_\+\+X0\+\_\+to\+\_\+\+BBox} (double x, double y, double z)
+\item 
+\Hypertarget{class_data_manager_a0eff397352759129dc2a7bac25283548}\label{class_data_manager_a0eff397352759129dc2a7bac25283548} 
+double \texorpdfstring{$\ast$}{*} {\bfseries get\+\_\+rotM} ()
+\item 
+\Hypertarget{class_data_manager_a28c8a4848780a818a832f7e7f204709c}\label{class_data_manager_a28c8a4848780a818a832f7e7f204709c} 
+void {\bfseries set\+\_\+rotM} (cv\+::\+Mat rotM)
+\item 
+\Hypertarget{class_data_manager_a74ef7903575e8a9444d4fe81e0c47a00}\label{class_data_manager_a74ef7903575e8a9444d4fe81e0c47a00} 
+void {\bfseries set\+\_\+filter\+\_\+matches\+\_\+ransac\+\_\+fisheye} (double val)
+\item 
+\Hypertarget{class_data_manager_a4c3240d43a7e2deec2b96bd9da760504}\label{class_data_manager_a4c3240d43a7e2deec2b96bd9da760504} 
+double {\bfseries get\+\_\+filter\+\_\+matches\+\_\+ransac\+\_\+fisheye} () const
+\item 
+\Hypertarget{class_data_manager_a5e205a8aaf072ebc37a62ffdfe5fd50b}\label{class_data_manager_a5e205a8aaf072ebc37a62ffdfe5fd50b} 
+void {\bfseries set\+\_\+filter\+\_\+matches\+\_\+ransac\+\_\+pinhole} (double val)
+\item 
+\Hypertarget{class_data_manager_a1ff0c02c74df2b306e8f8fcfb7ccde32}\label{class_data_manager_a1ff0c02c74df2b306e8f8fcfb7ccde32} 
+double {\bfseries get\+\_\+filter\+\_\+matches\+\_\+ransac\+\_\+pinhole} () const
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_data_manager_a236515e2c8f7dededbde24f3496b362c}\index{DataManager@{DataManager}!read\_json\_file@{read\_json\_file}}
+\index{read\_json\_file@{read\_json\_file}!DataManager@{DataManager}}
+\doxysubsubsection{\texorpdfstring{read\_json\_file()}{read\_json\_file()}}
+{\footnotesize\ttfamily \label{class_data_manager_a236515e2c8f7dededbde24f3496b362c} 
+void Data\+Manager\+::read\+\_\+json\+\_\+file (\begin{DoxyParamCaption}\item[{std\+::string}]{path\+\_\+file\+\_\+json}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Reads and parses JSON configuration data from a specified file path, and updates internal parameters accordingly. 
+
+This function reads a JSON file containing various parameters (e.\+g., file paths, camera settings, projection center, orientation angles) required for processing 3D image projections and updates the internal parameters for subsequent calculations. The function also handles default values and logs the results of each parameter\textquotesingle{}s assignment.
+
+
+\begin{DoxyParams}{Parameters}
+{\em path\+\_\+file\+\_\+json} & Path to the JSON file containing configuration parameters. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_data_manager_af5e615a1c23bf6021c3e8f6df8474a7d}\index{DataManager@{DataManager}!run\_lightglue\_image\_matching@{run\_lightglue\_image\_matching}}
+\index{run\_lightglue\_image\_matching@{run\_lightglue\_image\_matching}!DataManager@{DataManager}}
+\doxysubsubsection{\texorpdfstring{run\_lightglue\_image\_matching()}{run\_lightglue\_image\_matching()}}
+{\footnotesize\ttfamily \label{class_data_manager_af5e615a1c23bf6021c3e8f6df8474a7d} 
+bool Data\+Manager\+::run\+\_\+lightglue\+\_\+image\+\_\+matching (\begin{DoxyParamCaption}\item[{const cv\+::\+Mat \&}]{in\+\_\+true\+\_\+image}{, }\item[{const cv\+::\+Mat \&}]{in\+\_\+synth\+\_\+image}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Runs Light\+Glue-\/based image matching on the provided true and synthetic images. 
+
+This function saves the provided true and synthetic images to disk, generates an image list file, and executes a Python script to perform image matching using Light\+Glue. The matching results are saved in a designated output directory. The function checks for successful image and file storage before running the script to ensure data completeness.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em in\+\_\+true\+\_\+image} & The input image representing the "{}true"{} scene, as an Open\+CV matrix (cv\+::\+Mat). \\
+\hline
+\mbox{\texttt{ in}}  & {\em in\+\_\+synth\+\_\+image} & The input image representing the "{}synthetic"{} scene, as an Open\+CV matrix (cv\+::\+Mat).\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+True if the Light\+Glue matching script executes successfully, false otherwise. 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/Data\+Manager.\+h\end{DoxyCompactItemize}

@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35122.118
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GIRAFFE", "VirtualImageGenerator\VirtualImageGenerator.vcxproj", "{7DAA4CA7-998D-434B-8AC7-4A0CF295B914}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		GIRAFFE_Release_CV_4100_x64|x64 = GIRAFFE_Release_CV_4100_x64|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7DAA4CA7-998D-434B-8AC7-4A0CF295B914}.GIRAFFE_Release_CV_4100_x64|x64.ActiveCfg = VIG_Release_CV_410_x64|x64
+		{7DAA4CA7-998D-434B-8AC7-4A0CF295B914}.GIRAFFE_Release_CV_4100_x64|x64.Build.0 = VIG_Release_CV_410_x64|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {801E06F6-6894-4147-9D89-5E7C748B4FB5}
+	EndGlobalSection
+EndGlobal

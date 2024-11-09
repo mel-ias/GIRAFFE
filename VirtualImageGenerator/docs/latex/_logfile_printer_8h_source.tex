@@ -1,0 +1,52 @@
+\doxysection{Logfile\+Printer.\+h}
+\hypertarget{_logfile_printer_8h_source}{}\label{_logfile_printer_8h_source}\index{include/LogfilePrinter.h@{include/LogfilePrinter.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#ifndef\ LOGFILEPRINTER\_H}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#define\ LOGFILEPRINTER\_H}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}stdafx.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <ostream>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <iomanip>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_log_file}{LogFile}}\ \{}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00027\ \ \ \ \ \mbox{\hyperlink{class_log_file_ad11b3baf5602575c1396f726d3598188}{LogFile}}()\ \{\ \ \}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00030\ \ \ \ \ \mbox{\hyperlink{class_log_file_a440a7de2dcbb9facb68e56dc47cb9dea}{\string~LogFile}}()\ \{\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_log_file_a3253aa6b100c4d955d514cb411d32ec6}{print\_content\_disk}}(std::string\ path\_working\_directory)\ \{\ \ \ \ \ }
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ std::ofstream\ datFile\ (path\_working\_directory);\ \textcolor{comment}{//\ Open\ the\ file\ in\ write\ mode,\ overwriting\ any\ existing\ content}}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ datFile\ <<\ \_logfile.rdbuf();\ \textcolor{comment}{//\ Write\ the\ entire\ content\ of\ the\ log\ to\ the\ file}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ datFile.close();\ \textcolor{comment}{//\ Close\ the\ file\ after\ writing}}
+\DoxyCodeLine{00044\ \ \ \ \ \}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}}(\textcolor{keyword}{const}\ std::stringstream\&\ logfile,\ \textcolor{keywordtype}{int}\ precision\ =\ 3)\ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \_logfile\ <<\ std::setprecision(precision)\ <<\ logfile.str()\ <<\ std::endl;\ \textcolor{comment}{//\ Set\ the\ precision\ for\ numerical\ output}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ std::cout\ <<\ std::fixed\ <<\ logfile.str()\ <<\ std::endl;\ \ \textcolor{comment}{//\ Print\ the\ log\ entry\ to\ the\ console}}
+\DoxyCodeLine{00059\ \ \ \ \ \}}
+\DoxyCodeLine{00060\ \ \ \ \ }
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_log_file_abb4f9bbf890f800a4adbf401c7dffce4}{append}}(\textcolor{keyword}{const}\ std::string\&\ logfile,\ \textcolor{keywordtype}{int}\ precision\ =\ 3)\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \_logfile\ <<\ std::setprecision(precision)\ <<\ logfile\ <<\ std::endl;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ std::cout\ <<\ std::fixed\ <<\ logfile\ <<\ std::endl;\ }
+\DoxyCodeLine{00074\ \ \ \ \ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_log_file_ac42d62c5b527e79a5e2e770e97d1cbb2}{append}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ logfile,\ \textcolor{keywordtype}{int}\ precision\ =\ 3)\ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \_logfile\ <<\ std::setprecision(precision)\ <<\ std::string(logfile)\ <<\ std::endl;\ \ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ std::cout\ <<\ std::fixed\ <<\ std::string(logfile)\ <<\ std::endl;\ }
+\DoxyCodeLine{00089\ \ \ \ \ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00092\ \ \ \ \ std::stringstream\ \_logfile;\ \textcolor{comment}{//\ The\ internal\ stringstream\ that\ holds\ the\ log\ content}}
+\DoxyCodeLine{00093\ \};}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

@@ -610,7 +610,7 @@ Matching::FilteredData Matching::filter_pts_by_distance(
 		const auto& point2_3D = list2_3d[i];
 
 		// Check if the Euclidean distance between points is within the threshold
-		if (euclideanDistance(point1, point2) < distanceThreshold) {
+		if (euclidean_distance(point1, point2) < distanceThreshold) {
 			filtered_idx.push_back(counter);              // Store index of the point
 			filtered_list1.push_back(point1);             // Store point from list1
 			filtered_list2.push_back(point2);             // Store point from list2

@@ -1,0 +1,178 @@
+\doxysection{Matching.\+h}
+\hypertarget{_matching_8h_source}{}\label{_matching_8h_source}\index{include/Matching.h@{include/Matching.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#ifndef\ MATCHING\_H}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#define\ MATCHING\_H}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}ImCalculator.hpp"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}LogfilePrinter.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}Model.h"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}DataManager.h"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}Utils.h"{}}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <opencv2/opencv.hpp>}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <opencv2/core.hpp>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <opencv2/flann.hpp>}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_matching}{Matching}}}
+\DoxyCodeLine{00026\ \{\ \ \ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keyword}{enum}\ Flags\_resec\ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ CALC\_EO\_IO,\ CALC\_EO,\ FIXED\_EO\_IO}
+\DoxyCodeLine{00031\ \ \ \ \ \};}
+\DoxyCodeLine{00032\ \ \ \ \ }
+\DoxyCodeLine{00039\ \ \ \ \ \mbox{\hyperlink{class_matching_a904a31abfaa75c60e0f5ad5f3d8dec26}{Matching}}();}
+\DoxyCodeLine{00040\ \ \ \ \ }
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{class_matching_aa41444d8996166ec4443f062c819f258}{\string~Matching}}();}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ }
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_matching_ad46c19a938d4f2859d7bab8b8d8fe581}{init}}(\mbox{\hyperlink{class_data_manager}{DataManager}}*\ \_dataManager);}
+\DoxyCodeLine{00060\ \ \ \ \ }
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_matching_a2b622b19397d9c38190af3c96c41dead}{image\_points\_3D\_referencing}}(}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ std::vector<std::vector<cv::Point2d>>\&\ input\_image\_points,}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ std::vector<cv::Point3d>\&\ synth\_pts\_3D,}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ cv::Mat\&\ in\_image\_4\_color,\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ cv::Mat\&\ camera\_matrix,\ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ cv::Mat\&\ dist\_coeffs,}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ cv::Mat\&\ rvec\_cc\_orig\_copy,\ }
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ cv::Mat\&\ tvec\_cc\_orig\_copy,\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ shift\_vector\_x,}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ shift\_vector\_y,}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ shift\_vector\_z,\ }
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ print\_pcl,\ }
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ std::vector<std::string>\ file\_name\_image\_points);}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_matching_a2133ca96caa31c4d99116419f5ede974}{loadMatches}}(}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ std::string\ in\_path\_matching\_output,}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ cv::Mat\&\ in\_real\_image,}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ cv::Mat\&\ in\_synth\_image,}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\&\ in\_synth\_pts\_2D,}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ std::vector<cv::Point3d>\&\ in\_synth\_pts\_3D,}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ std::vector<cv::Point3d>\&\ out\_matched\_object\_points,}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\&\ out\_matched\_image\_points\_real,}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\&\ out\_matched\_image\_points\_synth,}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ neighbour\_distance\_allowed\_pointcloud\ =\ 2.5);\ \textcolor{comment}{//\ neighbour\ distance\ in\ pixels}}
+\DoxyCodeLine{00122\ \ \ \ \ }
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_matching_a7b89ece5a34d4f0cf706bdfcece2c73b}{is\_distribution\_good}}(}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Point2f>\&\ imagePoints,}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ cv::Size\&\ imageSize,}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ gridRows\ =\ 4,}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ gridCols\ =\ 4,}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ minPointsPerCell\ =\ 3);}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_matching_a46023981f65071254bdb8cbfff388c43}{run\_calibration}}(}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ std::vector<std::vector<cv::Point3f>>\ objectPoints,}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ std::vector<std::vector<cv::Point2f>>\ imagePoints,}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ cv::Size\&\ imageSize,}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ cv::Mat\&\ cameraMatrix,}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ cv::Mat\&\ distCoeffs,}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ useFisheye);}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{class_matching_afd02f70fca84c530a6c59788e6e33774}{space\_resection}}(}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ std::vector<cv::Point3d>\ \&in\_matched\_object\_points,\ }
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\&\ in\_matched\_image\_points\_real,\ }
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ cv::Mat\&\ real\_canvas,\ }
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ in\_pix\_size,\ }
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ cv::Mat\&\ camera\_matrix,\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ cv::Mat\&\ dist\_coeffs,\ }
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ cv::Mat\&\ rvec,\ }
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ cv::Mat\&\ tvec,\ }
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ cv::Mat\&\ stdDev\_In,\ }
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ cv::Mat\&\ stdDev\_Ext,\ }
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ Flags\_resec\ in\_flag,\ }
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ fisheye);}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ }
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keyword}{struct\ }FilteredData\ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ std::vector<int>\ image\_data\_original\_idx;}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\ image\_data\_original;}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\ image\_data\_projected;}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ std::vector<cv::Point3d>\ image\_data\_3D;}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00217\ \ \ \ \ \};}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keywordtype}{void}\ calculate\_nn\_synth\_key\_\_\_pts\_image\_pts(}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Point2d>\&\ in\_synth\_pts\_float,\textcolor{comment}{//punkte}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Point3d>\&\ in\_synth\_pts\_3D\_float,\ \textcolor{comment}{//punkte3d}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Point2d>\&\ in\_synth\_keypoints\_float,}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Point2d>\&\ in\_real\_keypoints\_float,}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ cv::Mat\&\ in\_real\_image,}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ cv::Mat\&\ in\_synth\_image,}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\&\ out\_matched\_image\_points\_real,}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\&\ out\_matched\_image\_points\_synth,}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ std::vector<cv::Point3d>\&\ out\_matched\_object\_points,}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ in\_neighbour\_distance\ =\ 2.5\ \textcolor{comment}{//\ distance\ in\ pixels}}
+\DoxyCodeLine{00249\ \ \ \ \ );}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00270\ \ \ \ \ cv::Mat\ ransac\_test(}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\&\ \_points1,\ }
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\&\ \_points2,\ }
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ confidence\ =\ 0.95,\ }
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ distance\ =\ 8.0,}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ refineF\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{comment}{//\ Function\ to\ calculate\ the\ Euclidean\ distance\ between\ two\ cv::Point2d\ points}}
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keywordtype}{double}\ euclidean\_distance(\textcolor{keyword}{const}\ cv::Point2d\&\ p1,\ \textcolor{keyword}{const}\ cv::Point2d\&\ p2)\ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::sqrt(std::pow(p1.x\ -\/\ p2.x,\ 2)\ +\ std::pow(p1.y\ -\/\ p2.y,\ 2));}
+\DoxyCodeLine{00281\ \ \ \ \ \}}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00299\ \ \ \ \ FilteredData\ filter\_pts\_by\_distance(}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Point2d>\&\ list1,}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Point2d>\&\ list2,}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::vector<cv::Point3d>\&\ list2\_3d,}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ distanceThreshold\ =\ 2.0);}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{comment}{//\ Output\ functions}}
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{keywordtype}{void}\ write\_camera\_calibration\_statistics(cv::Mat\&\ in\_camera\_matrix,\ cv::Mat\&\ in\_dist\_coeffs,\ cv::Mat\&\ in\_rvec,\ cv::Mat\&\ in\_tvec,\ cv::Mat\&\ stdDev\_In,\ cv::Mat\&\ stdDev\_Ext,\ cv::Mat\&\ perViewErrors,\ \textcolor{keywordtype}{double}\ in\_pix\_size);}
+\DoxyCodeLine{00324\ \ \ \ \ }
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{keywordtype}{void}\ write\_visualization\_matches(cv::Mat\&\ canvas\_real\_image,\ cv::Mat\&\ canvas\_synth\_image,\ std::vector\ <cv::Point2d>\&\ real\_matches\_draw,\ std::vector\ <cv::Point2d>\&\ synth\_matches\_draw,\ std::string\ fileName);}
+\DoxyCodeLine{00339\ \ \ \ \ }
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{keywordtype}{void}\ write\_corresponding\_points\_to\_file(\textcolor{keyword}{const}\ std::vector<cv::Point3d>\&\ object\_points\_3D,\ \textcolor{keyword}{const}\ std::vector<cv::Point2d>\&\ image\_points\_2D\_real,\ \textcolor{keyword}{const}\ std::vector<cv::Point2d>\&\ image\_points\_2D\_synth);}
+\DoxyCodeLine{00356\ \ \ \ \ }
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{keywordtype}{void}\ write\_and\_print\_log\_statistics(std::stringstream\&\ log\_statistics)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{comment}{//\ constants}}
+\DoxyCodeLine{00371\ \ \ \ \ std::string\ TAG\ =\ \textcolor{stringliteral}{"{}Matching:\(\backslash\)t"{}};}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \ \ \textcolor{comment}{//\ member}}
+\DoxyCodeLine{00374\ \ \ \ \ \mbox{\hyperlink{class_data_manager}{DataManager}}\ *\_data\_manager;}
+\DoxyCodeLine{00375\ \ \ \ \ \mbox{\hyperlink{class_log_file}{LogFile}}\ *\_logfile;}
+\DoxyCodeLine{00376\ \ \ \ \ fs::path\ \_working\_dir\_matching;}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00378\ \};}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ }
+
+\end{DoxyCode}

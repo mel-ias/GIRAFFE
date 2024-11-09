@@ -1,0 +1,565 @@
+\doxysection{Data\+Manager.\+h}
+\hypertarget{_data_manager_8h_source}{}\label{_data_manager_8h_source}\index{include/DataManager.h@{include/DataManager.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#ifndef\ DATAMANAGER\_H}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#define\ DATAMANAGER\_H}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}stdafx.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <windows.h>}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}opencv2\(\backslash\)opencv.hpp"{}}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}json.hpp"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}LogfilePrinter.h"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}Utils.h"{}}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#define\ \_USE\_MATH\_DEFINES}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#ifdef\ \_WIN64}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <direct.h>}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#define\ GetCurrentDir\ \_getcwd}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#elif\ \_\_linux\_\_}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <unistd.h>}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#define\ GetCurrentDir\ getcwd}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{using\ }nlohmann::json;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_recolored___point___cloud}{Recolored\_Point\_Cloud}}\ \{}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ cv::Point3d\ \_point;}
+\DoxyCodeLine{00043\ \ \ \ \ cv::Vec3b\ \_color;}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \mbox{\hyperlink{struct_recolored___point___cloud}{Recolored\_Point\_Cloud}}(cv::Point3d\ point,\ cv::Vec3b\ color)\ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \_point\ =\ point;}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \_color\ =\ color;}
+\DoxyCodeLine{00048\ \ \ \ \ \}}
+\DoxyCodeLine{00049\ \};}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_data_manager}{DataManager}}\ \{}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{comment}{//\ C'tor}}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{comment}{//\ set\ default\ values\ for\ member\ variables}}
+\DoxyCodeLine{00057\ \ \ \ \ \mbox{\hyperlink{class_data_manager}{DataManager}}(\mbox{\hyperlink{class_log_file}{LogFile}}*\ logFile)\ \{}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ -\/-\/-\/\ from\ main\ -\/-\/-\/}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \_logfile\ =\ logFile;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \_path\_file\_point\_cloud\ =\ \textcolor{stringliteral}{"{}noPointCloud.bin"{}};\ \textcolor{comment}{//\ causes\ a\ "{}not\ a\ pw"{}\ error}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \_path\_working\_directory\ =\ \textcolor{stringliteral}{"{}noDir"{}};}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \_path\_file\_output\_lightglue\_matches\ =\ \textcolor{stringliteral}{"{}noDir"{}};}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \_path\_python\_script\_lightglue\ =\ \textcolor{stringliteral}{"{}noFile"{}};}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ -\/-\/-\/\ from\ json\ -\/-\/-\/}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \_file\_name\_true\_image\ =\ \textcolor{stringliteral}{"{}noFileName"{}};}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ parameters\ for\ IOP\ /\ about\ camera}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \_principal\_distance\ =\ 1.0;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \_pix\_size\ =\ 0.00089;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \_view\_angle\_half\_H\ =\ 30.0;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \_view\_angle\_half\_V\ =\ 30.0;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ parameters\ for\ EOP}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \_X0\_x\ =\ \_X0\_y\ =\ \_X0\_z\ =\ 0.0;\ \textcolor{comment}{//\ translation\ params:\ projC}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \_shift\_x\ =\ \_shift\_y\ =\ \_shift\_z\ =\ 0.0;\ \textcolor{comment}{//\ shift\ utm\ values\ for\ better\ handling}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \_azimuth\ =\ \_roll\ =\ \_pitch\ =\ 0.0;\ \textcolor{comment}{//rotation\ params:\ Euler\ angles}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \_rotM\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{double}[9];\ \textcolor{comment}{//\ use\ only\ one\ instance\ for\ rotation\ matrix.\ for\ filling,\ just\ reference\ it}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \_rotM[0]\ =\ 1.0;\ \_rotM[3]\ =\ 0.0;\ \_rotM[6]\ =\ 0.0;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \_rotM[1]\ =\ 0.0;\ \_rotM[4]\ =\ 1.0;\ \_rotM[7]\ =\ 0.0;}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \_rotM[2]\ =\ 0.0;\ \_rotM[5]\ =\ 0.0;\ \_rotM[8]\ =\ 1.0;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ thresholds\ /\ uncertainity\ values\ for\ point\ cloud\ projection}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \_min\_dist\_to\_X0\ =\ 1.0;}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \_max\_dist\_to\_X0\ =\ 200.0;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \_loc\_acc\_X0\_z\ =\ 20.0;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \_loc\_acc\_X0\_xy\ =\ 20.0;}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ others\ \ \ \ \ \ \ }}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \_filter\_matches\_ransac\_fisheye\ =\ 200.0;\ \textcolor{comment}{//\ run\ solvepnoransac\ to\ find\ good\ image-\/to-\/object\ matches\ before\ running\ spatial\ resection\ -\/>\ fisheye\ thresh\ (should\ be\ high\ cause\ OCVs\ solvepnp\ does\ not\ support\ fisheye\ cams)}}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \_filter\_matches\_ransac\_pinhole\ =\ 8.0;\ \textcolor{comment}{//\ run\ solvepnoransac\ to\ find\ good\ image-\/to-\/object\ matches\ before\ running\ spatial\ resection\ -\/>\ pinhole\ thresh\ (should\ be\ small)}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ instantiate\ objects}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \_frustum\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{class_bounding_box}{BoundingBox}}(logFile);\ \textcolor{comment}{//\ Instantiate\ frustum\ by\ BoundingBox\ to\ select\ point\ cloud\ part\ to\ be\ projected,\ provide\ pointer\ to\ logfile}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \_coord\_img\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \_pts\_synth\_2D\_double\ =\ \textcolor{keyword}{new}\ std::vector<cv::Point2d>;}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \_pts\_synth\_3D\_double\ =\ \textcolor{keyword}{new}\ std::vector<cv::Point3d>;}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \_pts\_color\_RGB\_int\ =\ \textcolor{keyword}{new}\ std::vector<cv::Scalar>;}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \_point\_cloud\_recolored\ =\ \textcolor{keyword}{new}\ std::vector<Recolored\_Point\_Cloud>;}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \_pts\_image\_points\_2D\ =\ \textcolor{keyword}{new}\ std::vector<std::vector<cv::Point2d>>;\ \ \ }
+\DoxyCodeLine{00103\ \ \ \ \ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ D'tor}}
+\DoxyCodeLine{00106\ \ \ \ \ \mbox{\hyperlink{class_data_manager}{\string~DataManager}}()\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_point\_cloud\_recolored\ !=\ \textcolor{keyword}{nullptr})\ \{\ \textcolor{keyword}{delete}\ \_point\_cloud\_recolored;\ \}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_pts\_image\_points\_2D\ !=\ \textcolor{keyword}{nullptr})\ \{\ \textcolor{keyword}{delete}\ \_pts\_image\_points\_2D;\ \}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_coord\_img\ !=\ \textcolor{keyword}{nullptr})\ \{\ \textcolor{keyword}{delete}\ \_coord\_img;\ \}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_pts\_synth\_2D\_double\ !=\ \textcolor{keyword}{nullptr})\ \{\ \textcolor{keyword}{delete}\ \_pts\_synth\_2D\_double;\ \}}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_pts\_synth\_3D\_double\ !=\ \textcolor{keyword}{nullptr})\ \{\ \textcolor{keyword}{delete}\ \_pts\_synth\_3D\_double;\ \}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_pts\_color\_RGB\_int\ !=\ \textcolor{keyword}{nullptr})\ \{\ \textcolor{keyword}{delete}\ \_pts\_color\_RGB\_int;\ \}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_rotM\ !=\ \textcolor{keyword}{nullptr})\ \{\ \textcolor{keyword}{delete}\ \_rotM;\ \}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_frustum\ !=\ \textcolor{keyword}{nullptr})\ \{\ \textcolor{keyword}{delete}\ \_frustum;\ \}\ \ \ }
+\DoxyCodeLine{00115\ \ \ \ \ \}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_data_manager_a236515e2c8f7dededbde24f3496b362c}{read\_json\_file}}(std::string\ path\_file\_json)\ \{}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Open\ the\ JSON\ file\ and\ parse\ its\ contents}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ std::ifstream\ i(path\_file\_json);}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ json\ j;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ i\ >>\ j;}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Read\ JSON\ file..."{}}\ <<\ std::endl;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Retrieve\ file\ name\ of\ the\ master\ (true)\ image}}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (j[\textcolor{stringliteral}{"{}file\_name\_true\_image"{}}]\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \_file\_name\_true\_image\ =\ j.at(\textcolor{stringliteral}{"{}file\_name\_true\_image"{}}).get<std::string>();}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Set\ 'file\_name'\ of\ true\ image:\ "{}}\ <<\ \_file\_name\_true\_image\ <<\ std::endl;}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}No\ value\ for\ 'file\_name'\ in\ json."{}}\ <<\ std::endl;}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Retrieve\ file\ name\ of\ the\ image\ points\ to\ be\ referenced}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*if\ (j["{}file\_name\_image\_points"{}]\ !=\ nullptr)\ \{}}
+\DoxyCodeLine{00147\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \_file\_name\_image\_points\ =\ j.at("{}file\_name\_image\_points"{}).get<std::string>();}}
+\DoxyCodeLine{00148\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ "{}Set\ 'file\_name'\ of\ image\ points\ file:\ "{}\ <<\ \_file\_name\_image\_points\ <<\ std::endl;}}
+\DoxyCodeLine{00149\ \textcolor{comment}{\ \ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00150\ \textcolor{comment}{\ \ \ \ \ \ \ \ else\ \{}}
+\DoxyCodeLine{00151\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ "{}No\ value\ for\ 'file\_name\_image\_points'\ in\ json."{}\ <<\ std::endl;}}
+\DoxyCodeLine{00152\ \textcolor{comment}{\ \ \ \ \ \ \ \ \}*/}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Retrieve\ file\ name\ of\ the\ image\ points\ to\ be\ referenced}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (j.contains(\textcolor{stringliteral}{"{}file\_name\_image\_points"{}})\ \&\&\ j[\textcolor{stringliteral}{"{}file\_name\_image\_points"{}}].is\_array())\ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \_file\_name\_image\_points\ =\ j[\textcolor{stringliteral}{"{}file\_name\_image\_points"{}}].get<std::vector<std::string>>();}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \}\ }
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}No\ value\ for\ 'file\_name\_image\_points'\ in\ json."{}}\ <<\ std::endl;}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Read\ and\ set\ the\ focal\ length\ (in\ mm)\ if\ available}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (j[\textcolor{stringliteral}{"{}focal\_length\_mm"{}}]\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \_principal\_distance\ =\ std::stod(j.at(\textcolor{stringliteral}{"{}focal\_length\_mm"{}}).get<std::string>());}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Set\ 'focal\_length\_mm'\ ck:\ "{}}\ <<\ \_principal\_distance\ <<\ \textcolor{stringliteral}{"{}\ [mm]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}No\ value\ for\ 'focal\_length\_mm'\ in\ json."{}}\ <<\ std::endl;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Retrieve\ the\ horizontal\ and\ vertical\ view\ angles}}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (j[\textcolor{stringliteral}{"{}view\_angle\_x"{}}]\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ j[\textcolor{stringliteral}{"{}view\_angle\_y"{}}]\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \_view\_angle\_half\_H\ =\ std::stod(j.at(\textcolor{stringliteral}{"{}view\_angle\_x"{}}).get<std::string>());}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \_view\_angle\_half\_V\ =\ std::stod(j.at(\textcolor{stringliteral}{"{}view\_angle\_y"{}}).get<std::string>());}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Set\ (full)\ opening\ angles\ 'view\_angle\_x'/'view\_angle\_y'\ (H/V):\ "{}}}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \_view\_angle\_half\_H\ <<\ \textcolor{stringliteral}{"{}/"{}}\ <<\ \_view\_angle\_half\_V\ <<\ \textcolor{stringliteral}{"{}\ [°]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}No\ information\ about\ view\ angle\ horizontal\ and/or\ vertical\ of\ camera\ available"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Set\ the\ initial\ projection\ center\ coordinates}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (j[\textcolor{stringliteral}{"{}X0\_x"{}}]\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ j[\textcolor{stringliteral}{"{}X0\_y"{}}]\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ j[\textcolor{stringliteral}{"{}X0\_z"{}}]\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \_X0\_x\ =\ std::stod(j.at(\textcolor{stringliteral}{"{}X0\_x"{}}).get<std::string>());}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \_X0\_y\ =\ std::stod(j.at(\textcolor{stringliteral}{"{}X0\_y"{}}).get<std::string>());}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \_X0\_z\ =\ std::stod(j.at(\textcolor{stringliteral}{"{}X0\_z"{}}).get<std::string>());}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Set\ initial\ projection\ center\ 'X0\ (x,y,z)':\ "{}}\ <<\ \_X0\_x\ <<\ \textcolor{stringliteral}{"{}\ [m],\ "{}}\ <<\ \_X0\_y\ <<\ \textcolor{stringliteral}{"{}\ [m],\ "{}}\ <<\ \_X0\_z\ <<\ \textcolor{stringliteral}{"{}\ [m]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}No\ value\ for\ 'X0\ (x,y,z)'\ in\ json."{}}\ <<\ std::endl;}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Set\ the\ orientation\ angles\ for\ azimuth,\ pitch,\ and\ roll\ if\ available}}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (j[\textcolor{stringliteral}{"{}azimuth"{}}]\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ j[\textcolor{stringliteral}{"{}pitch"{}}]\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ j[\textcolor{stringliteral}{"{}roll"{}}]\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \_azimuth\ =\ std::stod(j.at(\textcolor{stringliteral}{"{}azimuth"{}}).get<std::string>());}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \_pitch\ =\ std::stod(j.at(\textcolor{stringliteral}{"{}pitch"{}}).get<std::string>());}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \_roll\ =\ std::stod(j.at(\textcolor{stringliteral}{"{}roll"{}}).get<std::string>());}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Set\ initial\ rotation\ angles\ (Euler,\ in\ deg):\ 'azimuth':\ "{}}\ <<\ \_azimuth}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{},\ 'pitch':\ "{}}\ <<\ \_pitch\ <<\ \textcolor{stringliteral}{"{},\ 'roll':\ "{}}\ <<\ \_roll\ <<\ std::endl;}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}No\ value\ for\ 'azimuth',\ 'pitch',\ 'roll'\ in\ json."{}}\ <<\ std::endl;}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Set\ the\ pixel\ size\ in\ millimeters}}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (j[\textcolor{stringliteral}{"{}pixel\_size\_mm"{}}]\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \_pix\_size\ =\ std::stod(j.at(\textcolor{stringliteral}{"{}pixel\_size\_mm"{}}).get<std::string>());}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Set\ 'pixel\_size\_mm':\ "{}}\ <<\ \_pix\_size\ <<\ \textcolor{stringliteral}{"{}\ [mm]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}No\ value\ for\ 'pixel\_size\_mm'\ in\ json,\ Set\ default:\ "{}}\ <<\ \_pix\_size\ <<\ \textcolor{stringliteral}{"{}\ [mm]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Set\ the\ location\ accuracy}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (j[\textcolor{stringliteral}{"{}loc\_accuracy"{}}]\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \_loc\_acc\_X0\_z\ =\ std::stod(j.at(\textcolor{stringliteral}{"{}loc\_accuracy"{}}).get<std::string>());}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \_loc\_acc\_X0\_xy\ =\ \_loc\_acc\_X0\_z;}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \_frustum-\/>\mbox{\hyperlink{class_bounding_box_aedeb5ba3d620fc03fae3b183773046a0}{set\_bb\_offset\_X0\_xy}}(\_loc\_acc\_X0\_xy);}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \_frustum-\/>\mbox{\hyperlink{class_bounding_box_a1d78038db145ca409b24ef7fe79f2817}{set\_bb\_offset\_X0\_z}}(\_loc\_acc\_X0\_z);}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Set\ 'loc\_accuracy'.\ Noise\ position\ location\ (XY):\ "{}}\ <<\ \_loc\_acc\_X0\_xy}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ [m]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Set\ 'loc\_accuracy'.\ Noise\ position\ height\ (Z):\ "{}}\ <<\ \_loc\_acc\_X0\_z\ <<\ \textcolor{stringliteral}{"{}\ [m]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}No\ value\ for\ 'loc\_accuracy'\ in\ json."{}}\ <<\ std::endl;}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Define\ the\ maximum\ distance\ to\ the\ projection\ center}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (j[\textcolor{stringliteral}{"{}max\_dist\_to\_X0"{}}]\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \_max\_dist\_to\_X0\ =\ std::stod(j.at(\textcolor{stringliteral}{"{}max\_dist\_to\_X0"{}}).get<std::string>());}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Set\ 'max\_dist\_to\_X0':\ "{}}\ <<\ \_max\_dist\_to\_X0\ <<\ \textcolor{stringliteral}{"{}\ [m]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}No\ value\ for\ 'max\_dist\_to\_X0'\ in\ json,\ set\ default:\ "{}}\ <<\ \_max\_dist\_to\_X0\ <<\ \textcolor{stringliteral}{"{}\ [m]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Define\ the\ minimum\ distance\ from\ the\ projection\ center}}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (j[\textcolor{stringliteral}{"{}min\_dist\_to\_X0"{}}]\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \_min\_dist\_to\_X0\ =\ std::stod(j.at(\textcolor{stringliteral}{"{}min\_dist\_to\_X0"{}}).get<std::string>());}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Set\ 'min\_dist\_to\_X0':\ "{}}\ <<\ \_min\_dist\_to\_X0\ <<\ \textcolor{stringliteral}{"{}\ [m]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}No\ value\ for\ 'min\_dist\_to\_X0'\ in\ json,\ set\ default:\ "{}}\ <<\ \_min\_dist\_to\_X0\ <<\ \textcolor{stringliteral}{"{}\ [m]"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Load\ the\ true\ image\ from\ the\ specified\ file\ path}}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ fs::path\ path\_file\_trueImage\ =\ fs::path(path\_file\_json).parent\_path()\ /\ \_file\_name\_true\_image;}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ true\_image\ =\ cv::imread(path\_file\_trueImage.string());}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Loaded\ true\ image\ from\ path:\ "{}}\ <<\ path\_file\_trueImage\ <<\ \textcolor{stringliteral}{"{}.\ Image\ size:\ "{}}\ <<\ true\_image.size()\ <<\ std::endl;}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Lade\ Bildpunkte\ zur\ Skalierung\ aus\ mehreren\ Dateien}}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\_file\_name\_image\_points.empty())\ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ file\_name\ :\ \_file\_name\_image\_points)\ \{}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fs::path\ path\_file\_image\_points\ =\ fs::path(path\_file\_json).parent\_path()\ /\ file\_name;}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::ifstream\ inputStream(path\_file\_image\_points);}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!inputStream.is\_open())\ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Failed\ to\ open\ file:\ "{}}\ <<\ path\_file\_image\_points\ <<\ std::endl;}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Vektor\ zur\ Speicherung\ der\ Punkte\ aus\ der\ aktuellen\ Datei}}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<cv::Point2d>\ points\_from\_file;}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ x,\ y,\ z;}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ sep;}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Lese\ Punkte\ aus\ der\ Datei\ und\ füge sie\ in\ den\ Vektor\ ein}}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (inputStream\ >>\ x\ >>\ sep\ >>\ y\ >>\ sep\ >>\ z)\ \{}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ points\_from\_file.emplace\_back(x,\ y);}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Füge die\ Punkte\ dieser\ Datei\ dem\ Hauptvektor\ hinzu}}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_pts\_image\_points\_2D-\/>push\_back(points\_from\_file);}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Ausgabe\ in\ das\ Logfile}}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Loaded\ "{}}\ <<\ points\_from\_file.size()}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ image\ points\ from:\ "{}}\ <<\ path\_file\_image\_points\ <<\ std::endl;}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Gesamtanzahl\ der\ geladenen\ Bildpunkte\ über alle\ Dateien}}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Total\ image\ points\ count:\ "{}}\ <<\ \_pts\_image\_points\_2D-\/>size()\ <<\ std::endl;}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}No\ image\ points\ to\ be\ scaled\ given."{}}\ <<\ std::endl;}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Adjust\ the\ view\ angles\ for\ frustum\ calculations}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \_view\_angle\_half\_H\ /=\ 2.0;}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \_view\_angle\_half\_V\ /=\ 2.0;}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \_frustum-\/>\mbox{\hyperlink{class_bounding_box_a14515a340160d6c770a68598af671ac5}{set\_view\_angles}}(\_view\_angle\_half\_H,\ \_view\_angle\_half\_V);}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Updated\ (half)\ view\ angles\ for\ frustum\ calculation\ (in\ deg):\ H:\ "{}}\ <<\ \_view\_angle\_half\_H\ <<\ \textcolor{stringliteral}{"{},\ V:\ "{}}\ <<\ \_view\_angle\_half\_V\ <<\ std::endl;}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Apply\ coordinate\ shifts\ for\ efficiency}}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \_shift\_x\ =\ \_X0\_x;}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \_shift\_y\ =\ \_X0\_y;}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \_shift\_z\ =\ \_X0\_z;}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \_X0\_x\ -\/=\ \_shift\_x;}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \_X0\_y\ -\/=\ \_shift\_y;}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \_X0\_z\ -\/=\ \_shift\_z;}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \_logfile\_json\ <<\ \textcolor{stringliteral}{"{}Applied\ shift\ to\ coordinates\ X0\ for\ efficiency.\ shift\_x:\ "{}}\ <<\ std::fixed\ <<\ \_shift\_x\ <<\ \textcolor{stringliteral}{"{}\ [m],\ shift\_y:\ "{}}\ <<\ \_shift\_y\ <<\ \textcolor{stringliteral}{"{}\ [m],\ shift\_z:\ "{}}\ <<\ \_shift\_z\ <<\ \textcolor{stringliteral}{"{}\ [m]"{}}\ <<\ std::endl;\ \textcolor{comment}{//Use\ std::fixed\ floating-\/point\ notation\ for\ formatting}}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \_frustum-\/>\mbox{\hyperlink{class_bounding_box_a93dfe6bed5b2c1d622e0c3d847515834}{set\_X0\_Cam\_World}}(\_X0\_x,\ \_X0\_y,\ \_X0\_z);\ \textcolor{comment}{//update\ frustum\ X0}}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \_frustum-\/>\mbox{\hyperlink{class_bounding_box_a286e98e5e5ce151a3638795ce9a8d22f}{calculate\_rotation\_matrix\_rzxy}}(\_azimuth,\ \_roll,\ \_pitch);\ \textcolor{comment}{//update\ frustum\ rotM}}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Precompute\ trigonometric\ values\ for\ rotation\ matrix\ based\ on\ azimuth,\ roll,\ and\ pitch\ angles}}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ rad\_azimuth\ =\ \_azimuth\ *\ M\_PI\ /\ 180.0;}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ rad\_roll\ =\ \_roll\ *\ M\_PI\ /\ 180.0;}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ rad\_pitch\ =\ \_pitch\ *\ M\_PI\ /\ 180.0;}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ Cz\ =\ cos(rad\_azimuth);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ Sz\ =\ sin(rad\_azimuth);}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ Cy\ =\ cos(rad\_roll);}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ Sy\ =\ sin(rad\_roll);}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ Cx\ =\ cos(rad\_pitch);}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ Sx\ =\ sin(rad\_pitch);}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Construct\ the\ rotation\ matrix\ \_rotM\ (Rxyz)\ with\ rotations\ in\ the\ order\ of\ Rz\ (azimuth),\ Ry\ (roll),\ then\ Rx\ (pitch).}}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Rotational\ axes:\ x-\/axis\ (pitch),\ y-\/axis\ (roll),\ z-\/axis\ (azimuth).}}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \_rotM[0]\ =\ Cy\ *\ Cz;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_rotM[3]\ =\ -\/Cy\ *\ Sz;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_rotM[6]\ =\ Sy;}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \_rotM[1]\ =\ Sx\ *\ Sy\ *\ Cz\ +\ Cx\ *\ Sz;\ \ \ \ \ \ \_rotM[4]\ =\ -\/Sx\ *\ Sy\ *\ Sz\ +\ Cx\ *\ Cz;\ \_rotM[7]\ =\ -\/Sx\ *\ Cy;}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \_rotM[2]\ =\ -\/Cx\ *\ Sy\ *\ Cz\ +\ Sx\ *\ Sz;\ \ \ \ \ \_rotM[5]\ =\ Cx\ *\ Sy\ *\ Sz\ +\ Sx\ *\ Cz;\ \ \_rotM[8]\ =\ Cx\ *\ Cy;}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Log\ the\ constructed\ rotation\ matrix\ for\ debugging}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \_logfile-\/>\mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}}(TAG\ +\ \textcolor{stringliteral}{"{}RotM:"{}});}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \_logfile-\/>\mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}}(\textcolor{stringliteral}{"{}\(\backslash\)t\(\backslash\)t"{}}\ +\ std::to\_string(\_rotM[0])\ +\ \textcolor{stringliteral}{"{}\ "{}}\ +\ std::to\_string(\_rotM[3])\ +\ \textcolor{stringliteral}{"{}\ "{}}\ +\ std::to\_string(\_rotM[6]),\ 4);}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \_logfile-\/>\mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}}(\textcolor{stringliteral}{"{}\(\backslash\)t\(\backslash\)t"{}}\ +\ std::to\_string(\_rotM[1])\ +\ \textcolor{stringliteral}{"{}\ "{}}\ +\ std::to\_string(\_rotM[4])\ +\ \textcolor{stringliteral}{"{}\ "{}}\ +\ std::to\_string(\_rotM[7]),\ 4);}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \_logfile-\/>\mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}}(\textcolor{stringliteral}{"{}\(\backslash\)t\(\backslash\)t"{}}\ +\ std::to\_string(\_rotM[2])\ +\ \textcolor{stringliteral}{"{}\ "{}}\ +\ std::to\_string(\_rotM[5])\ +\ \textcolor{stringliteral}{"{}\ "{}}\ +\ std::to\_string(\_rotM[8]),\ 4);}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \_logfile-\/>\mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}}(\textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Set\ maximum\ depth\ of\ the\ point\ cloud\ for\ projection\ within\ the\ frustum}}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \_frustum-\/>\mbox{\hyperlink{class_bounding_box_ad6c84e671c3cbcba0e0695ced7c24605}{set\_frustum\_depth}}(\_max\_dist\_to\_X0);\ }
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Calculate\ the\ view\ frustum\ based\ on\ updated\ parameters}}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \_frustum-\/>\mbox{\hyperlink{class_bounding_box_a1a5c1560ea37dfa00f93f546df7e5e85}{calculate\_view\_frustum}}();}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Push\ log\ content\ to\ logfile}}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ std::string\ line,\ lineErr;}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \_logfile-\/>\mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}}(\textcolor{stringliteral}{"{}"{}});\ \textcolor{comment}{//\ Add\ an\ empty\ line\ before\ JSON\ content,\ if\ needed\ for\ separation}}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (std::getline(\_logfile\_json,\ line))\ \{\ \textcolor{comment}{//\ Read\ and\ log\ each\ line\ from\ \_logfile\_json\ with\ a\ "{}JSON:"{}\ prefix}}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile-\/>\mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}}(\textcolor{stringliteral}{"{}JSON:\(\backslash\)t\(\backslash\)t"{}}\ +\ line);}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00342\ \ \ \ \ \}}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00358\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_data_manager_af5e615a1c23bf6021c3e8f6df8474a7d}{run\_lightglue\_image\_matching}}(\textcolor{keyword}{const}\ cv::Mat\&\ in\_true\_image,\ \textcolor{keyword}{const}\ cv::Mat\&\ in\_synth\_image)\ \{}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ both\ input\ images\ are\ valid}}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (in\_true\_image.empty()\ ||\ in\_synth\_image.empty())\ \{}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile-\/>\mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}}(\textcolor{stringliteral}{"{}Cannot\ run\ LightGlue\ image\ matching\ due\ to\ missing\ images."{}});}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile-\/>\mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}}(\textcolor{stringliteral}{"{}Running\ LightGlue\ image\ matching."{}});}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Define\ the\ directory\ path\ for\ input\ data\ and\ result\ storage}}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ fs::path\ path\_directory\_myData\ =\ get\_path\_working\_directory()\ /\ \textcolor{stringliteral}{"{}myData"{}};}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ fs::create\_directory(path\_directory\_myData);\ \ \textcolor{comment}{//\ Generate\ 'myData'\ directory\ if\ it\ doesn't\ exist}}
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Define\ file\ paths\ for\ the\ image\ list\ and\ individual\ image\ files}}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ fs::path\ path\_file\_imagelist\_to\_match\ =\ path\_directory\_myData\ /\ \textcolor{stringliteral}{"{}image\_file\_list.txt"{}};}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ fs::path\ path\_file\_trueImage\_to\_match\ =\ path\_directory\_myData\ /\ \textcolor{stringliteral}{"{}true\_image.jpg"{}};}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ fs::path\ path\_file\_synthImage\_to\_match\ =\ path\_directory\_myData\ /\ \textcolor{stringliteral}{"{}synth\_image.jpg"{}};}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \_path\_file\_output\_lightglue\_matches\ =\ path\_directory\_myData\ /\ \textcolor{stringliteral}{"{}kpts.txt"{}};}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Save\ the\ images\ to\ the\ 'myData'\ directory}}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ cv::imwrite(path\_file\_trueImage\_to\_match.string(),\ in\_true\_image);}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ cv::imwrite(path\_file\_synthImage\_to\_match.string(),\ in\_synth\_image);}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Wait\ until\ the\ images\ are\ fully\ saved\ by\ checking\ their\ file\ sizes}}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_utils_a1af7801c7551a0c2ad03fbb72bc772e9}{Utils::calculate\_file\_size}}(path\_file\_trueImage\_to\_match)\ ==\ NULL\ ||}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_utils_a1af7801c7551a0c2ad03fbb72bc772e9}{Utils::calculate\_file\_size}}(path\_file\_synthImage\_to\_match)\ ==\ NULL\ ||}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_utils_a1af7801c7551a0c2ad03fbb72bc772e9}{Utils::calculate\_file\_size}}(path\_file\_trueImage\_to\_match.string())\ <\ 1\ ||}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_utils_a1af7801c7551a0c2ad03fbb72bc772e9}{Utils::calculate\_file\_size}}(path\_file\_synthImage\_to\_match)\ <\ 1)\ \{}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Wait\ until\ both\ images\ have\ been\ completely\ written\ to\ disk}}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Open\ an\ output\ file\ stream\ to\ write\ the\ image\ list\ file}}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ std::ofstream\ myFileImageList(path\_file\_imagelist\_to\_match);}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ myFileImageList\ <<\ path\_file\_trueImage\_to\_match\ <<\ std::endl;}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ myFileImageList\ <<\ path\_file\_synthImage\_to\_match\ <<\ std::endl;}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ myFileImageList.close();}
+\DoxyCodeLine{00396\ }
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Ensure\ the\ image\ list\ file\ is\ saved\ before\ proceeding}}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\mbox{\hyperlink{class_utils_a1af7801c7551a0c2ad03fbb72bc772e9}{Utils::calculate\_file\_size}}(path\_file\_imagelist\_to\_match)\ ==\ NULL)\ \{}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Wait\ until\ the\ image\ list\ file\ has\ been\ completely\ written\ to\ disk}}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Prepare\ to\ execute\ the\ LightGlue\ Python\ script\ with\ arguments}}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ std::string\ python\_executable\ =\ \textcolor{stringliteral}{"{}python"{}};\ \ \textcolor{comment}{//\ Adjust\ this\ to\ "{}python3"{}\ or\ the\ path\ to\ your\ Python\ interpreter\ as\ needed}}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Construct\ the\ command\ to\ execute\ the\ Python\ script\ with\ appropriate\ arguments}}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ std::string\ command\ =\ python\_executable\ +\ \textcolor{stringliteral}{"{}\ "{}}\ +\ this-\/>get\_path\_python\_script\_lightglue().string()\ +}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\ -\/-\/left\_image\ "{}}\ +\ path\_file\_trueImage\_to\_match.string()\ +}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\ -\/-\/right\_image\ "{}}\ +\ path\_file\_synthImage\_to\_match.string()\ +}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\ -\/-\/output\_dir\ "{}}\ +\ path\_directory\_myData.string();}
+\DoxyCodeLine{00410\ }
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Execute\ the\ command\ to\ run\ the\ Python\ script}}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ result\ =\ std::system(command.c\_str());}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ the\ Python\ script\ executed\ successfully}}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (result\ !=\ 0)\ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}Error\ executing\ Python\ script."{}}\ <<\ std::endl;}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \_logfile-\/>\mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}}(\textcolor{stringliteral}{"{}Python-\/based\ LightGlue\ image\ matching\ executed\ successfully."{}});}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00422\ \ \ \ \ \}}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \ \ \ \ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00426\ \ \ \ \ \textcolor{comment}{//\ GETTERS\ /\ SETTERS\ }}
+\DoxyCodeLine{00427\ \ \ \ \ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00428\ }
+\DoxyCodeLine{00429\ \ \ \ \ \textcolor{comment}{//\ paths}}
+\DoxyCodeLine{00430\ \ \ \ \ fs::path\ get\_path\_file\_pointcloud()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_path\_file\_point\_cloud;\ \}}
+\DoxyCodeLine{00431\ \ \ \ \ fs::path\ get\_path\_working\_directory()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_path\_working\_directory;\ \}}
+\DoxyCodeLine{00432\ \ \ \ \ fs::path\ get\_path\_python\_script\_lightglue()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_path\_python\_script\_lightglue;\ \}}
+\DoxyCodeLine{00433\ \ \ \ \ fs::path\ get\_path\_lightglue\_kpts()\ \{\ \textcolor{keywordflow}{return}\ \_path\_file\_output\_lightglue\_matches;\ \}}
+\DoxyCodeLine{00434\ }
+\DoxyCodeLine{00435\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_path\_working\_directory(\textcolor{keyword}{const}\ fs::path\&\ path\_dir)\ \{}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \_path\_working\_directory\ =\ path\_dir;}
+\DoxyCodeLine{00437\ \ \ \ \ \}}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_path\_file\_pointcloud(\textcolor{keyword}{const}\ fs::path\&\ path)\ \{}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \_path\_file\_point\_cloud\ =\ path;}
+\DoxyCodeLine{00441\ \ \ \ \ \}}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_path\_python\_script\_lightglue(\textcolor{keyword}{const}\ fs::path\&\ path\_python\_lightglue)\ \{}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \_path\_python\_script\_lightglue\ =\ path\_python\_lightglue;}
+\DoxyCodeLine{00445\ \ \ \ \ \}}
+\DoxyCodeLine{00446\ }
+\DoxyCodeLine{00447\ \ \ \ \ \textcolor{comment}{//\ set/get\ file\ name\ of\ image\ points\ file\ (only\ file\ name\ with\ extension,\ not\ path!)}}
+\DoxyCodeLine{00448\ \ \ \ \ std::vector<std::string>\ get\_file\_name\_image\_points()\ \{\ \textcolor{keywordflow}{return}\ \_file\_name\_image\_points;\ \}}
+\DoxyCodeLine{00449\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_file\_name\_image\_points(std::vector<std::string>\ names)\ \{\ }
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \_file\_name\_image\_points\ =\ names;\ }
+\DoxyCodeLine{00451\ \ \ \ \ \}}
+\DoxyCodeLine{00452\ \ \ \ \ }
+\DoxyCodeLine{00453\ \ \ \ \ \textcolor{comment}{//\ logfile}}
+\DoxyCodeLine{00454\ \ \ \ \ \mbox{\hyperlink{class_log_file}{LogFile}}*\ get\_logfile()\ \{\ \textcolor{keywordflow}{return}\ \_logfile;\ \}\ }
+\DoxyCodeLine{00455\ }
+\DoxyCodeLine{00456\ \ \ \ \ \textcolor{comment}{//\ image\ management\ }}
+\DoxyCodeLine{00457\ \ \ \ \ cv::Mat\&\ get\_synth\_image()\ \{\ \textcolor{keywordflow}{return}\ synth\_image;\ \}\ \textcolor{comment}{//get\ synth\ image}}
+\DoxyCodeLine{00458\ \ \ \ \ cv::Mat\&\ get\_true\_image()\ \{\ \textcolor{keywordflow}{return}\ true\_image;\ \}\ \textcolor{comment}{//get\ true\ image}}
+\DoxyCodeLine{00459\ \ \ \ \ \mbox{\hyperlink{class_coordinate_image}{CoordinateImage}}*\ get\_coordinate\_image()\ \{\ \textcolor{keywordflow}{return}\ \_coord\_img;\ \}\ \textcolor{comment}{//\ get\ coordinate\ image\ of\ projected\ point\ cloud}}
+\DoxyCodeLine{00460\ \ \ \ \ std::string\ get\_filename\_true\_image()\ \{\ \textcolor{keywordflow}{return}\ \_file\_name\_true\_image;\ \}\ \textcolor{comment}{//\ get\ file\ name\ of\ true\ (master)\ image\ (set\ during\ read\ out\ of\ JSON\ meta\ data\ file)}}
+\DoxyCodeLine{00461\ \ \ \ \ cv::Size\ get\_size\_true\_image()\ \{\ \textcolor{keywordflow}{return}\ true\_image.size();\ \}\ \textcolor{comment}{//\ get\ image\ size\ of\ true\ image}}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_synth\_image(cv::Mat\&\ synth\_img)\ \{\ synth\_img.copyTo(synth\_image);\ \}\ \textcolor{comment}{//set\ synth\ image}}
+\DoxyCodeLine{00464\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_true\_image(cv::Mat\&\ true\_img)\ \{\ true\_img.copyTo(true\_image);\ \}\ \textcolor{comment}{//set\ true\ image\ }}
+\DoxyCodeLine{00465\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_coordinate\_image(\textcolor{keywordtype}{int}\ column,\ \textcolor{keywordtype}{int}\ row)\ \{\ \_coord\_img\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{class_coordinate_image}{CoordinateImage}}(column,\ row);\ \}\ \ \ \ \textcolor{comment}{//\ set\ coordinate\ image\ of\ projected\ point\ cloud}}
+\DoxyCodeLine{00466\ \ \ \ \ }
+\DoxyCodeLine{00467\ \ \ \ \ \textcolor{comment}{//\ point\ cloud\ management}}
+\DoxyCodeLine{00468\ \ \ \ \ std::vector<cv::Point2d>*\ get\_pts\_synth\_2D\_double()\ \{\ \textcolor{keywordflow}{return}\ \_pts\_synth\_2D\_double;\ \}}
+\DoxyCodeLine{00469\ \ \ \ \ std::vector<cv::Point3d>*\ get\_pts\_synth\_3D\_double()\ \{\ \textcolor{keywordflow}{return}\ \_pts\_synth\_3D\_double;\ \}}
+\DoxyCodeLine{00470\ \ \ \ \ std::vector<cv::Scalar>*\ get\_pts\_color\_RGB\_int()\ \{\ \textcolor{keywordflow}{return}\ \_pts\_color\_RGB\_int;\ \}}
+\DoxyCodeLine{00471\ \ \ \ \ std::vector<Recolored\_Point\_Cloud>*\ get\_point\_cloud\_recolored()\ \{\ \textcolor{keywordflow}{return}\ \_point\_cloud\_recolored;\ \}}
+\DoxyCodeLine{00472\ \ \ \ \ std::vector<std::vector<cv::Point2d>>*\ get\_image\_points\_2D\_ptr()\ \{\ \textcolor{keywordflow}{return}\ \_pts\_image\_points\_2D;\ \}\ \textcolor{comment}{//\ pointer\ to\ image\ points\ to\ be\ referenced}}
+\DoxyCodeLine{00473\ }
+\DoxyCodeLine{00474\ \ \ \ \ \textcolor{comment}{//\ coordinate\ shifts}}
+\DoxyCodeLine{00475\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_shift\_x()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_shift\_x;\ \}}
+\DoxyCodeLine{00476\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_shift\_y()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_shift\_y;\ \}}
+\DoxyCodeLine{00477\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_shift\_z()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_shift\_z;\ \}}
+\DoxyCodeLine{00478\ }
+\DoxyCodeLine{00479\ \ \ \ \ \textcolor{comment}{//\ frustum\ }}
+\DoxyCodeLine{00480\ \ \ \ \ \mbox{\hyperlink{class_bounding_box}{BoundingBox}}*\ get\_frustum()\ \{\ \textcolor{keywordflow}{return}\ \_frustum;\ \}}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \ \ \ \ \textcolor{comment}{//\ camera\ orientation}}
+\DoxyCodeLine{00483\ \ \ \ \ \textcolor{keywordtype}{double}\&\ get\_pixel\_size()\ \{\ \textcolor{keywordflow}{return}\ \_pix\_size;\ \}}
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{keywordtype}{double}\&\ get\_principal\_distance()\ \{\ \textcolor{keywordflow}{return}\ \_principal\_distance;\ \}}
+\DoxyCodeLine{00485\ \ \ \ \ \textcolor{keywordtype}{double}\&\ get\_min\_dist\_to\_X0()\ \{\ \textcolor{keywordflow}{return}\ \_min\_dist\_to\_X0;\ \}}
+\DoxyCodeLine{00486\ \ \ \ \ cv::Point3d\ get\_X0()\ \{\ \textcolor{keywordflow}{return}\ cv::Point3d(\_X0\_x,\ \_X0\_y,\ \_X0\_z);\ \}}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_X0\_to\_BBox(\textcolor{keywordtype}{double}\ x,\ \textcolor{keywordtype}{double}\ y,\ \textcolor{keywordtype}{double}\ z)\ \{}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \_X0\_x\ =\ x;}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \_X0\_y\ =\ y;}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \_X0\_z\ =\ z;}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \_frustum-\/>\mbox{\hyperlink{class_bounding_box_a93dfe6bed5b2c1d622e0c3d847515834}{set\_X0\_Cam\_World}}(\_X0\_x,\ \_X0\_y,\ \_X0\_z);}
+\DoxyCodeLine{00493\ \ \ \ \ \}}
+\DoxyCodeLine{00494\ }
+\DoxyCodeLine{00495\ \ \ \ \ \textcolor{comment}{//\ get\ rotation\ matrix}}
+\DoxyCodeLine{00496\ \ \ \ \ \textcolor{keywordtype}{double}*\ get\_rotM()\ \{\ \textcolor{keywordflow}{return}\ \_rotM;\ \}\ }
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \ \ \ \ \textcolor{comment}{//\ set\ rotation\ matrix\ [row-\/major]}}
+\DoxyCodeLine{00499\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_rotM(cv::Mat\ rotM)\ \{}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \_rotM[0]\ =\ rotM.at<\textcolor{keywordtype}{double}>(0,\ 0);\ \_rotM[3]\ =\ rotM.at<\textcolor{keywordtype}{double}>(0,\ 1);\ \_rotM[6]\ =\ rotM.at<\textcolor{keywordtype}{double}>(0,\ 2);}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \_rotM[1]\ =\ rotM.at<\textcolor{keywordtype}{double}>(1,\ 0);\ \_rotM[4]\ =\ rotM.at<\textcolor{keywordtype}{double}>(1,\ 1);\ \_rotM[7]\ =\ rotM.at<\textcolor{keywordtype}{double}>(1,\ 2);}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \_rotM[2]\ =\ rotM.at<\textcolor{keywordtype}{double}>(2,\ 0);\ \_rotM[5]\ =\ rotM.at<\textcolor{keywordtype}{double}>(2,\ 1);\ \_rotM[8]\ =\ rotM.at<\textcolor{keywordtype}{double}>(2,\ 2);}
+\DoxyCodeLine{00503\ \ \ \ \ \}}
+\DoxyCodeLine{00504\ }
+\DoxyCodeLine{00505\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_filter\_matches\_ransac\_fisheye(\textcolor{keywordtype}{double}\ val)\ \{}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (val\ >\ 0.0)\ \{}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \_filter\_matches\_ransac\_fisheye\ =\ val;}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile-\/>\mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}}(\textcolor{stringliteral}{"{}Invalid\ value\ for\ filter\_matches\_ransac\_fisheye\ threshold.\ Must\ be\ val\ >\ 0.\ Restore\ default\ (200.0)"{}});}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ \_filter\_matches\_ransac\_fisheye\ =\ 200.0;}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00513\ \ \ \ \ \}}
+\DoxyCodeLine{00514\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_filter\_matches\_ransac\_fisheye()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_filter\_matches\_ransac\_fisheye;\ \}}
+\DoxyCodeLine{00515\ }
+\DoxyCodeLine{00516\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_filter\_matches\_ransac\_pinhole(\textcolor{keywordtype}{double}\ val)\ \{}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (val\ >\ 0.0)\ \{}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \_filter\_matches\_ransac\_pinhole\ =\ val;}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ \_logfile-\/>\mbox{\hyperlink{class_log_file_ad195ac6ffcaf36d58e485807e0f05e74}{append}}(\textcolor{stringliteral}{"{}Invalid\ value\ for\ filter\_matches\_ransac\_pinhole\ threshold.\ Must\ be\ val\ >\ 0.\ Restore\ default\ (8.0)"{}});}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \ \ \_filter\_matches\_ransac\_pinhole\ =\ 8.0;}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00524\ \ \ \ \ \}}
+\DoxyCodeLine{00525\ \ \ \ \ \textcolor{keywordtype}{double}\ get\_filter\_matches\_ransac\_pinhole()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_filter\_matches\_ransac\_pinhole;\ \}}
+\DoxyCodeLine{00526\ }
+\DoxyCodeLine{00527\ }
+\DoxyCodeLine{00528\ }
+\DoxyCodeLine{00529\ }
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00531\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00532\ }
+\DoxyCodeLine{00533\ \ \ \ \ \textcolor{comment}{//\ constants\ }}
+\DoxyCodeLine{00534\ \ \ \ \ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00535\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ TAG\ =\ \textcolor{stringliteral}{"{}DataManager:\(\backslash\)t"{}};}
+\DoxyCodeLine{00536\ \ \ \ \ }
+\DoxyCodeLine{00537\ \ \ \ \ \textcolor{comment}{//\ paths\ to\ directories\ or\ files}}
+\DoxyCodeLine{00538\ \ \ \ \ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00539\ \ \ \ \ fs::path\ \_path\_working\_directory;}
+\DoxyCodeLine{00540\ \ \ \ \ fs::path\ \_path\_file\_point\_cloud;}
+\DoxyCodeLine{00541\ \ \ \ \ fs::path\ \_path\_file\_output\_lightglue\_matches;}
+\DoxyCodeLine{00542\ \ \ \ \ fs::path\ \_path\_python\_script\_lightglue;}
+\DoxyCodeLine{00543\ }
+\DoxyCodeLine{00544\ \ \ \ \ std::string\ \_file\_name\_true\_image;}
+\DoxyCodeLine{00545\ \ \ \ \ std::vector<std::string>\ \_file\_name\_image\_points;}
+\DoxyCodeLine{00546\ }
+\DoxyCodeLine{00547\ \ \ \ \ \textcolor{comment}{//\ logfile}}
+\DoxyCodeLine{00548\ \ \ \ \ \mbox{\hyperlink{class_log_file}{LogFile}}*\ \_logfile;}
+\DoxyCodeLine{00549\ \ \ \ \ std::stringstream\ \_logfile\_json;\ }
+\DoxyCodeLine{00550\ \ \ \ \ }
+\DoxyCodeLine{00551\ \ \ \ \ \textcolor{comment}{//\ image\ data}}
+\DoxyCodeLine{00552\ \ \ \ \ cv::Mat\ true\_image;\ }
+\DoxyCodeLine{00553\ \ \ \ \ cv::Mat\ synth\_image;}
+\DoxyCodeLine{00554\ }
+\DoxyCodeLine{00555\ \ \ \ \ \textcolor{comment}{//\ parameters}}
+\DoxyCodeLine{00556\ \ \ \ \ \textcolor{keywordtype}{double}\ \_pix\_size,\ \_loc\_acc\_X0\_z,\ \_loc\_acc\_X0\_xy,\ \_view\_angle\_half\_H,\ \_view\_angle\_half\_V,\ \_principal\_distance;\ \textcolor{comment}{//\ for\ IOP}}
+\DoxyCodeLine{00557\ \ \ \ \ \textcolor{keywordtype}{double}\ \_X0\_x,\ \_X0\_y,\ \_X0\_z;\ \textcolor{comment}{//\ for\ EOP}}
+\DoxyCodeLine{00558\ \ \ \ \ \textcolor{keywordtype}{double}\ \_shift\_x,\ \_shift\_y,\ \_shift\_z;\ \textcolor{comment}{//\ enable\ shift\ of\ georeferenced\ point\ clouds\ (utm\ values\ very\ large\ numbers)\ }}
+\DoxyCodeLine{00559\ \ \ \ \ }
+\DoxyCodeLine{00560\ \ \ \ \ \textcolor{keywordtype}{double}\ \_azimuth,\ \_roll,\ \_pitch;\ }
+\DoxyCodeLine{00561\ \ \ \ \ \textcolor{keywordtype}{double}*\ \_rotM;}
+\DoxyCodeLine{00562\ }
+\DoxyCodeLine{00563\ \ \ \ \ \textcolor{keywordtype}{double}\ \_min\_dist\_to\_X0;\ \textcolor{comment}{//\ for\ projection;\ check\ if\ point\ to\ be\ projected\ is\ to\ close\ to\ projection\ centre.\ use\ 1\ m\ distance\ by\ default\ }}
+\DoxyCodeLine{00564\ \ \ \ \ \textcolor{keywordtype}{double}\ \_max\_dist\_to\_X0;\ \textcolor{comment}{//\ max\ depth\ of\ point\ cloud\ to\ be\ projected\ starting\ from\ projection\ cnetre.\ use\ 200\ m\ distance\ by\ default}}
+\DoxyCodeLine{00565\ }
+\DoxyCodeLine{00566\ \ \ \ \ \textcolor{keywordtype}{double}\ \_filter\_matches\_ransac\_fisheye;}
+\DoxyCodeLine{00567\ \ \ \ \ \textcolor{keywordtype}{double}\ \_filter\_matches\_ransac\_pinhole;}
+\DoxyCodeLine{00568\ }
+\DoxyCodeLine{00569\ \ \ \ \ \textcolor{comment}{//\ objects}}
+\DoxyCodeLine{00570\ \ \ \ \ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00571\ \ \ \ \ \mbox{\hyperlink{class_bounding_box}{BoundingBox}}*\ \_frustum;\ }
+\DoxyCodeLine{00572\ \ \ \ \ \mbox{\hyperlink{class_coordinate_image}{CoordinateImage}}*\ \_coord\_img;}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00574\ \ \ \ \ \textcolor{comment}{//\ vectors\ with\ data\ }}
+\DoxyCodeLine{00575\ \ \ \ \ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00576\ \ \ \ \ std::vector<cv::Point2d>*\ \_pts\_synth\_2D\_double;\ \textcolor{comment}{//\ for\ matching}}
+\DoxyCodeLine{00577\ \ \ \ \ std::vector<cv::Point3d>*\ \_pts\_synth\_3D\_double;\ \textcolor{comment}{//\ for\ matching}}
+\DoxyCodeLine{00578\ \ \ \ \ std::vector<cv::Scalar>*\ \_pts\_color\_RGB\_int;\ \ \ \ \textcolor{comment}{//\ for\ matching}}
+\DoxyCodeLine{00579\ \ \ \ \ std::vector<std::vector<cv::Point2d>>*\ \_pts\_image\_points\_2D;\ \textcolor{comment}{//\ image\ points\ to\ be\ referenced}}
+\DoxyCodeLine{00580\ \ \ \ \ std::vector<Recolored\_Point\_Cloud>*\ \_point\_cloud\_recolored;\ \textcolor{comment}{//\ point\ cloud\ recolored\ from\ image\ points}}
+\DoxyCodeLine{00581\ \};}
+
+\end{DoxyCode}

@@ -1,0 +1,140 @@
+\doxysection{Im\+Calculator.\+hpp}
+\hypertarget{_im_calculator_8hpp_source}{}\label{_im_calculator_8hpp_source}\index{include/ImCalculator.hpp@{include/ImCalculator.hpp}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#ifndef\ IMCALCULATOR\_H}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#define\ IMCALCULATOR\_H}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include"{}LaserPoint.h"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include"{}CoordinateImage.hpp"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include"{}BoundingBox.hpp"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include"{}LogfilePrinter.h"{}}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include"{}DataManager.h"{}}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <omp.h>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <Windows.h>}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <opencv2/opencv.hpp>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <opencv2/flann.hpp>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ <omp.h>}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#ifdef\ min}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#undef\ min}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#ifdef\ max}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#undef\ max}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_im_calculator}{ImCalculator}}}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{comment}{//\ Ctor}}
+\DoxyCodeLine{00045\ \ \ \ \ \mbox{\hyperlink{class_im_calculator}{ImCalculator}}();}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{//\ Dtor}}
+\DoxyCodeLine{00048\ \ \ \ \ \mbox{\hyperlink{class_im_calculator}{\string~ImCalculator}}();}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_im_calculator_a679198a753de48d5a3850e1256c8d94e}{init}}(\mbox{\hyperlink{class_data_manager}{DataManager}}*\ \_dataManager);}
+\DoxyCodeLine{00060\ \ \ \ \ }
+\DoxyCodeLine{00061\ \ \ \ \ }
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_im_calculator_a3b0fe3ae72de03d46a5ddca7643b399e}{projectPoint}}(\mbox{\hyperlink{class_laser_point}{LaserPoint}}*\ lp);}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_im_calculator_a4cf23c39f46c312e1bde13f45e3076e5}{init\_image}}(\mbox{\hyperlink{class_bounding_box}{BoundingBox}}*\ b);}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_im_calculator_a72dbd78647602fcf07d21aecaa6ff197}{write\_images}}();}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_im_calculator_a60a13c5de1fd2f168c5c05d519a59370}{save\_images}}();}
+\DoxyCodeLine{00110\ \ \ \ \ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_im_calculator_af1329e53df5d5e3aafd7e4d060f8bd30}{fill\_vectors}}();}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_im_calculator_a2e8fc2f5a0fd46e4476f4c786a0637fe}{fill\_image}}(\textcolor{keywordtype}{int}\ radius\_mask\_fill\ =\ 10);}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ cv::Mat*\ get\_image()\{\ \textcolor{keywordflow}{return}\ \_image;\ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ }
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ TAG\ =\ \textcolor{stringliteral}{"{}ImCalculator:\(\backslash\)t"{}};}
+\DoxyCodeLine{00138\ \ \ \ \ \mbox{\hyperlink{class_log_file}{LogFile}}*\ logfile;}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordtype}{void}\ calc\_image\_plane(\textcolor{keywordtype}{float}*\ plane\ );}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordtype}{void}\ init\_images(\textcolor{keywordtype}{int}\ column,\ \textcolor{keywordtype}{int}\ row);}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keywordtype}{void}\ calc\_dist\_image(\textcolor{keywordtype}{float}\ d\_min,\ \textcolor{keywordtype}{float}\ d\_diff,\ \textcolor{keywordtype}{bool}\ deleteCurrentData\ =\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordtype}{void}\ filter\_image(\textcolor{keywordtype}{float}\ db);}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keywordtype}{void}\ calc\_dist\_pyramids(\textcolor{keywordtype}{float}\ d\_min,\ \textcolor{keywordtype}{float}\ d\_diff);}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{comment}{//\ image\ of\ the\ projected\ intensity\ values}}
+\DoxyCodeLine{00208\ \ \ \ \ cv::Mat*\ \_image;}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{comment}{//\ image\ mask\ indicating\ where\ points\ have\ been\ projected}}
+\DoxyCodeLine{00211\ \ \ \ \ cv::Mat*\ \_mask;}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{comment}{//\ for\ the\ distance\ image}}
+\DoxyCodeLine{00214\ \ \ \ \ cv::Mat*\ \_distImage;}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ pyramid\ masks}}
+\DoxyCodeLine{00217\ \ \ \ \ std::vector<cv::Mat*>\ next\_masks;}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{comment}{//\ pyramid\ dist\ images}}
+\DoxyCodeLine{00219\ \ \ \ \ std::vector<cv::Mat*>\ next\_dists;}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{comment}{//\ pixel\ size}}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keywordtype}{float}\ \_pixSize;}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{comment}{//\ distance\ between\ origin\ and\ image\ plane}}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keywordtype}{float}\ \_ck;}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{comment}{//Bildgröße von\ Smartphone\ Bild}}
+\DoxyCodeLine{00227\ \ \ \ \ cv::Size\ \_imageSize;}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{comment}{//\ the\ columns\ and\ rows\ in\ the\ current\ Images}}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keywordtype}{int}\ \_columns,\ \_rows;}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{comment}{//\ the\ minima\ and\ maxima\ distance\ in\ current\ Images}}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordtype}{float}\ \_dist\_min,\ \_dist\_max;}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordtype}{double}*\ \_rotM;}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keywordtype}{float}*\ \_image\_plane;}
+\DoxyCodeLine{00237\ \ \ \ \ \mbox{\hyperlink{class_bounding_box}{BoundingBox}}*\ \_frustum;}
+\DoxyCodeLine{00238\ \ \ \ \ \mbox{\hyperlink{class_data_manager}{DataManager}}*\ \_data\_manager;}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ \ std::vector<cv::Point2d>\ \_real\_matched\_pts;}
+\DoxyCodeLine{00241\ \ \ \ \ std::vector<cv::Point2d>\ \_synth\_matched\_pts;}
+\DoxyCodeLine{00242\ \ \ \ \ std::vector<cv::Point2d>\ \_image\_points\_real;}
+\DoxyCodeLine{00243\ \ \ \ \ std::vector<cv::Point2d>\ \_image\_points\_synth;}
+\DoxyCodeLine{00244\ \ \ \ \ std::vector<cv::Point3d>\ \_object\_points;}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{comment}{//\ fillImages}}
+\DoxyCodeLine{00247\ \ \ \ \ \textcolor{comment}{//\ init\ }}
+\DoxyCodeLine{00248\ \ \ \ \ cv::Mat\ \_maske\_8UC1;\ \textcolor{comment}{//\ Maske\ für ungefüllte Bereiche\ -\/-\/>\ vermeide\ hier\ SiftSuche\ nach\ Punkten}}
+\DoxyCodeLine{00249\ \ \ \ \ cv::Mat\ \_realImage;\textcolor{comment}{//\ echtes\ Bild\ als\ input}}
+\DoxyCodeLine{00250\ \ \ \ \ cv::Mat\ \_realImage\_copy\_orig;}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \ \ \ \ fs::path\ \_working\_dir\_imcalculator;}
+\DoxyCodeLine{00253\ \ \ \ \ }
+\DoxyCodeLine{00254\ \};}
+
+\end{DoxyCode}

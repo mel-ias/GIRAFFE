@@ -1,0 +1,89 @@
+\doxysection{Coordinate\+Image.\+hpp}
+\hypertarget{_coordinate_image_8hpp_source}{}\label{_coordinate_image_8hpp_source}\index{include/CoordinateImage.hpp@{include/CoordinateImage.hpp}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ COORDINATE\_IMAGE\_HPP}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ COORDINATE\_IMAGE\_HPP}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <memory>}\ \textcolor{comment}{//\ For\ std::unique\_ptr}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <stdexcept>}\ \ \textcolor{comment}{//\ For\ std::logic\_error}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}opencv2\(\backslash\)opencv.hpp"{}}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_coordinate_image}{CoordinateImage}}}
+\DoxyCodeLine{00018\ \{}
+\DoxyCodeLine{00019\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00024\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_coordinate_image_1_1_coordinate}{Coordinate}}}
+\DoxyCodeLine{00025\ \ \ \ \ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ x,\ y,\ z;\ \textcolor{comment}{//\ 3D\ coordinates\ of\ the\ pixel.}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ color[3];\ \textcolor{comment}{//\ RGB\ color\ values.}}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ xi,\ yi;\ \textcolor{comment}{//\ Additional\ coordinates\ for\ image\ alignment.}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_coordinate_image_1_1_coordinate_aaf7739c05f87912a7e04ff9c022c2029}{Coordinate}}()}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ :\ x(0),\ y(0),\ z(0),\ xi(0),\ yi(0)}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ color[0]\ =\ 0;}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ color[1]\ =\ 0;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ color[2]\ =\ 0;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_coordinate_image_1_1_coordinate_a87627d002a3afd1deb6c65aa12e5687c}{Coordinate}}(\textcolor{keywordtype}{double}\ xc,\ \textcolor{keywordtype}{double}\ yc,\ \textcolor{keywordtype}{double}\ zc,\ cv::Point3\_<uchar>*\ colorc,\ \textcolor{keywordtype}{double}\ xic,\ \textcolor{keywordtype}{double}\ yic)}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ :\ x(xc),\ y(yc),\ z(zc),\ xi(xic),\ yi(yic)}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ color[0]\ =\ colorc-\/>x;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ color[1]\ =\ colorc-\/>y;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ color[2]\ =\ colorc-\/>z;}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00058\ \ \ \ \ \};}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ Disable\ the\ default\ constructor}}
+\DoxyCodeLine{00061\ \ \ \ \ \mbox{\hyperlink{class_coordinate_image}{CoordinateImage}}()\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00072\ \ \ \ \ \mbox{\hyperlink{class_coordinate_image}{CoordinateImage}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ height);}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00080\ \ \ \ \ \mbox{\hyperlink{class_coordinate_image_ac969fa653516e4acc4af0e1646193f05}{\string~CoordinateImage}}();}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{//\ Disable\ copy\ constructor\ and\ assignment\ operator}}
+\DoxyCodeLine{00084\ \ \ \ \ \mbox{\hyperlink{class_coordinate_image}{CoordinateImage}}(\mbox{\hyperlink{class_coordinate_image}{CoordinateImage}}\&\ src)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00085\ \ \ \ \ \mbox{\hyperlink{class_coordinate_image}{CoordinateImage}}\&\ operator=(\mbox{\hyperlink{class_coordinate_image}{CoordinateImage}}\&\ rhs)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00098\ \ \ \ \ \mbox{\hyperlink{struct_coordinate_image_1_1_coordinate}{Coordinate}}*\ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_coordinate_image_a1de28044a06f057a4c628572940b0ce6}{get\_pixel}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ row);}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_coordinate_image_1_1_coordinate}{Coordinate}}*\ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_coordinate_image_a1de28044a06f057a4c628572940b0ce6}{get\_pixel}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ row)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_coordinate_image_ab13d19ebc252061bf2ed45cae24cdbe5}{set\_pixel}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ row,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_coordinate_image_1_1_coordinate}{Coordinate}}\&\ c);}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_coordinate_image_a1608dcc2af73b3e4f9c535f2881a7060}{delete\_pixel}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ row);}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{class_coordinate_image_a69cd8063e6520b03ff29751dc3817277}{getWidth}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_img\_width;\ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{class_coordinate_image_a6de026dcb4a6c8f1ba3b30e70139eb9d}{getHeight}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_img\_height;\ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00163\ \ \ \ \ std::vector<std::shared\_ptr<Coordinate>>\ \mbox{\hyperlink{class_coordinate_image_a12f7ff63decdd8a7212d1857ef4a014c}{getPixels}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \_pixels;\ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordtype}{int}\ \_img\_width,\ \_img\_height;\ \textcolor{comment}{//\ Image\ dimensions}}
+\DoxyCodeLine{00167\ \ \ \ \ std::vector<std::shared\_ptr<Coordinate>>\ \_pixels;\ \textcolor{comment}{//\ Vector\ storing\ unique\ pointers\ to\ Coordinates}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ std::stringstream\ \_logfile;\ \textcolor{comment}{//\ Logfile\ stream}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keywordtype}{void}\ validateBounds(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ column,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ row)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00181\ \};}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ COORDINATE\_IMAGE\_HPP}}
+
+\end{DoxyCode}

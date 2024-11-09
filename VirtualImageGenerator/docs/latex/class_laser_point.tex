@@ -1,0 +1,63 @@
+\doxysection{Laser\+Point Class Reference}
+\hypertarget{class_laser_point}{}\label{class_laser_point}\index{LaserPoint@{LaserPoint}}
+
+
+Represents a 3D point with associated ID and color.  
+
+
+
+
+{\ttfamily \#include $<$Laser\+Point.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{class_laser_point_a5696479ecef631d5de41090e0221689c}{Laser\+Point}} ()
+\begin{DoxyCompactList}\small\item\em Default constructor. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{class_laser_point_ac60079744f49d2c8427712bcf44a85ee}{\texorpdfstring{$\sim$}{\string~}\+Laser\+Point}} ()
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{class_laser_point_a50e1b7a0bbbd2d646800778cbff28d08}\label{class_laser_point_a50e1b7a0bbbd2d646800778cbff28d08} 
+unsigned int {\bfseries \+\_\+id}
+\item 
+\Hypertarget{class_laser_point_a2d07db74aef7add3e8a9809833488621}\label{class_laser_point_a2d07db74aef7add3e8a9809833488621} 
+double \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+xyz}
+\item 
+\Hypertarget{class_laser_point_a96f4ff7dae08258b2f8b1622bfd7f4eb}\label{class_laser_point_a96f4ff7dae08258b2f8b1622bfd7f4eb} 
+unsigned char {\bfseries color} \mbox{[}3\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Represents a 3D point with associated ID and color. 
+
+This class stores a 3D point\textquotesingle{}s coordinates (in the form of a dynamic array), a unique ID for the point, and a color represented by an RGB triplet (red, green, blue). It handles memory management for the dynamic array storing the 3D coordinates. 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{class_laser_point_a5696479ecef631d5de41090e0221689c}\index{LaserPoint@{LaserPoint}!LaserPoint@{LaserPoint}}
+\index{LaserPoint@{LaserPoint}!LaserPoint@{LaserPoint}}
+\doxysubsubsection{\texorpdfstring{LaserPoint()}{LaserPoint()}}
+{\footnotesize\ttfamily \label{class_laser_point_a5696479ecef631d5de41090e0221689c} 
+Laser\+Point\+::\+Laser\+Point (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Default constructor. 
+
+Initializes the point ID to 0, the 3D coordinates (\+\_\+xyz) to (0.\+0, 0.\+0, 0.\+0), and the color to black (RGB\+: \{0, 0, 0\}). \Hypertarget{class_laser_point_ac60079744f49d2c8427712bcf44a85ee}\index{LaserPoint@{LaserPoint}!````~LaserPoint@{\texorpdfstring{$\sim$}{\string~}LaserPoint}}
+\index{````~LaserPoint@{\texorpdfstring{$\sim$}{\string~}LaserPoint}!LaserPoint@{LaserPoint}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}LaserPoint()}{\string~LaserPoint()}}
+{\footnotesize\ttfamily \label{class_laser_point_ac60079744f49d2c8427712bcf44a85ee} 
+virtual Laser\+Point\+::\texorpdfstring{$\sim$}{\string~}\+Laser\+Point (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [virtual]}}
+
+
+
+Destructor. 
+
+Frees the dynamically allocated memory for the 3D coordinates (\+\_\+xyz) array if it has been allocated, to prevent memory leaks. 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/Laser\+Point.\+h\end{DoxyCompactItemize}

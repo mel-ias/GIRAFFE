@@ -1,0 +1,232 @@
+\doxysection{Coordinate\+Image Class Reference}
+\hypertarget{class_coordinate_image}{}\label{class_coordinate_image}\index{CoordinateImage@{CoordinateImage}}
+
+
+Class used to map the coordinates of each point from the point cloud to the corresponding pixel in the virtual image.  
+
+
+
+
+{\ttfamily \#include $<$Coordinate\+Image.\+hpp$>$}
+
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{struct_coordinate_image_1_1_coordinate}{Coordinate}}
+\begin{DoxyCompactList}\small\item\em Structure representing a pixel with 3D coordinates and color information. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{class_coordinate_image_af126a5acb6a1f2ff010017762dd43048}{Coordinate\+Image}} (const int width, const int height)
+\begin{DoxyCompactList}\small\item\em Constructor for \doxylink{class_coordinate_image}{Coordinate\+Image}. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{class_coordinate_image_ac969fa653516e4acc4af0e1646193f05}{\texorpdfstring{$\sim$}{\string~}\+Coordinate\+Image}} ()
+\begin{DoxyCompactList}\small\item\em Destructor for \doxylink{class_coordinate_image}{Coordinate\+Image}. \end{DoxyCompactList}\item 
+\Hypertarget{class_coordinate_image_abb9ebbd7dd00e9b7be37d5cf3c33e1a6}\label{class_coordinate_image_abb9ebbd7dd00e9b7be37d5cf3c33e1a6} 
+{\bfseries Coordinate\+Image} (\mbox{\hyperlink{class_coordinate_image}{Coordinate\+Image}} \&src)=delete
+\item 
+\Hypertarget{class_coordinate_image_a728beadfffd77a1f41ba74576fa319ad}\label{class_coordinate_image_a728beadfffd77a1f41ba74576fa319ad} 
+\mbox{\hyperlink{class_coordinate_image}{Coordinate\+Image}} \& {\bfseries operator=} (\mbox{\hyperlink{class_coordinate_image}{Coordinate\+Image}} \&rhs)=delete
+\item 
+\mbox{\hyperlink{struct_coordinate_image_1_1_coordinate}{Coordinate}} \texorpdfstring{$\ast$}{*}const \mbox{\hyperlink{class_coordinate_image_a1de28044a06f057a4c628572940b0ce6}{get\+\_\+pixel}} (const int column, const int row)
+\begin{DoxyCompactList}\small\item\em Retrieves a modifiable pointer to the pixel at the specified column and row. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{struct_coordinate_image_1_1_coordinate}{Coordinate}} \texorpdfstring{$\ast$}{*}const \mbox{\hyperlink{class_coordinate_image_abb2a084c964cfb1034939bfdb8b38e7f}{get\+\_\+pixel}} (const int column, const int row) const
+\begin{DoxyCompactList}\small\item\em Retrieves a constant pointer to the pixel at the specified column and row. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_coordinate_image_ab13d19ebc252061bf2ed45cae24cdbe5}{set\+\_\+pixel}} (const int column, const int row, const \mbox{\hyperlink{struct_coordinate_image_1_1_coordinate}{Coordinate}} \&c)
+\begin{DoxyCompactList}\small\item\em Sets the pixel at the specified column and row to the given \doxylink{struct_coordinate_image_1_1_coordinate}{Coordinate} object. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_coordinate_image_a1608dcc2af73b3e4f9c535f2881a7060}{delete\+\_\+pixel}} (const int column, const int row)
+\begin{DoxyCompactList}\small\item\em Deletes the pixel at the specified column and row. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{class_coordinate_image_a69cd8063e6520b03ff29751dc3817277}{get\+Width}} () const
+\begin{DoxyCompactList}\small\item\em Returns the width of the image. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{class_coordinate_image_a6de026dcb4a6c8f1ba3b30e70139eb9d}{get\+Height}} () const
+\begin{DoxyCompactList}\small\item\em Returns the height of the image. \end{DoxyCompactList}\item 
+std\+::vector$<$ std\+::shared\+\_\+ptr$<$ \mbox{\hyperlink{struct_coordinate_image_1_1_coordinate}{Coordinate}} $>$ $>$ \mbox{\hyperlink{class_coordinate_image_a12f7ff63decdd8a7212d1857ef4a014c}{get\+Pixels}} () const
+\begin{DoxyCompactList}\small\item\em Returns a copy of the vector of pixel pointers. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Class used to map the coordinates of each point from the point cloud to the corresponding pixel in the virtual image. 
+
+In this project, the class is primarily used to read and write data. 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{class_coordinate_image_af126a5acb6a1f2ff010017762dd43048}\index{CoordinateImage@{CoordinateImage}!CoordinateImage@{CoordinateImage}}
+\index{CoordinateImage@{CoordinateImage}!CoordinateImage@{CoordinateImage}}
+\doxysubsubsection{\texorpdfstring{CoordinateImage()}{CoordinateImage()}}
+{\footnotesize\ttfamily \label{class_coordinate_image_af126a5acb6a1f2ff010017762dd43048} 
+Coordinate\+Image\+::\+Coordinate\+Image (\begin{DoxyParamCaption}\item[{const int}]{width}{, }\item[{const int}]{height}{}\end{DoxyParamCaption})}
+
+
+
+Constructor for \doxylink{class_coordinate_image}{Coordinate\+Image}. 
+
+Initializes a \doxylink{class_coordinate_image}{Coordinate\+Image} with the given width and height, allocating a vector of nullptrs (initially no Coordinates).
+
+
+\begin{DoxyParams}{Parameters}
+{\em width} & Width of the image (number of columns). \\
+\hline
+{\em height} & Height of the image (number of rows). \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_coordinate_image_ac969fa653516e4acc4af0e1646193f05}\index{CoordinateImage@{CoordinateImage}!````~CoordinateImage@{\texorpdfstring{$\sim$}{\string~}CoordinateImage}}
+\index{````~CoordinateImage@{\texorpdfstring{$\sim$}{\string~}CoordinateImage}!CoordinateImage@{CoordinateImage}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}CoordinateImage()}{\string~CoordinateImage()}}
+{\footnotesize\ttfamily \label{class_coordinate_image_ac969fa653516e4acc4af0e1646193f05} 
+Coordinate\+Image\+::\texorpdfstring{$\sim$}{\string~}\+Coordinate\+Image (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [default]}}
+
+
+
+Destructor for \doxylink{class_coordinate_image}{Coordinate\+Image}. 
+
+Automatically handled by shared\+\_\+ptr, no manual deletion required. 
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{class_coordinate_image_a1608dcc2af73b3e4f9c535f2881a7060}\index{CoordinateImage@{CoordinateImage}!delete\_pixel@{delete\_pixel}}
+\index{delete\_pixel@{delete\_pixel}!CoordinateImage@{CoordinateImage}}
+\doxysubsubsection{\texorpdfstring{delete\_pixel()}{delete\_pixel()}}
+{\footnotesize\ttfamily \label{class_coordinate_image_a1608dcc2af73b3e4f9c535f2881a7060} 
+void Coordinate\+Image\+::delete\+\_\+pixel (\begin{DoxyParamCaption}\item[{const int}]{column}{, }\item[{const int}]{row}{}\end{DoxyParamCaption})}
+
+
+
+Deletes the pixel at the specified column and row. 
+
+Throws a logic error if the specified column or row is out of bounds. If no \doxylink{struct_coordinate_image_1_1_coordinate}{Coordinate} exists at the given position, nothing happens.
+
+
+\begin{DoxyParams}{Parameters}
+{\em column} & The x-\/coordinate of the pixel. \\
+\hline
+{\em row} & The y-\/coordinate of the pixel. \\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em std\+::logic\+\_\+error} & If the column or row is out of bounds. \\
+\hline
+\end{DoxyExceptions}
+\Hypertarget{class_coordinate_image_a1de28044a06f057a4c628572940b0ce6}\index{CoordinateImage@{CoordinateImage}!get\_pixel@{get\_pixel}}
+\index{get\_pixel@{get\_pixel}!CoordinateImage@{CoordinateImage}}
+\doxysubsubsection{\texorpdfstring{get\_pixel()}{get\_pixel()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{class_coordinate_image_a1de28044a06f057a4c628572940b0ce6} 
+\mbox{\hyperlink{struct_coordinate_image_1_1_coordinate}{Coordinate\+Image\+::\+Coordinate}} \texorpdfstring{$\ast$}{*}const Coordinate\+Image\+::get\+\_\+pixel (\begin{DoxyParamCaption}\item[{const int}]{column}{, }\item[{const int}]{row}{}\end{DoxyParamCaption})}
+
+
+
+Retrieves a modifiable pointer to the pixel at the specified column and row. 
+
+Throws a logic error if the specified column or row is out of bounds.
+
+
+\begin{DoxyParams}{Parameters}
+{\em column} & The x-\/coordinate of the pixel. \\
+\hline
+{\em row} & The y-\/coordinate of the pixel. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Coordinate\texorpdfstring{$\ast$}{*} Pointer to the \doxylink{struct_coordinate_image_1_1_coordinate}{Coordinate} object at the specified position. 
+\end{DoxyReturn}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em std\+::logic\+\_\+error} & If the column or row is out of bounds. \\
+\hline
+\end{DoxyExceptions}
+\Hypertarget{class_coordinate_image_abb2a084c964cfb1034939bfdb8b38e7f}\index{CoordinateImage@{CoordinateImage}!get\_pixel@{get\_pixel}}
+\index{get\_pixel@{get\_pixel}!CoordinateImage@{CoordinateImage}}
+\doxysubsubsection{\texorpdfstring{get\_pixel()}{get\_pixel()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{class_coordinate_image_abb2a084c964cfb1034939bfdb8b38e7f} 
+const \mbox{\hyperlink{struct_coordinate_image_1_1_coordinate}{Coordinate\+Image\+::\+Coordinate}} \texorpdfstring{$\ast$}{*}const Coordinate\+Image\+::get\+\_\+pixel (\begin{DoxyParamCaption}\item[{const int}]{column}{, }\item[{const int}]{row}{}\end{DoxyParamCaption}) const}
+
+
+
+Retrieves a constant pointer to the pixel at the specified column and row. 
+
+Throws a logic error if the specified column or row is out of bounds.
+
+
+\begin{DoxyParams}{Parameters}
+{\em column} & The x-\/coordinate of the pixel. \\
+\hline
+{\em row} & The y-\/coordinate of the pixel. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+const Coordinate\texorpdfstring{$\ast$}{*} Constant pointer to the \doxylink{struct_coordinate_image_1_1_coordinate}{Coordinate} object at the specified position. 
+\end{DoxyReturn}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em std\+::logic\+\_\+error} & If the column or row is out of bounds. \\
+\hline
+\end{DoxyExceptions}
+\Hypertarget{class_coordinate_image_a6de026dcb4a6c8f1ba3b30e70139eb9d}\index{CoordinateImage@{CoordinateImage}!getHeight@{getHeight}}
+\index{getHeight@{getHeight}!CoordinateImage@{CoordinateImage}}
+\doxysubsubsection{\texorpdfstring{getHeight()}{getHeight()}}
+{\footnotesize\ttfamily \label{class_coordinate_image_a6de026dcb4a6c8f1ba3b30e70139eb9d} 
+int Coordinate\+Image\+::get\+Height (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Returns the height of the image. 
+
+\begin{DoxyReturn}{Returns}
+int The height of the image. 
+\end{DoxyReturn}
+\Hypertarget{class_coordinate_image_a12f7ff63decdd8a7212d1857ef4a014c}\index{CoordinateImage@{CoordinateImage}!getPixels@{getPixels}}
+\index{getPixels@{getPixels}!CoordinateImage@{CoordinateImage}}
+\doxysubsubsection{\texorpdfstring{getPixels()}{getPixels()}}
+{\footnotesize\ttfamily \label{class_coordinate_image_a12f7ff63decdd8a7212d1857ef4a014c} 
+std\+::vector$<$ std\+::shared\+\_\+ptr$<$ \mbox{\hyperlink{struct_coordinate_image_1_1_coordinate}{Coordinate}} $>$ $>$ Coordinate\+Image\+::get\+Pixels (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Returns a copy of the vector of pixel pointers. 
+
+\begin{DoxyReturn}{Returns}
+std\+::vector$<$std\+::shared\+\_\+ptr$<$\+Coordinate$>$$>$ Vector of unique pointers to \doxylink{struct_coordinate_image_1_1_coordinate}{Coordinate}. 
+\end{DoxyReturn}
+\Hypertarget{class_coordinate_image_a69cd8063e6520b03ff29751dc3817277}\index{CoordinateImage@{CoordinateImage}!getWidth@{getWidth}}
+\index{getWidth@{getWidth}!CoordinateImage@{CoordinateImage}}
+\doxysubsubsection{\texorpdfstring{getWidth()}{getWidth()}}
+{\footnotesize\ttfamily \label{class_coordinate_image_a69cd8063e6520b03ff29751dc3817277} 
+int Coordinate\+Image\+::get\+Width (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Returns the width of the image. 
+
+\begin{DoxyReturn}{Returns}
+int The width of the image. 
+\end{DoxyReturn}
+\Hypertarget{class_coordinate_image_ab13d19ebc252061bf2ed45cae24cdbe5}\index{CoordinateImage@{CoordinateImage}!set\_pixel@{set\_pixel}}
+\index{set\_pixel@{set\_pixel}!CoordinateImage@{CoordinateImage}}
+\doxysubsubsection{\texorpdfstring{set\_pixel()}{set\_pixel()}}
+{\footnotesize\ttfamily \label{class_coordinate_image_ab13d19ebc252061bf2ed45cae24cdbe5} 
+void Coordinate\+Image\+::set\+\_\+pixel (\begin{DoxyParamCaption}\item[{const int}]{column}{, }\item[{const int}]{row}{, }\item[{const \mbox{\hyperlink{struct_coordinate_image_1_1_coordinate}{Coordinate}} \&}]{c}{}\end{DoxyParamCaption})}
+
+
+
+Sets the pixel at the specified column and row to the given \doxylink{struct_coordinate_image_1_1_coordinate}{Coordinate} object. 
+
+Throws a logic error if the specified column or row is out of bounds. If no \doxylink{struct_coordinate_image_1_1_coordinate}{Coordinate} exists at the given position, a new one is created.
+
+
+\begin{DoxyParams}{Parameters}
+{\em column} & The x-\/coordinate of the pixel. \\
+\hline
+{\em row} & The y-\/coordinate of the pixel. \\
+\hline
+{\em c} & The \doxylink{struct_coordinate_image_1_1_coordinate}{Coordinate} object to be set at the specified position. \\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em std\+::logic\+\_\+error} & If the column or row is out of bounds. \\
+\hline
+\end{DoxyExceptions}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/Coordinate\+Image.\+hpp\item 
+src/Coordinate\+Image.\+cpp\end{DoxyCompactItemize}
