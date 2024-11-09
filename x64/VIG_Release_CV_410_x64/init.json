@@ -1,0 +1,7 @@
+{
+"neighbour_distance":2.5,
+"final_iteration_number":3,
+"calc_IO":false,
+"ultra_wide_camera":false,
+"output_pointcloud":true
+}
