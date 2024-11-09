@@ -1,5 +1,97 @@
 # GIRAFFE
 
+
+GIRAFFE is an open-source tool designed for precise registration and orientation of 2D images within 3D geometries, specifically point clouds. It enables the projection and alignment of image data into the coordinate space of the point cloud, supporting workflows like visualization, georeferencing, and coloring of point clouds.
+
+## Features
+- Image-to-Geometry Registration: Aligns images within a point cloud and links image data with geometric features.
+- Image Rendering from Point Clouds: Generates synthetic views from point clouds to support image orientation.
+- Feature Extraction and Matching: Detects and extracts image and geometry features for accurate spatial registration.
+- Frustum Culling: Optimizes visibility and rendering by calculating a local frustum and transforming it into world coordinates.
+- Automatic Calibration: Dynamically adjusts calibration parameters based on the distribution of matched points.
+
+
+## Installation
+### Clone this repository:
+
+bash
+git clone https://github.com/mel-ias/GIRAFFE.git --branch I2G_publishing
+cd GIRAFFE
+Dependencies: Install required dependencies as listed in the CMakeLists.txt file.
+
+Build with CMake:
+
+´´´
+bash
+Code kopieren
+mkdir build
+cd build
+cmake ..
+make
+´´´
+
+Usage
+This example script demonstrates how to set up and execute the GIRAFFE.exe with sample arguments for processing a point cloud and image data.
+
+Example Batch Script Usage
+Here is a sample batch script to configure and run GIRAFFE:
+
+batch
+Code kopieren
+
+´´´
+@echo off
+:: Define paths for executable, virtual environment, and arguments
+set "VIG_DIR=E:\PROMOTION\vs_workspace\I2G_publishing\cpp_server_application\x64\VIG_Release_CV_410_x64"
+set "VENV_DIR=%VIG_DIR%\.venv"
+set "POINT_CLOUD_PATH=E:\OTHER\PIPS\Data\PointCloud_Data\230703_Grabengufer_small2_5cm.pw"
+set "JSON_PATH=E:\OTHER\PIPS\00_Review\I2G_Publishing_Test\cam4\synthImg.json"
+set "PYTHON_SCRIPT_PATH=%VIG_DIR%\match_pairs_lightglue.py"
+set "PROJECT_NAME=cam04_01"
+
+:: Activate the virtual environment
+call "%VENV_DIR%\Scripts\activate.bat"
+
+:: Run GIRAFFE.exe with specified arguments
+"%VIG_DIR%\GIRAFFE.exe" -i "%POINT_CLOUD_PATH%" -j "%JSON_PATH%" -p "%PYTHON_SCRIPT_PATH%" -n "%PROJECT_NAME%"
+
+:: Pause to keep the console open
+pause
+Argument Details
+-i: Path to the point cloud file (e.g., .pw format).
+-j: Path to the JSON configuration file containing image or synthetic view data.
+-p: Path to the Python script (e.g., match_pairs_lightglue.py) for feature matching.
+-n: Project name for the current run, used to organize output data.
+´´´
+
+Running GIRAFFE
+To run the batch script:
+
+Copy the script content into a .bat file.
+Update paths as necessary for your setup.
+Execute the batch file to start the GIRAFFE process with specified arguments.
+Documentation
+To generate HTML documentation:
+
+Install Doxygen.
+Run:
+bash
+
+´´´
+doxygen Doxyfile
+´´´
+The HTML documentation will be located in the docs folder.
+
+### Contributing
+Contributions are welcome! Please fork the repository and submit a pull request for review.
+
+### License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+
+
+
+
 How to setup
 
 1. create a new virtual python environemnt as prerequisite to run lightglue (ref) in the cloned project directory and follow the installation instruction from lightglue (https://github.com/cvg/LightGlue):
