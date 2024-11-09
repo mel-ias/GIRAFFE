@@ -44,6 +44,10 @@ python -m pip install .
 
 5. copy "init.txt" to the program directory of GIRAFFE(.exe) 
 
+### Integration of json.hpp
+GIRAFFE includes the header-only library "JSON for Modern C++" (https://github.com/nlohmann/json). We would like to take the opportunity and thank the authors for providing this incredible useful library. 
+
+
 ## Usage
 
 This example script demonstrates how to set up and execute the GIRAFFE.exe with sample arguments for processing a point cloud and image data.
