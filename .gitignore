@@ -338,9 +338,9 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-/VirtualImageGenerator/lightglue/myBatchLightglue.bat
-/VirtualImageGenerator/.venv
-/VirtualImageGenerator/Result/synthImg
-/VirtualImageGenerator/build
-/VirtualImageGenerator/copy_to_release
-/VirtualImageGenerator/how_to_build.txt
+/GIRAFFE/lightglue/myBatchLightglue.bat
+/GIRAFFE/.venv
+/GIRAFFE/Result/synthImg
+/GIRAFFE/build
+/GIRAFFE/copy_to_release
+/GIRAFFE/how_to_build.txt
