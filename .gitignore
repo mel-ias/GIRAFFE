@@ -14,18 +14,18 @@
 *.userprefs
 
 # Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
-[Bb]in/
-[Oo]bj/
-[Ll]og/
+#[Dd]ebug/
+#[Dd]ebugPublic/
+#[Rr]elease/
+#[Rr]eleases/
+#x64/
+#x86/
+#[Aa][Rr][Mm]/
+#[Aa][Rr][Mm]64/
+#bld/
+#[Bb]in/
+#[Oo]bj/
+#[Ll]og/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -345,3 +345,4 @@ healthchecksdb
 /GIRAFFE/copy_to_release
 /GIRAFFE/how_to_build.txt
 /LightGlue/.venv
+/GIRAFFE/x64/VIG_Release_CV_410_x64
