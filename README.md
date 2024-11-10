@@ -1,5 +1,7 @@
 # GIRAFFE -  Geospatial Image Registration And reFErencing
 
+![GIRAFFE - Logo](https://github.com/mel-ias/GIRAFFE/blob/I2G_publishing/GIRAFFE/logo.jpg?raw=true)
+
 **GIRAFFE** is an open-source tool designed for precise registration and orientation of 2D images within 3D geometries, specifically point clouds. It enables image projection and alignment within the coordinate space of the point cloud, supporting workflows like visualization, georeferencing, and coloring.
 
 ## Features
