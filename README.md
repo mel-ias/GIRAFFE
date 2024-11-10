@@ -16,6 +16,8 @@
 
 ## Installation
 
+You can use the pre-built version given in directory VIG_Release_CV_410_x64 (Windows 10, 64 bit) or build it yourself using CMake, following the instructions below.
+
 1. Clone this repository:
 ```bash
 git clone https://github.com/mel-ias/GIRAFFE.git --branch I2G_publishing
