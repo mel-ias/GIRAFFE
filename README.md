@@ -109,21 +109,8 @@ The script loads and processes images, extracts features, performs matching, and
 
 TODO: ADD EXPLANATION HERE
 
-## Running GIRAFFE
-To run the batch script:
 
-Copy the script content into a .bat file.
-Update paths as necessary for your setup.
-Execute the batch file to start the GIRAFFE process with specified arguments.
-
-Running GIRAFFE
-To run GIRAFFE with the batch script:
-
-Copy the script content into a .bat file.
-Update paths as necessary.
-Execute the batch file to start the GIRAFFE process
-
-Documentation
+### Documentation
 
 To generate HTML documentation:
 
