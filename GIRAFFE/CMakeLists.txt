@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.12)
 
-# Projektname
+# project name
 project(GIRAFFE)
 
-# Setze den C++ Standard
+# c++ standard and flags
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
@@ -13,21 +13,21 @@ if(MSVC)
     add_compile_options(/fp:precise)
 endif()
 
-# OpenCV finden
-set(OpenCV_DIR "C:/Bibliotheken/OpenCV/opencv_4_10_win/build") # Pfad zu deinem OpenCV-Build-Verzeichnis
+# find opencv
+set(OpenCV_DIR "C:/Bibliotheken/OpenCV/opencv_4_10_win/build") # set path to OPENCV
 find_package(OpenCV REQUIRED)
 
-# Include-Verzeichnisse hinzufügen
+# add include files
 include_directories(${OpenCV_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# Quellcodedateien erfassen
-file(GLOB SOURCES "src/*.cpp")  # Alle .cpp-Dateien im src-Verzeichnis
+# add source files
+file(GLOB SOURCES "src/*.cpp") 
 
 # Executable erstellen
 add_executable(GIRAFFE ${SOURCES})
 
-# OpenCV-Bibliotheken verknüpfen
+# link opencv
 target_link_libraries(GIRAFFE PRIVATE ${OpenCV_LIBS})
 
-# Optionale: füge weitere spezifische Compiler-Flags oder Einstellungen hinzu
+# Optional compiler flags
 # set_target_properties(GIRAFFE PROPERTIES COMPILE_FLAGS "-Wall")

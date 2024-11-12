@@ -37,7 +37,7 @@ cmake --build . --config Release
 Create a new virtual python environemnt as prerequisite to run lightglue image matching in the cloned project directory and follow the installation instruction from lightglue (https://github.com/cvg/LightGlue).  We recommend to install Lightglue in a virtual Python 3.10. environment:
 
 ```bash
-python -V:3.10 -m venv .venv
+py -V:3.10 -m venv .venv
 .venv\Scripts\activate.bat
 git clone https://github.com/cvg/LightGlue.git && cd LightGlue
 python -m pip install .
