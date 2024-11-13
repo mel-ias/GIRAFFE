@@ -110,6 +110,9 @@ The script loads and processes images, extracts features, performs matching, and
 TODO: ADD EXPLANATION HERE
 
 
+
+points to be referenced: structure X,Y,Z - separated by commata, no exponential notation?!
+
 ### Documentation
 
 To generate HTML documentation:
