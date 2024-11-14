@@ -18,20 +18,38 @@
 
 You can use the pre-built version given in directory VIG_Release_CV_410_x64 (Windows 10, 64 bit) or build it yourself using CMake, following the instructions below.
 
-1. Clone this repository:
-```bash
-git clone https://github.com/mel-ias/GIRAFFE.git --branch I2G_publishing
-cd GIRAFFE
-```
-2. Dependencies: Install required dependencies as listed in the CMakeLists.txt file.
-3. Build with CMake (tested with [MSVC Compiler using Buildtools für Visual Studio 2022](https://visualstudio.microsoft.com/de/downloads/#build-tools-for-visual-studio-2022 "MSVC Compiler using Buildtools für Visual Studio 2022")):
 
-```bash
+### Build Instructions
+
+1. Install CMake
+Download and install CMake (https://cmake.org/download/, minimum version 3.12; we tested with version 3.30 on Windows x64).
+Note: Ensure CMake is added to your system PATH if not done automatically. To add it manually, you can use the following command in PowerShell or Command Prompt:
+```set PATH="C:\Program Files\CMake\bin\";%PATH%```
+
+2. Install Visual Studio 2022 MSVC 19.40 compiler
+Download and install Visual Studio 2022 (the free Community Edition is sufficient) or, alternatively, the Build Tools for Visual Studio 2022 (https://visualstudio.microsoft.com/de/downloads/#build-tools-for-visual-studio-2022) to obtain the required MSVC compiler.
+Note: We tested our compilation using MSVC 19.40, targeting Visual Studio 17 2022.
+
+3. Clone the Repository
+Clone this repository and switch to the project directory:
+```git clone https://github.com/mel-ias/GIRAFFE.git --branch I2G_publishing
+cd GIRAFFE```
+
+4. Install Dependencies
+Install the required dependency, OpenCV version 4.10.0. Update the path to your OpenCV installation in the provided CMakeLists.txt file by setting OpenCV_DIR (e.g., set(OpenCV_DIR "C:/Libraries/OpenCV/opencv_4_10_win/build")).
+
+5. Build GIRAFFE
+Open PowerShell or Command Prompt in the project directory and build GIRAFFE.exe using CMake:
+
+```
+bash
+Code kopieren
 mkdir build
 cd build
 cmake ..
 cmake --build . --config Release
 ```
+
 
 #### Integrate Lightglue for true-synthetic image matching
 Create a new virtual python environemnt as prerequisite to run lightglue image matching in the cloned project directory and follow the installation instruction from lightglue (https://github.com/cvg/LightGlue).  We recommend to install Lightglue in a virtual Python 3.10. environment. Furthermore, be sure you run everything in command line (not powershell):
