@@ -32,8 +32,10 @@ Note: We tested our compilation using MSVC 19.40, targeting Visual Studio 17 202
 
 3. Clone the Repository
 Clone this repository and switch to the project directory:
-```git clone https://github.com/mel-ias/GIRAFFE.git --branch I2G_publishing
-cd GIRAFFE```
+```
+git clone https://github.com/mel-ias/GIRAFFE.git --branch I2G_publishing
+cd GIRAFFE
+```
 
 4. Install Dependencies
 Install the required dependency, OpenCV version 4.10.0. Update the path to your OpenCV installation in the provided CMakeLists.txt file by setting OpenCV_DIR (e.g., set(OpenCV_DIR "C:/Libraries/OpenCV/opencv_4_10_win/build")).
