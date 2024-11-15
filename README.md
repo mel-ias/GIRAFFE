@@ -38,7 +38,7 @@ cd GIRAFFE
 ```
 
 4. Install Dependencies
-Install the required dependency, OpenCV version 4.10.0. Update the path to your OpenCV installation in the provided CMakeLists.txt file by setting OpenCV_DIR (e.g., ```set(OpenCV_DIR "C:/Libraries/OpenCV/opencv_4_10_win/build"```)).
+Install the required dependency, OpenCV version 4.10.0 (https://opencv.org/releases/). Update the path to your OpenCV installation in the provided CMakeLists.txt file by setting OpenCV_DIR (e.g., ```set(OpenCV_DIR "C:/Libraries/OpenCV/opencv_4_10_win/build"```)).
 
 5. Build GIRAFFE
 Open PowerShell or Command Prompt in the project directory and build ```GIRAFFE.exe``` using CMake:
