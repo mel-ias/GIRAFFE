@@ -54,7 +54,8 @@ cmake --build . --config Release
 
 
 #### Integrate Lightglue for true-synthetic image matching
-Create a new virtual python environemnt as prerequisite to run lightglue image matching in the cloned project directory and follow the installation instruction from lightglue (https://github.com/cvg/LightGlue).  We recommend to install Lightglue in a virtual Python 3.10. environment. Furthermore, be sure you run everything in command line (not powershell):
+Create a new virtual python environemnt as prerequisite to run lightglue image matching in the cloned project directory and follow the installation instruction from lightglue (https://github.com/cvg/LightGlue).  
+We recommend to install Lightglue in a virtual Python 3.10. environment. Furthermore, be sure you run everything in command line (not powershell):
 
 ```bash
 py -3.10 -m venv .venv
@@ -63,11 +64,13 @@ git clone https://github.com/cvg/LightGlue.git && cd LightGlue
 python -m pip install .
 ```
 
+*Note: If you do not want to use git, you can also download and unpack the lightglue repository. The user must switch to the unpacked repository (e.g. lightglue-main) and continue with ```python -m pip install .``` after the .venv has been activated.*
+
 #### Copy initialisation file
-GIRAFFE.exe requires a few initialisation parameters that are preconfigured in the given init.json file that has to be copied to the directory of GIRAFFE.(.exe). More details on the settings are given below.
+```GIRAFFE.exe``` requires a few initialisation parameters that are preconfigured in the given ```init.json``` file that has to be copied to the directory of ```GIRAFFE.exe```. More details on the settings are given below.
 
 ## Usage
-This example script demonstrates how to set up and execute the GIRAFFE.exe with sample arguments for processing a point cloud and image data.
+This example script demonstrates how to set up and execute the ```GIRAFFE.exe``` with sample arguments for processing a point cloud and image data.
 
 ### Example Batch Script Usage
 Here is a sample batch script to configure and run GIRAFFE:
@@ -77,7 +80,7 @@ Here is a sample batch script to configure and run GIRAFFE:
 :: Define paths for executable, virtual environment, and arguments
 set "VIG_DIR=[...]\x64\VIG_Release_CV_410_x64"
 set "VENV_DIR=%VIG_DIR%\.venv"
-set "POINT_CLOUD_PATH=[...]\point_cloud.pw" :: PW format mandatory
+set "POINT_CLOUD_PATH=[...]\point_cloud.pw" :: PW format mandatory, use the provided PWConverter in the pre-built directory for conversion of a txt-saved point cloud given in X Y Z r g b format (space, comma or semicolon separated) by drag and drop the .txt point cloud file to the provided batch file xyzRGB_to_PW.bat
 set "JSON_PATH=[...]\cam\cam_params.json"
 set "PYTHON_SCRIPT_PATH=%VIG_DIR%\match_pairs_lightglue.py" :: link to the provided python file that executes lightglue-based matching
 set "PROJECT_NAME=my_project" :: specify project name
@@ -92,7 +95,7 @@ call "%VENV_DIR%\Scripts\activate.bat"
 pause
 ```
 #### Argument Details
-- `-i`: Path to the point cloud file (e.g., .pw format).
+- `-i`: Path to the point cloud file (in .pw format - see explanation above how to get the required PW-format).
 - `-j`: Path to the JSON configuration file containing image or synthetic view data. (see explanation below)
 - `-p`: Path to the Python script (e.g., match_pairs_lightglue.py) for feature matching.
 - `-n`: Project name for the current run, used to organize output data.
