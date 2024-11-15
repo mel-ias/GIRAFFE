@@ -44,6 +44,7 @@
       <AdditionalIncludeDirectories>C:\Bibliotheken\OpenCV\opencv_4_10_win\build\include</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
