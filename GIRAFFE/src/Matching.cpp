@@ -276,7 +276,6 @@ bool Matching::run_calibration(
 double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_points,
 	 std::vector<cv::Point2d>& in_matched_image_points_real,
 	 cv::Mat& true_image,
-	 double in_pix_size,
 	 cv::Mat& camera_matrix,
 	 cv::Mat& dist_coeffs,
 	 cv::Mat& rvec,

@@ -431,7 +431,6 @@ int main(int argc, char** argv) {
 					matched_object_points,
 					matched_image_points_real,
 					data_manager->get_true_image(),
-					data_manager->get_pixel_size(),
 					camera_matrix,
 					dist_coeffs,
 					rMatObj,

@@ -177,7 +177,6 @@ public:
 	 * @param[in] in_matched_object_points Matched 3D object points (in world coordinates).
 	 * @param[in] in_matched_image_points_real Matched 2D image points (in image coordinates).
 	 * @param[in] true_image Original image matrix for size reference.
-	 * @param[in] in_pix_size Pixel size (used for scaling).
 	 * @param[in] camera_matrix Intrinsic camera matrix.
 	 * @param[in] dist_coeffs Camera distortion coefficients.
 	 * @param[out] rvec Rotation vector (output if solved).
@@ -193,7 +192,6 @@ public:
 		std::vector<cv::Point3d> &in_matched_object_points, 
 		std::vector<cv::Point2d>& in_matched_image_points_real, 
 		cv::Mat& real_canvas, 
-		double in_pix_size, 
 		cv::Mat& camera_matrix, 
 		cv::Mat& dist_coeffs, 
 		cv::Mat& rvec, 
