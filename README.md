@@ -128,11 +128,25 @@ The script loads and processes images, extracts features, performs matching, and
 
 #### JSON configuration file (-j)
 
-TODO: ADD EXPLANATION HERE
 
+```
+### JSON Parameter Description
 
+The following parameters are used in the JSON file:
 
-points to be referenced: structure X,Y,Z - separated by commata, no exponential notation?!
+- **`file_name_true_image`**: The name of the original image file (e.g., `"m220606150003016.jpg"`) that needs to be stored in the same directory as this json file
+- **`azimuth`**: The azimuth angle in degrees. Indicates the camera's direction clockwise from north (e.g., `235`) in the reference system of the 3D point cloud data used for referencing the image measurements
+- **`pitch`**: The pitch angle of the camera in degrees. Range: `0` (downward) to `180` (upward) (e.g., use `90` for close-range camera arrangements)
+- **`roll`**: The roll angle of the camera in degrees. Describes the rotation around the camera's optical axis (e.g., `0` - usually used)
+- **`X0_x`, `X0_y`, `X0_z`**: The cartesian coordinates (x, y, z) of the camera's projection centre in the reference system of the 3D point cloud (e.g., `2629114`, `1105319`, `2870`) - usually in metres
+- **`loc_accuracy`**: The location accuracy in meters. Represents the uncertainty of the camera position (e.g., `0.5`) in the unit of the reference system; check the docs and Elias et al., 2019 for details on this parameter
+- **`focal_length_mm`**: The focal length of the camera lens in millimeters (e.g., `5.4`)
+- **`pixel_size_mm`**: The size of a single pixel of the camera sensor in millimeters (e.g., `0.003125`)
+- **`view_angle_x`, `view_angle_y`**: The horizontal (`view_angle_x`) and vertical (`view_angle_y`) field of view of the camera in degrees (e.g., `90`, `90` for maximum field of view - recommended)
+- **`file_name_image_points`**: A list of filenames containing the raw 2D image points to be referenced corresponding to the image coordinate system of true_image (e.g., `["time_lapse_sequence_01.txt", ..., "time_lapse_sequence_19.txt"]`). Note: the structure needs to be x,y,z (xy = image coordinates, z = 0)
+- **`max_dist_to_X0`**: The maximum distance (in meters) from the camera origin (`X0`) to consider points in the view frustum (e.g., `3000`)
+- **`min_dist_to_X0`**: The minimum distance (in meters) from the camera origin (`X0`) to consider points in the view frustum (e.g., `1.0`)
+```  
 
 ### Documentation
 
@@ -150,6 +164,58 @@ The HTML documentation will be located in the docs folder.
 
 ### Contributing
 Contributions are welcome! Please fork the repository and submit a pull request for review.
+
+
+### Citation
+If you use GIRAFFE in your work, please cite the underlying research papers as follows:  
+
+#### BibTeX Entries  
+
+```
+@Article{HendrickxElias2024,
+AUTHOR = {Hendrickx, H. and Elias, M. and Blanch, X. and Delaloye, R. and Eltner, A.},
+TITLE = {AI-Based Tracking of Fast-Moving Alpine Landforms Using High Frequency Monoscopic Time-Lapse Imagery},
+JOURNAL = {EGUsphere},
+VOLUME = {2024},
+YEAR = {2024},
+PAGES = {1--20},
+URL = {https://egusphere.copernicus.org/preprints/2024/egusphere-2024-2570/},
+DOI = {10.5194/egusphere-2024-2570}
+}
+
+
+@article{Elias2023,
+title = {Multi-modal image matching to colorize a SLAM based point cloud with arbitrary data from a thermal camera},
+journal = {ISPRS Open Journal of Photogrammetry and Remote Sensing},
+volume = {9},
+pages = {100041},
+year = {2023},
+issn = {2667-3932},
+doi = {https://doi.org/10.1016/j.ophoto.2023.100041},
+url = {https://www.sciencedirect.com/science/article/pii/S2667393223000121},
+author = {Melanie Elias and Alexandra Weitkamp and Anette Eltner},
+keywords = {Thermal infrared (TIR) camera, Hand-held LiDAR, Urban mapping, Deep learning, Scene rendering},
+}
+
+
+@article{Elias2019,
+author = {Elias, Melanie and Kehl, Christian and Schneider, Danilo},
+title = {Photogrammetric water level determination using smartphone technology},
+journal = {The Photogrammetric Record},
+volume = {34},
+number = {166},
+pages = {198-223},
+keywords = {exterior orientation, hydrology, image-to-geometry registration, outdoor application, sensor fusion, smartphone},
+doi = {https://doi.org/10.1111/phor.12280},
+url = {https://onlinelibrary.wiley.com/doi/abs/10.1111/phor.12280},
+eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1111/phor.12280},
+abstract = {Abstract Rapid technological progress has made mobile devices increasingly valuable for scientific research. This paper outlines a versatile camera-based water gauging method, implemented on smartphones, which is usable almost anywhere if 3D data is available at the targeted river section. After analysing smartphone images to detect the present water line, the image data is transferred into object space. Using the exterior orientation acquired by smartphone sensor fusion, a synthetic image originating from the 3D data is rendered that represents the local situation. Performing image-to-geometry registration using the true smartphone camera image and the rendered synthetic image, image parameters are refined by space resection. Moreover, the water line is transferred into object space by means of the underlying 3D information. The algorithm is implemented in the smartphone application “Open Water Levels”, which can be used on both high-end and low-cost devices. In a comprehensive investigation, the methodology is evaluated, demonstrating both its potential and remaining issues.},
+year = {2019}
+}
+
+
+
+
 
 ### License
 This project is licensed under the MIT License. See the LICENSE file for details.
