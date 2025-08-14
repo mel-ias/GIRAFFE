@@ -79,7 +79,7 @@ Here is a sample batch script to configure and run GIRAFFE:
 :: Define paths for executable, virtual environment, and arguments
 set "VIG_DIR=[...]\x64\VIG_Release_CV_410_x64"
 set "VENV_DIR=%VIG_DIR%\.venv"
-set "POINT_CLOUD_PATH=[...]\point_cloud.pw" :: PW format mandatory, use the provided PWConverter in the pre-built directory for conversion of a txt-saved point cloud given in X Y Z r g b format (space, comma or semicolon separated) by drag and drop the .txt point cloud file to the provided batch file xyzRGB_to_PW.bat
+set "POINT_CLOUD_PATH=[...]\point_cloud.pw" :: PW format mandatory, use the provided PWConverter in the pre-built directory for conversion of a txt-saved point cloud given in X Y Z r g b format (space, comma or semicolon separated, no headline allowed!) by drag and drop the .txt point cloud file to the provided batch file xyzRGB_to_PW.bat
 set "JSON_PATH=[...]\cam\cam_params.json"
 set "PYTHON_SCRIPT_PATH=%VIG_DIR%\match_pairs_lightglue.py" :: link to the provided python file that executes lightglue-based matching, which is prepared in the program directory GIRAFFE/GIRAFFE. We recommend to copy the file to VIG_DIR.
 set "PROJECT_NAME=my_project" :: specify project name
