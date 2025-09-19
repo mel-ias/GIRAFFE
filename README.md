@@ -69,6 +69,9 @@ python -m pip install .
 ```GIRAFFE.exe``` requires a few initialisation parameters that are preconfigured in the given ```init.json``` file that has to be copied to the directory of ```GIRAFFE.exe```. More details on the settings are given below.
 
 ## Usage
+
+➡️ **Sample data including all config files, point clouds and image data to check the setup of GIRAFFE was pushlished in [Zenodo](https://zenodo.org/records/14260180/files/GIRAFFE_calls_and_results.zip?download=1).**
+
 This example script demonstrates how to set up and execute the ```GIRAFFE.exe``` with sample arguments for processing a point cloud and image data.
 
 ### Example Batch Script Usage
