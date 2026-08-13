@@ -9,6 +9,11 @@
 #include <cfloat>
 #include <string>
 
+#include <queue>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
 #include "LaserPoint.h"
 #include "ImCalculator.hpp"
 #include "BoundingBox.hpp"

@@ -166,6 +166,18 @@ public:
 		cv::Mat& distCoeffs,
 		bool useFisheye);
 
+	int space_resection_prior_aware(
+		const std::vector<cv::Point3d>& obj_pts,
+		const std::vector<cv::Point2d>& img_pts,
+		const cv::Mat& camera_matrix,
+		const cv::Mat& dist_coeffs,
+		const cv::Mat& rvec_prior_in, const cv::Mat& tvec_prior_in,
+		double reproj_threshold,
+		int num_iterations,
+		double lambda_prior_rot,
+		double lambda_prior_trans,
+		cv::Mat& rvec_out, cv::Mat& tvec_out,
+		std::vector<int>& inliers_out);
 
 	/**
 	 * @brief Space resection using matched object and image points to estimate intrinsic / extrinsic camera parameters.
@@ -199,9 +211,26 @@ public:
 		cv::Mat& stdDev_In, 
 		cv::Mat& stdDev_Ext, 
 		Flags_resec in_flag, 
-		bool fisheye);
+		bool fisheye,
+		std::vector<int>& out_inliers);
 
-	
+
+	/**
+	 * @brief Draws matches between real and synthetic images, and saves the result as an image file.
+	 *
+	 * This function visualizes the matches between keypoints from a real image and a synthetic image.
+	 * It draws lines connecting the corresponding points from both images and saves the result in the specified file.
+	 *
+	 * @param[in] in_real_image The real image (as an OpenCV matrix).
+	 * @param[in] in_synth_image The synthetic image (as an OpenCV matrix).
+	 * @param[in] in_real_matches_draw A vector of 2D keypoints from the real image.
+	 * @param[in] in_synth_matches_draw A vector of 2D keypoints from the synthetic image.
+	 * @param[in] fileName The name of the output file (without extension) where the result will be saved.
+	 */
+	 //void write_visualization_matches(cv::Mat& canvas_real_image, cv::Mat& canvas_synth_image, std::vector <cv::Point2d>& real_matches_draw, std::vector <cv::Point2d>& synth_matches_draw, std::string fileName);
+	void write_visualization_matches(cv::Mat& in_real_image, cv::Mat& in_synth_image, std::vector<cv::Point2d>& in_real_matches_draw, std::vector<cv::Point2d>& in_synth_matches_draw, std::string fileName, const std::vector<bool>& in_inlier_mask);
+
+
 
 private:
 
@@ -301,6 +330,7 @@ private:
 		double distanceThreshold = 2.0);
 
 
+	
 	// Output functions
 	/**
 	 * @brief Outputs enhanced camera calibration results to the log file.
@@ -319,21 +349,6 @@ private:
 	 * @param in_pix_size       The size of a pixel in millimeters, used to convert pixel measurements.
 	 */
 	void write_camera_calibration_statistics(cv::Mat& in_camera_matrix, cv::Mat& in_dist_coeffs, cv::Mat& in_rvec, cv::Mat& in_tvec, cv::Mat& stdDev_In, cv::Mat& stdDev_Ext, cv::Mat& perViewErrors, double in_pix_size);
-	
-
-	/**
-	 * @brief Draws matches between real and synthetic images, and saves the result as an image file.
-	 *
-	 * This function visualizes the matches between keypoints from a real image and a synthetic image.
-	 * It draws lines connecting the corresponding points from both images and saves the result in the specified file.
-	 *
-	 * @param[in] in_real_image The real image (as an OpenCV matrix).
-	 * @param[in] in_synth_image The synthetic image (as an OpenCV matrix).
-	 * @param[in] in_real_matches_draw A vector of 2D keypoints from the real image.
-	 * @param[in] in_synth_matches_draw A vector of 2D keypoints from the synthetic image.
-	 * @param[in] fileName The name of the output file (without extension) where the result will be saved.
-	 */
-	void write_visualization_matches(cv::Mat& canvas_real_image, cv::Mat& canvas_synth_image, std::vector <cv::Point2d>& real_matches_draw, std::vector <cv::Point2d>& synth_matches_draw, std::string fileName);
 	
 
 	/**

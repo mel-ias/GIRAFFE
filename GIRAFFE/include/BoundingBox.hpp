@@ -121,6 +121,7 @@ public:
 	 * @param V Vertical angle in degrees (must be between 0 and 60 degrees, defaulted to H if invalid).
 	 */
 	void set_view_angles(double H, double V = 0.0f);
+	void set_view_angles(double ck, double pixSize, int columns, int rows);
 
 	/**
 	 * @brief Set the 3x3 rotation matrix in ZXY order.

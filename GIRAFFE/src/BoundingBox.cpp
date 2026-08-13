@@ -54,6 +54,14 @@ void BoundingBox::set_view_angles(double H, double V){
 }
 
 
+// Eingabe: Kamera/Pixelgeometrie
+void BoundingBox::set_view_angles(double ck, double pixSize, int columns, int rows) {
+	_tH = (columns * pixSize / 2.0) / ck;
+	_tV = (rows * pixSize / 2.0) / ck;
+	_logFilePrinter->append(TAG + "set view angle tH: " + std::to_string(_tH) + ", tV: " + std::to_string(_tV));
+}
+
+
 void BoundingBox::set_X0_Cam_World(double X0_x, double X0_y, double X0_z){
 
 	_X0_cam_world[0] = X0_x;
@@ -86,7 +94,7 @@ void BoundingBox::calculate_rotation_matrix_rzxy(double _azimuth, double _roll, 
 void BoundingBox::calculate_view_frustum(){
 
 	_logFilePrinter->append(TAG + "Calculate View Frustum");
-	
+
 	// Simplest case: zMin and zMax grow with d*tan(V)
 	_zMin = -(_bb_offset_X0_z) - (_d * _tV);
 	_zMax = _bb_offset_X0_z + (_d * _tV);

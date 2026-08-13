@@ -244,9 +244,9 @@ public:
 		}
 
 		// Load the true image from the specified file path
-		fs::path path_file_trueImage = fs::path(path_file_json).parent_path() / _file_name_true_image;
-		true_image = cv::imread(path_file_trueImage.string());
-		_logfile_json << "Loaded true image from path: " << path_file_trueImage << ". Image size: " << true_image.size() << std::endl;
+		_path_file_trueImage = fs::path(path_file_json).parent_path() / _file_name_true_image;
+		true_image = cv::imread(_path_file_trueImage.string());
+		_logfile_json << "Loaded true image from path: " << _path_file_trueImage << ". Image size: " << true_image.size() << std::endl;
 
 		// Lade Bildpunkte zur Skalierung aus mehreren Dateien
 		if (!_file_name_image_points.empty()) {
@@ -288,7 +288,10 @@ public:
 		_view_angle_half_H /= 2.0;
 		_view_angle_half_V /= 2.0;
 		_frustum->set_view_angles(_view_angle_half_H, _view_angle_half_V);
-		_logfile_json << "Updated (half) view angles for frustum calculation (in deg): H: " << _view_angle_half_H << ", V: " << _view_angle_half_V << std::endl;
+
+		std::cout << "princp distance " << _principal_distance << " pix size " << _pix_size << " width " << true_image.size().width << " height " << true_image.size().height << std::endl;
+		_frustum->set_view_angles(_principal_distance, _pix_size, true_image.size().width, true_image.size().height);
+		//_logfile_json << "Updated (half) view angles for frustum calculation (in deg): H: " << _view_angle_half_H << ", V: " << _view_angle_half_V << std::endl;
 
 		// Apply coordinate shifts for efficiency
 		_shift_x = _X0_x;
@@ -342,78 +345,103 @@ public:
 	}
 
 
+
+
+
 	/**
 	 * @brief Runs LightGlue-based image matching on the provided true and synthetic images.
 	 *
-	 * This function saves the provided true and synthetic images to disk, generates an image list file,
-	 * and executes a Python script to perform image matching using LightGlue. The matching results are
-	 * saved in a designated output directory. The function checks for successful image and file storage
-	 * before running the script to ensure data completeness.
+	 * Copies the original true image file (byte-identical, no re-encoding) and writes the
+	 * synthetic image to disk into a per-call subdirectory, generates an image list file,
+	 * and executes a Python script to perform image matching using LightGlue.
 	 *
-	 * @param[in] in_true_image  The input image representing the "true" scene, as an OpenCV matrix (cv::Mat).
-	 * @param[in] in_synth_image The input image representing the "synthetic" scene, as an OpenCV matrix (cv::Mat).
-	 *
+	 * @param[in] in_synth_image The synthetic scene image (cv::Mat).
 	 * @return True if the LightGlue matching script executes successfully, false otherwise.
 	 */
-	bool run_lightglue_image_matching(const cv::Mat& in_true_image, const cv::Mat& in_synth_image) {
-		// Check if both input images are valid
-		if (in_true_image.empty() || in_synth_image.empty()) {
-			_logfile->append("Cannot run LightGlue image matching due to missing images.");
+	bool run_lightglue_image_matching(const cv::Mat& in_synth_image) {
+		if (in_synth_image.empty()) {
+			_logfile->append("Cannot run LightGlue image matching: synthetic image missing.");
 			return false;
 		}
-		else {
-			_logfile->append("Running LightGlue image matching.");
+		if (!fs::exists(_path_file_trueImage)) {
+			_logfile->append("Cannot run LightGlue image matching: true image file not found at " + _path_file_trueImage.string());
+			return false;
+		}
+		_logfile->append("Running LightGlue image matching.");
+
+		// Eindeutiges Unterverzeichnis pro Aufruf statt eindeutiger Dateinamen.
+		// Dateinamen bleiben fix, damit sie mit dem Python-Skript kompatibel sind.
+		static std::atomic<uint64_t> call_counter{ 0 };
+		const uint64_t call_id = call_counter.fetch_add(1);
+
+		fs::path path_directory_myData = get_path_working_directory() / "myData" / ("call_" + std::to_string(call_id));
+		std::error_code ec;
+		fs::create_directories(path_directory_myData, ec);
+		if (ec) {
+			_logfile->append("Failed to create myData subdirectory: " + ec.message());
+			return false;
 		}
 
-		// Define the directory path for input data and result storage
-		fs::path path_directory_myData = get_path_working_directory() / "myData";
-		fs::create_directory(path_directory_myData);  // Generate 'myData' directory if it doesn't exist
-
-		// Define file paths for the image list and individual image files
 		fs::path path_file_imagelist_to_match = path_directory_myData / "image_file_list.txt";
-		fs::path path_file_trueImage_to_match = path_directory_myData / "true_image.jpg";
+		fs::path path_file_trueImage_to_match = path_directory_myData / ("true_image" + _path_file_trueImage.extension().string());
 		fs::path path_file_synthImage_to_match = path_directory_myData / "synth_image.jpg";
-		_path_file_output_lightglue_matches = path_directory_myData / "kpts.txt";
+		_path_file_output_lightglue_matches = path_directory_myData / "kpts.txt"; // fixer Name, wie vom Python-Skript erwartet
 
-		// Save the images to the 'myData' directory
-		cv::imwrite(path_file_trueImage_to_match.string(), in_true_image);
-		cv::imwrite(path_file_synthImage_to_match.string(), in_synth_image);
+		// True-Image: byte-identische Kopie statt Neukodierung über cv::Mat
+		fs::copy_file(_path_file_trueImage, path_file_trueImage_to_match, fs::copy_options::overwrite_existing, ec);
+		if (ec) {
+			_logfile->append("Failed to copy true image: " + ec.message());
+			return false;
+		}
 
-		// Wait until the images are fully saved by checking their file sizes
-		while (
-			Utils::calculate_file_size(path_file_trueImage_to_match) == NULL ||
-			Utils::calculate_file_size(path_file_synthImage_to_match) == NULL ||
-			Utils::calculate_file_size(path_file_trueImage_to_match.string()) < 1 ||
+		// Synth-Image: weiterhin über cv::imwrite, da es nur im Speicher existiert
+		std::vector<int> jpg_params = { cv::IMWRITE_JPEG_QUALITY, 100 };
+		if (!cv::imwrite(path_file_synthImage_to_match.string(), in_synth_image, jpg_params)) {
+			_logfile->append("Failed to write synth_image to disk: " + path_file_synthImage_to_match.string());
+			return false;
+		}
+
+		if (Utils::calculate_file_size(path_file_trueImage_to_match) < 1 ||
 			Utils::calculate_file_size(path_file_synthImage_to_match) < 1) {
-			// Wait until both images have been completely written to disk
+			_logfile->append("Written/copied image files appear empty.");
+			return false;
 		}
 
-		// Open an output file stream to write the image list file
-		std::ofstream myFileImageList(path_file_imagelist_to_match);
-		myFileImageList << path_file_trueImage_to_match << std::endl;
-		myFileImageList << path_file_synthImage_to_match << std::endl;
-		myFileImageList.close();
-
-		// Ensure the image list file is saved before proceeding
-		while (Utils::calculate_file_size(path_file_imagelist_to_match) == NULL) {
-			// Wait until the image list file has been completely written to disk
+		// Image-Liste schreiben
+		{
+			std::ofstream myFileImageList(path_file_imagelist_to_match);
+			if (!myFileImageList.is_open()) {
+				_logfile->append("Failed to open image list file for writing.");
+				return false;
+			}
+			myFileImageList << path_file_trueImage_to_match << std::endl;
+			myFileImageList << path_file_synthImage_to_match << std::endl;
+		}
+		if (!fs::exists(path_file_imagelist_to_match) ||
+			Utils::calculate_file_size(path_file_imagelist_to_match) < 1) {
+			_logfile->append("Image list file was not written correctly.");
+			return false;
 		}
 
-		// Prepare to execute the LightGlue Python script with arguments
-		std::string python_executable = "python";  // Adjust this to "python3" or the path to your Python interpreter as needed
+		// Python-Skript ausführen
+		std::string python_executable = "python";
+		std::string command =
+			python_executable + " \"" + this->get_path_python_script_lightglue().string() + "\"" +
+			" --left_image \"" + path_file_trueImage_to_match.string() + "\"" +
+			" --right_image \"" + path_file_synthImage_to_match.string() + "\"" +
+			" --output_dir \"" + path_directory_myData.string() + "\"";
 
-		// Construct the command to execute the Python script with appropriate arguments
-		std::string command = python_executable + " " + this->get_path_python_script_lightglue().string() +
-			" --left_image " + path_file_trueImage_to_match.string() +
-			" --right_image " + path_file_synthImage_to_match.string() +
-			" --output_dir " + path_directory_myData.string();
-
-		// Execute the command to run the Python script
 		int result = std::system(command.c_str());
-
-		// Check if the Python script executed successfully
 		if (result != 0) {
-			std::cerr << "Error executing Python script." << std::endl;
+			_logfile->append("Error executing Python script (exit code " + std::to_string(result) + ").");
+			return false;
+		}
+
+		// Zusätzliche Absicherung: Existiert die Keypoint-Datei nach erfolgreichem Skript-Exit wirklich?
+		if (!fs::exists(_path_file_output_lightglue_matches) ||
+			Utils::calculate_file_size(_path_file_output_lightglue_matches) < 1) {
+			_logfile->append("Python script exited successfully, but expected output file is missing or empty: " +
+				_path_file_output_lightglue_matches.string());
 			return false;
 		}
 
@@ -490,6 +518,10 @@ public:
 		_X0_y = y;
 		_X0_z = z;
 		_frustum->set_X0_Cam_World(_X0_x, _X0_y, _X0_z);
+
+		// TEST
+		_frustum->calculate_rotation_matrix_rzxy(_azimuth, _roll, _pitch);
+
 	}
 
 	// get rotation matrix
@@ -540,6 +572,7 @@ private:
 	fs::path _path_file_point_cloud;
 	fs::path _path_file_output_lightglue_matches;
 	fs::path _path_python_script_lightglue;
+	fs::path _path_file_trueImage;
 
 	std::string _file_name_true_image;
 	std::vector<std::string> _file_name_image_points;

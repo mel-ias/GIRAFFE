@@ -17,6 +17,8 @@
 #include <vector>
 #include <Windows.h>
 
+#include <mutex>
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/flann.hpp>
 #include <iostream>
@@ -47,6 +49,23 @@ public:
 	// Dtor
 	~ImCalculator();
 
+	struct PointCoordData {
+		double x = 0.0, y = 0.0, z = 0.0;
+		double colF = 0.0, rowF = 0.0;
+		bool valid = false;
+	};
+
+	struct LocalFrameBuffer {
+		cv::Mat mask;             // CV_32FC1, init -1.0f
+		cv::Mat image;            // CV_8UC3
+		cv::Mat winnerId;         // CV_32SC1, init -1 (Tie-Break)
+		std::vector<PointCoordData> coordData;
+		std::vector<cv::Mat> pyrMask; // je Pyramidenstufe CV_32FC1, init -1.0f
+		float dist_min = std::numeric_limits<float>::max();
+		float dist_max = 0.0f;
+	};
+
+	
 	/**
 	 * @brief Initializes the ImCalculator with necessary parameters, including camera settings and directory setup.
 	 *
@@ -250,5 +269,9 @@ private:
 	cv::Mat _realImage_copy_orig;
 
 	fs::path _working_dir_imcalculator;
+	
+	std::mutex _projection_mutex; //schutz
+
+	
 	
 };

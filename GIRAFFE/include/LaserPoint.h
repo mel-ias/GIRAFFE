@@ -39,7 +39,7 @@ public:
 
 public:
 
-    unsigned int _id; // Unique identifier for the point
+    size_t _id; // Unique identifier for the point
     double* _xyz; // Array containing the 3D coordinates of the point (x, y, z)
     unsigned char color[3]; // Color of the point, represented by an RGB triplet (Red, Green, Blue)
 };

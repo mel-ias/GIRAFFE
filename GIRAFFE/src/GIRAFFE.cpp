@@ -11,6 +11,8 @@
 #include <ctime>
 #include "LogfilePrinter.h"
 
+#include <chrono>
+#include <thread>
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -295,6 +297,7 @@ int main(int argc, char** argv) {
 	}
 
 	// Check if the specified working directory already exists; if so, add a counter suffix
+	/*
 	int dirCounter = 0;
 	while (fs::exists(path) && dirCounter < 10) {
 		dirCounter++;
@@ -304,6 +307,24 @@ int main(int argc, char** argv) {
 	// Create the final working directory if it does not exist
 	if (!fs::create_directories(path)) {
 		std::cerr << "Error: Could not create output directory!" << std::endl;
+		return 1;
+	}
+	*/
+
+	// Atomically check AND create in a single step (prevents a race condition when
+	// processes with the same `working_directory_name` are started simultaneously).
+	// fs::create_directory() with error_code returns true exactly when THIS
+	// call has actually created the directory—there is no time window between
+	// “check” and “create” that another process could slip into.
+	int dirCounter = 0;
+	std::error_code ec;
+	while (!fs::create_directory(path, ec) && dirCounter < 1000) {
+		dirCounter++;
+		path = path_dir_result / (working_directory_name + "(" + std::to_string(dirCounter) + ")");
+	}
+
+	if (dirCounter >= 1000) {
+		std::cerr << "Error: Could not create a unique output directory!" << std::endl;
 		return 1;
 	}
 
@@ -402,7 +423,7 @@ int main(int argc, char** argv) {
 				"-----------------------------------------");
 
 			// Run LightGlue image matching between true and synthetic images
-			if (data_manager->run_lightglue_image_matching(true_img_4matching, synth_img_4matching)) {
+			if (data_manager->run_lightglue_image_matching(synth_img_4matching)) { // old version: true_img_4matching, synth_img_4matching
 
 				// Define output path for LightGlue keypoints
 				std::string path_matching_out = data_manager->get_path_lightglue_kpts().string();
@@ -411,7 +432,25 @@ int main(int argc, char** argv) {
 				log_printer->append(TAG + "matching successful, read inliers passing fundamental test...");
 
 				// Wait until the matching output file is saved and has valid content
-				while (Utils::calculate_file_size(path_matching_out) == NULL || Utils::calculate_file_size(path_matching_out) < 1) {}
+				using namespace std::chrono;
+				const auto wait_start = steady_clock::now();
+				const auto wait_timeout = seconds(30); // ggf. anpassen
+				bool file_ready = false;
+
+				while (steady_clock::now() - wait_start < wait_timeout) {
+					auto size = Utils::calculate_file_size(path_matching_out);
+					if (size != NULL && size >= 1) {
+						file_ready = true;
+						break;
+					}
+					std::this_thread::sleep_for(milliseconds(50)); // CPU-Last der Poll-Schleife reduzieren
+				}
+
+				if (!file_ready) {
+					log_printer->append(TAG + "Timeout waiting for LightGlue output file: " + path_matching_out);
+					terminate_program("LightGlue output file was not created within timeout - check python script and paths.");
+				}
+				
 
 				// Run post-processing on inlier data from VisualSFM
 				// Calculate camera parameters for transformation into object space
@@ -426,7 +465,37 @@ int main(int argc, char** argv) {
 					matched_image_points_synth,
 					_max_pixel_distance_synth_3D_derivation);
 				
+				// Planaritäts-Check: Kovarianzmatrix der (zentrierten) 3D-Punkte, SVD
+				cv::Mat pts(matched_object_points.size(), 3, CV_64F);
+				for (size_t i = 0; i < matched_object_points.size(); ++i) {
+					pts.at<double>(i, 0) = matched_object_points[i].x;
+					pts.at<double>(i, 1) = matched_object_points[i].y;
+					pts.at<double>(i, 2) = matched_object_points[i].z;
+				}
+				cv::Mat mean;
+				cv::reduce(pts, mean, 0, cv::REDUCE_AVG);
+				for (int i = 0; i < pts.rows; ++i) pts.row(i) -= mean;
+
+				cv::Mat w, u, vt;
+				cv::SVDecomp(pts, w, u, vt);
+				log_printer->append(TAG + "Planaritaets-Check singular values: "
+					+ std::to_string(w.at<double>(0)) + " / "
+					+ std::to_string(w.at<double>(1)) + " / "
+					+ std::to_string(w.at<double>(2)));
+				// Verhaeltnis kleinster zu groesstem Singulaerwert nahe 0 => nahezu planar/degeneriert
+
+				cv::Mat rvec_before; cv::Rodrigues(rMatObj, rvec_before);
+				log_printer->append(TAG + "Pose VOR space_resection - rvec: "
+					+ std::to_string(rvec_before.at<double>(0)) + " / "
+					+ std::to_string(rvec_before.at<double>(1)) + " / "
+					+ std::to_string(rvec_before.at<double>(2))
+					+ " | tvec: "
+					+ std::to_string(tVecObj.at<double>(0)) + " / "
+					+ std::to_string(tVecObj.at<double>(1)) + " / "
+					+ std::to_string(tVecObj.at<double>(2)));
+
 				// Perform spatial resection to determine camera and exterior orientation, check if values are valid
+				std::vector<int> ransac_inliers;  
 				repro_error = matching->space_resection(
 					matched_object_points,
 					matched_image_points_real,
@@ -438,7 +507,32 @@ int main(int argc, char** argv) {
 					stdDevCam_In,
 					stdDevObj_Ext,
 					flags_matching,
-					_ultra_ww);
+					_ultra_ww,
+					ransac_inliers);
+
+				cv::Mat rvec_after; cv::Rodrigues(rMatObj, rvec_after);
+				log_printer->append(TAG + "Pose NACH space_resection - rvec: "
+					+ std::to_string(rvec_after.at<double>(0)) + " / "
+					+ std::to_string(rvec_after.at<double>(1)) + " / "
+					+ std::to_string(rvec_after.at<double>(2))
+					+ " | tvec: "
+					+ std::to_string(tVecObj.at<double>(0)) + " / "
+					+ std::to_string(tVecObj.at<double>(1)) + " / "
+					+ std::to_string(tVecObj.at<double>(2)));
+
+				// Inlier-Maske für Visualisierung aufbauen
+				std::vector<bool> inlier_mask(matched_image_points_real.size(), false);
+				for (int idx : ransac_inliers) {
+					inlier_mask[idx] = true;
+				}
+				matching->write_visualization_matches(
+					data_manager->get_true_image(),
+					data_manager->get_synth_image(),
+					matched_image_points_real,
+					matched_image_points_synth,
+					"matches_iteration_" + std::to_string(iteration),
+					inlier_mask);
+
 
 				// If Interior Orientation Parameters (IOP) are calculated, undistort the image to align synthetic and real images for better matching
 				if (flags_matching == Matching::CALC_EO_IO) { // Before last iteration, undistort and use the undistorted image in the final iteration

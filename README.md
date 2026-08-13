@@ -170,20 +170,22 @@ Contributions are welcome! Please fork the repository and submit a pull request 
 
 
 ### Citation
-If you use GIRAFFE in your work, please cite the underlying research papers as follows:  
+If you use the GIRAFFE tool in your work, please cite one of the underlying research papers, depending on your topic.  
 
 #### BibTeX Entries  
 
 ```
-@Article{HendrickxElias2024,
+@Article{HendrickxElias2025,
 AUTHOR = {Hendrickx, H. and Elias, M. and Blanch, X. and Delaloye, R. and Eltner, A.},
-TITLE = {AI-Based Tracking of Fast-Moving Alpine Landforms Using High Frequency Monoscopic Time-Lapse Imagery},
-JOURNAL = {EGUsphere},
-VOLUME = {2024},
-YEAR = {2024},
-PAGES = {1--20},
-URL = {https://egusphere.copernicus.org/preprints/2024/egusphere-2024-2570/},
-DOI = {10.5194/egusphere-2024-2570}
+TITLE = {AI-based tracking of fast-moving alpine landforms using high-frequency
+monoscopic time-lapse imagery},
+JOURNAL = {Earth Surface Dynamics},
+VOLUME = {13},
+YEAR = {2025},
+NUMBER = {4},
+PAGES = {705--721},
+URL = {https://esurf.copernicus.org/articles/13/705/2025/},
+DOI = {10.5194/esurf-13-705-2025}
 }
 
 
@@ -199,7 +201,6 @@ url = {https://www.sciencedirect.com/science/article/pii/S2667393223000121},
 author = {Melanie Elias and Alexandra Weitkamp and Anette Eltner},
 keywords = {Thermal infrared (TIR) camera, Hand-held LiDAR, Urban mapping, Deep learning, Scene rendering},
 }
-
 
 @article{Elias2019,
 author = {Elias, Melanie and Kehl, Christian and Schneider, Danilo},
