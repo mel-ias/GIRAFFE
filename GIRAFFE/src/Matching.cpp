@@ -167,7 +167,7 @@ void Matching::loadMatches(
 	_logfile->append(TAG + "count fundamental inlier matches (real_matched_pts/synth_matched_pts):" + std::to_string(real_matched_pts.size()) + "/" + std::to_string(synth_matched_pts.size()));
 
 	// check for outliers
-	ransac_test(real_matched_pts, synth_matched_pts);
+	ransac_test(real_matched_pts, synth_matched_pts, 0.95, 8.0, false);
 
 	// data conversion for image matching
 	// receive 3D coordinates for all image points 
@@ -188,8 +188,9 @@ void Matching::loadMatches(
 	write_corresponding_points_to_file(out_matched_object_points, out_matched_image_points_real, out_matched_image_points_synth);
 
 	// draw matches
-	write_visualization_matches(in_real_image, in_synth_image, real_matched_pts, synth_matched_pts, "matches_2D");
-	write_visualization_matches(in_real_image, in_synth_image, out_matched_image_points_real, out_matched_image_points_synth, "matches_with_3D_val");
+	//write_visualization_matches(in_real_image, in_synth_image, real_matched_pts, synth_matched_pts, "matches_2D");
+	//write_visualization_matches(in_real_image, in_synth_image, out_matched_image_points_real, out_matched_image_points_synth, "matches_with_3D_val");
+
 }
 
 
@@ -272,6 +273,108 @@ bool Matching::run_calibration(
 }
 
 
+int Matching::space_resection_prior_aware(
+	const std::vector<cv::Point3d>& obj_pts,
+	const std::vector<cv::Point2d>& img_pts,
+	const cv::Mat& camera_matrix,
+	const cv::Mat& dist_coeffs,
+	const cv::Mat& rvec_prior, const cv::Mat& tvec_prior, // aktuelle/vorherige Pose
+	double reproj_threshold,
+	int num_iterations,
+	double lambda_prior_rot,    // Gewichtung Rotationsabweichung (pro rad)
+	double lambda_prior_trans,  // Gewichtung Translationsabweichung (pro m)
+	cv::Mat& rvec_out, cv::Mat& tvec_out,
+	std::vector<int>& inliers_out)
+{
+	int n = static_cast<int>(obj_pts.size());
+	cv::RNG rng(42);
+	double best_score = std::numeric_limits<double>::max();
+	cv::Mat best_rvec, best_tvec;
+	std::vector<int> best_inliers;
+
+	cv::Mat R_prior;
+	cv::Rodrigues(rvec_prior, R_prior);
+
+	for (int iter = 0; iter < num_iterations; ++iter) {
+		// Minimal-Sample fuer AP3P: 3 verschiedene, zufaellige Indizes
+		std::vector<int> sample_idx;
+		while (sample_idx.size() < 3) {
+			int idx = rng.uniform(0, n);
+			if (std::find(sample_idx.begin(), sample_idx.end(), idx) == sample_idx.end())
+				sample_idx.push_back(idx);
+		}
+		std::vector<cv::Point3d> sample_obj;
+		std::vector<cv::Point2d> sample_img;
+		for (int idx : sample_idx) {
+			sample_obj.push_back(obj_pts[idx]);
+			sample_img.push_back(img_pts[idx]);
+		}
+
+		// AP3P liefert ALLE (bis zu 4) Kandidatenloesungen fuer dieses Sample
+		std::vector<cv::Mat> rvecs, tvecs;
+		int num_solutions = cv::solvePnPGeneric(sample_obj, sample_img,
+			camera_matrix, dist_coeffs, rvecs, tvecs, false, cv::SOLVEPNP_AP3P);
+
+		for (int s = 0; s < num_solutions; ++s) {
+			cv::Mat rvec_cand = rvecs[s], tvec_cand = tvecs[s];
+
+			// Cheiralitaets-Check: physikalisch unmoegliche Loesungen sofort raus
+			// (Punkte muessen vor der Kamera liegen, z>0 im Kamerasystem)
+			cv::Mat R;
+			cv::Rodrigues(rvec_cand, R);
+			bool all_in_front = true;
+			for (const auto& p : sample_obj) {
+				cv::Mat pw = (cv::Mat_<double>(3, 1) << p.x, p.y, p.z);
+				cv::Mat pc = R * pw + tvec_cand;
+				if (pc.at<double>(2) <= 0) { all_in_front = false; break; }
+			}
+			if (!all_in_front) continue;
+
+			// Inlier auf der VOLLEN Punktmenge zaehlen
+			std::vector<cv::Point2d> projected;
+			cv::projectPoints(obj_pts, rvec_cand, tvec_cand, camera_matrix, dist_coeffs, projected);
+			std::vector<int> cand_inliers;
+			for (int i = 0; i < n; ++i) {
+				if (cv::norm(img_pts[i] - projected[i]) < reproj_threshold)
+					cand_inliers.push_back(i);
+			}
+			if (cand_inliers.size() < 4) continue;
+
+			// Abweichung von der Prior-Pose: Rotation als Winkel, Translation als Distanz
+			cv::Mat R_diff = R * R_prior.t();
+			cv::Mat rvec_diff;
+			cv::Rodrigues(R_diff, rvec_diff);
+			double angle_diff_rad = cv::norm(rvec_diff);
+			double trans_diff_m = cv::norm(tvec_cand - tvec_prior);
+
+			// Score: mehr Inlier = besser, Abweichung vom Prior = Strafe
+			double score = -static_cast<double>(cand_inliers.size())
+				+ lambda_prior_rot * angle_diff_rad
+				+ lambda_prior_trans * trans_diff_m;
+
+			if (score < best_score) {
+				best_score = score;
+				best_rvec = rvec_cand.clone();
+				best_tvec = tvec_cand.clone();
+				best_inliers = cand_inliers;
+			}
+		}
+	}
+
+	if (best_rvec.empty()) return -1;
+
+	// Finale Verfeinerung auf den besten Inliern
+	std::vector<cv::Point3d> in_obj;
+	std::vector<cv::Point2d> in_img;
+	for (int i : best_inliers) { in_obj.push_back(obj_pts[i]); in_img.push_back(img_pts[i]); }
+	cv::solvePnPRefineLM(in_obj, in_img, camera_matrix, dist_coeffs, best_rvec, best_tvec);
+
+	rvec_out = best_rvec;
+	tvec_out = best_tvec;
+	inliers_out = best_inliers;
+	return 0;
+}
+
 
 double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_points,
 	 std::vector<cv::Point2d>& in_matched_image_points_real,
@@ -283,7 +386,8 @@ double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_poi
 	 cv::Mat& stdDev_In,
 	 cv::Mat& stdDev_Ext,
 	 Flags_resec in_flag,
-	 bool ultra_wide_angle) {
+	 bool ultra_wide_angle,
+	 std::vector<int>& out_inliers) {
 	 
 	 // Early return if both extrinsic and intrinsic parameters are fixed
 	 if (in_flag == FIXED_EO_IO) {
@@ -313,8 +417,8 @@ double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_poi
 	 // use AP3P which seems to be more robust against uncertainities in the IOP and EOP than LM-Solver but less accurate
 	 if (!cv::solvePnPRansac(in_matched_object_points, in_matched_image_points_real,
 		 camera_matrix, dist_coeffs, rvec, tvec, true,
-		 100, 8.0f, 0.99, //default parameters
-		 inliers, cv::SOLVEPNP_AP3P)) 
+		 2000, 8.0f, 0.95, //default parameters
+		 inliers, cv::SOLVEPNP_AP3P))  // SOLVEPNP_AP3P
 	 {
 		 _logfile->append(TAG + "solvePnPRansac failed.");
 		 return -1;
@@ -334,7 +438,7 @@ double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_poi
 	 // Optimize extrinsics or both intrinsic and extrinsic parameters
 	 cv::Size imageSize = true_image.size();  // Store size in a variable
 	 
-	 if (in_flag ==!CALC_EO) {
+	 if (in_flag != CALC_EO) {
 		 // Check the distribution of points inside the image
 		 if (!is_distribution_good(image_points_real_ransac, imageSize)) {
 			 _logfile->append("Distribution of 2D-3D correspondences is not sufficient to calculate camera matrix and distortion coefficients.");
@@ -367,6 +471,9 @@ double Matching::space_resection(std::vector<cv::Point3d>& in_matched_object_poi
 		 rvec = rvec.reshape(1);
 		 tvec = tvec.reshape(1);
 	 }
+
+	 out_inliers = inliers;   // <-- NEU: vor dem return füllen
+
 	 return repro_error;
 }
 
@@ -406,7 +513,7 @@ cv::Mat Matching::ransac_test(std::vector<cv::Point2d>& _points1, std::vector<cv
 		cv::Mat Fund = cv::findFundamentalMat(
 			cv::Mat(points1), cv::Mat(points2),  // Input point sets
 			inliers_fund,                        // Inlier mask
-			cv::FM_RANSAC,                       // Use RANSAC for robust estimation
+			cv::FM_RANSAC,                     // USAC_MAGSAC or FM_RANSAC Use RANSAC for robust estimation
 			distance,                            // Distance threshold for inliers
 			confidence);                         // Confidence level for RANSAC
 
@@ -622,57 +729,83 @@ Matching::FilteredData Matching::filter_pts_by_distance(
 }
 
 
-void Matching::write_visualization_matches(cv::Mat& in_real_image, cv::Mat& in_synth_image, std::vector<cv::Point2d>& in_real_matches_draw, std::vector<cv::Point2d>& in_synth_matches_draw, std::string fileName) {
 
-	#ifdef max
-	#undef max
-	#endif
-	// Create a new image to combine both real and synthetic images side by side
+/**
+ * @brief Visualizes matches between real and synthetic images, with optional inlier/outlier color-coding.
+ *
+ * @param[in] in_real_image        The real image.
+ * @param[in] in_synth_image       The synthetic image.
+ * @param[in] in_real_matches_draw 2D points in the real image.
+ * @param[in] in_synth_matches_draw 2D points in the synthetic image (same indexing as in_real_matches_draw).
+ * @param[in] fileName             Output filename (without extension).
+ * @param[in] in_inlier_mask       Optional: same size as the match vectors. true = inlier (green), false = outlier (red, dimmed).
+ *                                 Pass an empty vector to color all matches uniformly (legacy behavior, distinct colors per line).
+ */
+void Matching::write_visualization_matches(
+	cv::Mat& in_real_image,
+	cv::Mat& in_synth_image,
+	std::vector<cv::Point2d>& in_real_matches_draw,
+	std::vector<cv::Point2d>& in_synth_matches_draw,
+	std::string fileName,
+	const std::vector<bool>& in_inlier_mask = {})
+{
+#ifdef max
+#undef max
+#endif
+	const bool have_inlier_info = !in_inlier_mask.empty();
+	if (have_inlier_info && in_inlier_mask.size() != in_real_matches_draw.size()) {
+		_logfile->append(TAG + "Warning: inlier mask size mismatch, ignoring mask.");
+	}
+	const bool use_mask = have_inlier_info && in_inlier_mask.size() == in_real_matches_draw.size();
+
+	// Combined image, real | synthetic side by side
 	cv::Mat matchesImage = cv::Mat(
-		std::max(in_synth_image.rows, in_real_image.rows),    // Choose the larger height between the two images
-		in_synth_image.cols + in_real_image.cols,             // Sum of the widths of both images
-		in_synth_image.type(),                                // Set the image type (same as the synthetic image)
-		cv::Scalar(0, 0, 0));                                 // Initialize with black background
-
+		std::max(in_synth_image.rows, in_real_image.rows),
+		in_synth_image.cols + in_real_image.cols,
+		in_synth_image.type(),
+		cv::Scalar(0, 0, 0));
 	_logfile->append(TAG + "Visualizing matches between real and synthetic images");
 
-	// Copy the real image to the left side of the combined image
-	for (int i = 0; i < matchesImage.rows; ++i) {
-		for (int j = 0; j < matchesImage.cols; ++j) {
-			if (j < in_real_image.cols && i < in_real_image.rows) {
-				matchesImage.at<cv::Vec3b>(i, j) = in_real_image.at<cv::Vec3b>(i, j);
-			}
-		}
-	}
+	// Copy real image (left) - direct ROI copy statt Pixel-Loop
+	in_real_image.copyTo(matchesImage(cv::Rect(0, 0, in_real_image.cols, in_real_image.rows)));
+	// Copy synthetic image (right)
+	in_synth_image.copyTo(matchesImage(cv::Rect(in_real_image.cols, 0, in_synth_image.cols, in_synth_image.rows)));
 
-	// Copy the synthetic image to the right side of the combined image
-	for (int i = 0; i < matchesImage.rows; ++i) {
-		for (int j = in_real_image.cols; j < matchesImage.cols; ++j) {
-			if (j - in_real_image.cols < in_synth_image.cols && i < in_synth_image.rows) {
-				matchesImage.at<cv::Vec3b>(i, j) = in_synth_image.at<cv::Vec3b>(i, j - in_real_image.cols);
-			}
-		}
-	}
-
-	// Draw lines connecting the corresponding keypoints between the real and synthetic images
+	// Draw matches
 	for (int i = 0; i < static_cast<int>(in_real_matches_draw.size()); ++i) {
-		// Set color for the keypoint connection (red for matches)
-		cv::Scalar matchColor(0, 0, 255);
+		cv::Point2d point_real = in_real_matches_draw[i];
+		cv::Point2d point_synth = in_synth_matches_draw[i];
+		point_synth.x += in_real_image.cols;
 
-		// Extract keypoints from the real and synthetic images
-		cv::Point2d point_real = cv::Point2d(in_real_matches_draw[i].x, in_real_matches_draw[i].y);
-		cv::Point2d point_synth = cv::Point2d(in_synth_matches_draw[i].x, in_synth_matches_draw[i].y);
-		point_synth.x += in_real_image.cols; // Shift synthetic points by real image width for correct positioning
+		cv::Scalar color;
+		int thickness = 1;
+		if (use_mask) {
+			// Grün = Inlier, Rot (gedimmt) = Outlier
+			bool is_inlier = in_inlier_mask[i];
+			color = is_inlier ? cv::Scalar(0, 220, 0) : cv::Scalar(0, 0, 140);
+			thickness = is_inlier ? 2 : 1;
+		}
+		else {
+			// Keine Maske übergeben: pro Linie eine eigene, deterministische Farbe
+			// (HSV-basiert, damit benachbarte Indizes sich klar unterscheiden)
+			cv::Mat hsv(1, 1, CV_8UC3, cv::Scalar((i * 47) % 180, 255, 255));
+			cv::Mat bgr;
+			cv::cvtColor(hsv, bgr, cv::COLOR_HSV2BGR);
+			cv::Vec3b c = bgr.at<cv::Vec3b>(0, 0);
+			color = cv::Scalar(c[0], c[1], c[2]);
+		}
 
-		// Draw circles around the keypoints
-		circle(matchesImage, point_real, 3, matchColor, 1);  // Real image keypoints in red
-		circle(matchesImage, point_synth, 3, matchColor, 1); // Synthetic image keypoints in red
+		circle(matchesImage, point_real, 4, color, 1, cv::LINE_AA);
+		circle(matchesImage, point_synth, 4, color, 1, cv::LINE_AA);
+		cv::line(matchesImage, point_real, point_synth, color, thickness, cv::LINE_AA);
 
-		// Draw lines connecting the keypoints between the real and synthetic images
-		cv::line(matchesImage, point_real, point_synth, matchColor, 2, 8, 0);
+		// Optional: Index zur Nachverfolgung im Log
+		cv::putText(matchesImage, std::to_string(i), point_real + cv::Point2d(5, -5),
+			cv::FONT_HERSHEY_SIMPLEX, 0.4, color, 1, cv::LINE_AA);
+		cv::putText(matchesImage, std::to_string(i), point_synth + cv::Point2d(5, -5),
+			cv::FONT_HERSHEY_SIMPLEX, 0.4, color, 1, cv::LINE_AA);
 	}
 
-	// Save the final image with the drawn matches
 	cv::imwrite(fs::path(_working_dir_matching / (fileName + ".jpg")).string(), matchesImage);
 }
 

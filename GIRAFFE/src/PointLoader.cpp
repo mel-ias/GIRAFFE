@@ -45,7 +45,6 @@ void PointLoader::display_progress_bar(int percent) {
     std::cout.flush(); // Ensure immediate output display
 }
 
-
 int PointLoader::read_binary_file() {
     // Check if necessary components are initialized
     if (_imc == nullptr) {
@@ -150,7 +149,7 @@ int PointLoader::read_binary_file() {
 
         // Launch processing of the batch asynchronously
         if (!batch.empty()) {
-            futures.push_back(std::async(std::launch::async, [this, batch]() {
+            futures.push_back(std::async(std::launch::deferred, [this, batch]() { //quick test -> std::launch::async to std::launch::deferred
                 for (LaserPoint* lp : batch) {
                     if (lp) {
                         _imc->projectPoint(lp); // Project point in perspective image
@@ -168,6 +167,9 @@ int PointLoader::read_binary_file() {
             lastPercent = percent;
         }
     }
+
+    std::cout << "Number of batches: " << futures.size() << std::endl;
+    std::cout << "Accepted after BB filter: " << i << std::endl;
 
     // Wait for all threads to complete
     for (auto& future : futures) {

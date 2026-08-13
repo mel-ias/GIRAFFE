@@ -30,7 +30,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='VIG_Release_CV_410_x64|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>E:\PROMOTION\vs_workspace\I2G_publishing\cpp_server_application\GIRAFFE\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\PIPS_GIRAFFE_GUI_v2\PIPS_GIRAFFE_GUI\GIRAFFE\GIRAFFE\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='VIG_Release_CV_410_x64|x64'">
     <ClCompile>
@@ -41,7 +41,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Bibliotheken\OpenCV\opencv_4_10_win\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Bibliotheken\opencv\build\include</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -51,7 +51,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>C:\Bibliotheken\OpenCV\opencv_4_10_win\build\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\Bibliotheken\opencv\build\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opencv_world4100.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

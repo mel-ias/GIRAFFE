@@ -159,6 +159,8 @@ void ImCalculator::projectPoint(LaserPoint* lp) {
 	// Compute the Euclidean distance from the camera to the point
 	float dist = static_cast<float>(sqrt(dx * dx + dy * dy + dz * dz));
 
+	std::lock_guard<std::mutex> lock(_projection_mutex);  // <-- schützt variable
+
 	// Update the min and max distance values
 	if (dist < _dist_min) _dist_min = dist;
 	if (dist > _dist_max) _dist_max = dist;
@@ -226,6 +228,14 @@ void ImCalculator::init_image(BoundingBox* b) {
 	_columns = static_cast<int>(ceil((_image_plane[1] - _image_plane[0]) / _pixSize)) + 1; // X dimension
 	_rows = static_cast<int>(ceil((_image_plane[3] - _image_plane[2]) / _pixSize)) + 1; // Y dimension
 
+	constexpr int MAX_REASONABLE_DIM = 30000; // großzügig über typischer Sensorauflösung
+	if (_columns <= 0 || _rows <= 0 || _columns > MAX_REASONABLE_DIM || _rows > MAX_REASONABLE_DIM) {
+		logfile->append(TAG + "FEHLER: unplausible Bildebenen-Groesse "
+			+ std::to_string(_columns) + "x" + std::to_string(_rows)
+			+ " - Abbruch statt Allokation.");
+		throw std::runtime_error("ImCalculator: unplausible Canvas-Groesse, vermutlich Frustum-Bug.");
+	}
+	
 	// Initialize the images with the calculated dimensions
 	init_images(_columns, _rows);
 
@@ -275,8 +285,30 @@ void ImCalculator::calc_image_plane(float* plane) {
 }
 
 
-
 void ImCalculator::init_images(int column, int row) {
+
+	if (_image) { 
+		_image->release();     
+		delete _image;     
+		_image = nullptr; 
+	}
+	
+	if (_mask) { 
+		_mask->release();       
+		delete _mask;      
+		_mask = nullptr; 
+	}
+	
+	if (_distImage) { 
+		_distImage->release();  
+		delete _distImage; 
+		_distImage = nullptr; 
+	}
+
+	for (auto* m : next_masks) { m->release(); delete m; }
+	next_masks.clear();
+	for (auto* d : next_dists) { d->release(); delete d; }
+	next_dists.clear();
 
 	// Initialize the main image (_image) with white color (255, 255, 255)
 	_image = new cv::Mat(row, column, CV_8UC3);
