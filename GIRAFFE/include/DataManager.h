@@ -69,8 +69,6 @@ public:
 		// parameters for IOP / about camera
 		_principal_distance = 1.0;
 		_pix_size = 0.00089;
-		_view_angle_half_H = 30.0;
-		_view_angle_half_V = 30.0;
 		
 		// parameters for EOP
 		_X0_x = _X0_y = _X0_z = 0.0; // translation params: projC
@@ -166,17 +164,6 @@ public:
 		}
 		else {
 			_logfile_json << "No value for 'focal_length_mm' in json." << std::endl;
-		}
-
-		// Retrieve the horizontal and vertical view angles
-		if (j["view_angle_x"] != nullptr && j["view_angle_y"] != nullptr) {
-			_view_angle_half_H = std::stod(j.at("view_angle_x").get<std::string>());
-			_view_angle_half_V = std::stod(j.at("view_angle_y").get<std::string>());
-			_logfile_json << "Set (full) opening angles 'view_angle_x'/'view_angle_y' (H/V): "
-				<< _view_angle_half_H << "/" << _view_angle_half_V << " [°]" << std::endl;
-		}
-		else {
-			_logfile_json << "No information about view angle horizontal and/or vertical of camera available" << std::endl;
 		}
 
 		// Set the initial projection center coordinates
@@ -285,13 +272,8 @@ public:
 		}
 
 		// Adjust the view angles for frustum calculations
-		_view_angle_half_H /= 2.0;
-		_view_angle_half_V /= 2.0;
-		_frustum->set_view_angles(_view_angle_half_H, _view_angle_half_V);
-
 		std::cout << "princp distance " << _principal_distance << " pix size " << _pix_size << " width " << true_image.size().width << " height " << true_image.size().height << std::endl;
 		_frustum->set_view_angles(_principal_distance, _pix_size, true_image.size().width, true_image.size().height);
-		//_logfile_json << "Updated (half) view angles for frustum calculation (in deg): H: " << _view_angle_half_H << ", V: " << _view_angle_half_V << std::endl;
 
 		// Apply coordinate shifts for efficiency
 		_shift_x = _X0_x;
@@ -586,7 +568,7 @@ private:
 	cv::Mat synth_image;
 
 	// parameters
-	double _pix_size, _loc_acc_X0_z, _loc_acc_X0_xy, _view_angle_half_H, _view_angle_half_V, _principal_distance; // for IOP
+	double _pix_size, _loc_acc_X0_z, _loc_acc_X0_xy, _principal_distance; // for IOP
 	double _X0_x, _X0_y, _X0_z; // for EOP
 	double _shift_x, _shift_y, _shift_z; // enable shift of georeferenced point clouds (utm values very large numbers) 
 	

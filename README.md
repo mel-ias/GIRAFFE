@@ -145,7 +145,6 @@ The following parameters are used in the JSON file:
 - **`loc_accuracy`**: The location accuracy in meters. Represents the uncertainty of the camera position (e.g., `0.5`) in the unit of the reference system; check the docs and Elias et al., 2019 for details on this parameter
 - **`focal_length_mm`**: The focal length of the camera lens in millimeters (e.g., `5.4`)
 - **`pixel_size_mm`**: The size of a single pixel of the camera sensor in millimeters (e.g., `0.003125`)
-- **`view_angle_x`, `view_angle_y`**: The horizontal (`view_angle_x`) and vertical (`view_angle_y`) field of view of the camera in degrees (e.g., `90`, `90` for maximum field of view - recommended)
 - **`file_name_image_points`**: A list of filenames containing the raw 2D image points to be referenced corresponding to the image coordinate system of true_image (e.g., `["time_lapse_sequence_01.txt", ..., "time_lapse_sequence_19.txt"]`). Note: the structure needs to be x,y,z (xy = image coordinates, z = 0)
 - **`max_dist_to_X0`**: The maximum distance (in meters) from the camera origin (`X0`) to consider points in the view frustum (e.g., `3000`)
 - **`min_dist_to_X0`**: The minimum distance (in meters) from the camera origin (`X0`) to consider points in the view frustum (e.g., `1.0`)

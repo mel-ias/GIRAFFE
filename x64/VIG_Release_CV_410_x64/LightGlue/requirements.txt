@@ -1,6 +1,0 @@
-torch==2.11.0+cu126
-torchvision==0.26.0+cu126
-numpy
-opencv-python
-matplotlib
-kornia>=0.6.11

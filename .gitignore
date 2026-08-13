@@ -337,11 +337,6 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-/GIRAFFE/lightglue/myBatchLightglue.bat
-/GIRAFFE/.venv
-/GIRAFFE/Result/synthImg
-/GIRAFFE/build
-/GIRAFFE/copy_to_release
-/GIRAFFE/how_to_build.txt
-/LightGlue/.venv
-/GIRAFFE/x64/VIG_Release_CV_410_x64
+/GIRAFFE/x64/VIG_Release_CV_410_x64/.venv
+/GIRAFFE/x64/VIG_Release_CV_410_x64/LightGlue
+/GIRAFFE/x64/VIG_Release_CV_410_x64/models

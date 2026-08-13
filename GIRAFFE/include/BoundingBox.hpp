@@ -113,14 +113,8 @@ public:
 	}
 
 	/**
-	 * @brief Set the camera's view angle.
-	 *
-	 * This function sets the horizontal and vertical angles of view for the view frustum.
-	 *
-	 * @param H Horizontal angle in degrees (must be between 0 and 60 degrees).
-	 * @param V Vertical angle in degrees (must be between 0 and 60 degrees, defaulted to H if invalid).
+	 * @brief Calculate the camera's view angle from the principal distance and pixel size as well as the image dimensions.
 	 */
-	void set_view_angles(double H, double V = 0.0f);
 	void set_view_angles(double ck, double pixSize, int columns, int rows);
 
 	/**

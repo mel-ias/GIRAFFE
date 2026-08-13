@@ -46,14 +46,6 @@ BoundingBox::~BoundingBox()
 }
 
 
-void BoundingBox::set_view_angles(double H, double V){
-	if (H <= 0.0f || H >= 60.0f) return;
-	_tH = tan(H* M_PI / 180.0f);
-	if (V <= 0.0f || V >= 60.0f) _tV = _tH;
-	else _tV = tan(V* M_PI / 180.0f);
-}
-
-
 // Eingabe: Kamera/Pixelgeometrie
 void BoundingBox::set_view_angles(double ck, double pixSize, int columns, int rows) {
 	_tH = (columns * pixSize / 2.0) / ck;
