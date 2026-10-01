@@ -207,6 +207,8 @@ static void read_init_file() {
 		std::cerr << "Parse error: " << e.what() << std::endl;
 	}
 }
+
+
 		
 
 int main(int argc, char** argv) {
@@ -601,10 +603,17 @@ int main(int argc, char** argv) {
 			std::string out_intr_mm = "";
 			std::string out_dist = "";
 			
+			// new version: use Utils::rotMatToPitchRollAzimuth to convert rotation matrix to Euler angles (pitch, roll, azimuth) and rotMatToQuaternion to convert rotation matrix to quaternion
+			cv::Vec3d eul = Utils::rotMatToPitchRollAzimuth(rMatObj);   // statt Rodrigues
+			//cv::Vec4d q = Utils::rotMatToQuaternion(rMatObj);
+
+			// old version: use Rodrigues to convert rotation matrix to rotation vector
+			/*
 			cv::Mat rVecObj;
 			cv::Rodrigues(rMatObj, rVecObj);
 			
 			double* ptr_rVecObj = (double*)(rVecObj.data);
+			*/
 			double* ptr_tVecObj = (double*)(tVecObj.data);
 			
 			// get standard deviations for extrinsics
@@ -616,9 +625,9 @@ int main(int argc, char** argv) {
 				double* ptr_stdDevObj_tvec = (double*)(stdDevObj_tvec.data);	
 				out_extr.append("rotV_r0;rotV_r1;rotV_r2;transV_X0;transV_Y0;transV_Z0;std_rotV_r0;std_rotV_r1;std_rotV_r2;std_transV_X0;std_transV_Y0;std_transV_Z0\n");
 				out_extr.append(
-					std::to_string(ptr_rVecObj[0]) + ";" +
-					std::to_string(ptr_rVecObj[1]) + ";" +
-					std::to_string(ptr_rVecObj[2]) + ";" +
+					std::to_string(eul[0]) + ";" +
+					std::to_string(eul[1]) + ";" +
+					std::to_string(eul[2]) + ";" +
 					std::to_string(ptr_tVecObj[0] + data_manager->get_shift_x()) + ";" +
 					std::to_string(ptr_tVecObj[1] + data_manager->get_shift_y()) + ";" +
 					std::to_string(ptr_tVecObj[2] + data_manager->get_shift_z()) +  ";" +
@@ -630,11 +639,11 @@ int main(int argc, char** argv) {
 					std::to_string(ptr_stdDevObj_tvec[2]));
 			}
 			else {
-				out_extr.append("rotV_r0;rotV_r1;rotV_r2;transV_X0;transV_Y0;transV_Z0;\n");
+				out_extr.append("pitch_deg;roll_deg;azimuth_deg;transV_X0;transV_Y0;transV_Z0;\n");
 				out_extr.append(
-					std::to_string(ptr_rVecObj[0]) + ";" +
-					std::to_string(ptr_rVecObj[1]) + ";" +
-					std::to_string(ptr_rVecObj[2]) + ";" +
+					std::to_string(eul[0]) + ";" +
+					std::to_string(eul[1]) + ";" +
+					std::to_string(eul[2]) + ";" +
 					std::to_string(ptr_tVecObj[0] + data_manager->get_shift_x()) + ";" +
 					std::to_string(ptr_tVecObj[1] + data_manager->get_shift_y()) + ";" +
 					std::to_string(ptr_tVecObj[2] + data_manager->get_shift_z()) );

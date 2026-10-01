@@ -166,18 +166,7 @@ public:
 		cv::Mat& distCoeffs,
 		bool useFisheye);
 
-	int space_resection_prior_aware(
-		const std::vector<cv::Point3d>& obj_pts,
-		const std::vector<cv::Point2d>& img_pts,
-		const cv::Mat& camera_matrix,
-		const cv::Mat& dist_coeffs,
-		const cv::Mat& rvec_prior_in, const cv::Mat& tvec_prior_in,
-		double reproj_threshold,
-		int num_iterations,
-		double lambda_prior_rot,
-		double lambda_prior_trans,
-		cv::Mat& rvec_out, cv::Mat& tvec_out,
-		std::vector<int>& inliers_out);
+
 
 	/**
 	 * @brief Space resection using matched object and image points to estimate intrinsic / extrinsic camera parameters.
