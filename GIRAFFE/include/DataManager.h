@@ -20,6 +20,8 @@
 #include "json.hpp"
 #include "LogfilePrinter.h"
 #include "Utils.h"
+#include "CameraPose.hpp"
+#include "CameraIntrinsics.hpp"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -31,6 +33,7 @@
 #include <unistd.h>
 #define GetCurrentDir getcwd
 #endif
+
 
 #endif
 
@@ -67,17 +70,8 @@ public:
 		_file_name_true_image = "noFileName";
 
 		// parameters for IOP / about camera
-		_principal_distance = 1.0;
-		_pix_size = 0.00089;
-		
-		// parameters for EOP
-		_X0_x = _X0_y = _X0_z = 0.0; // translation params: projC
-		_shift_x = _shift_y = _shift_z = 0.0; // shift utm values for better handling
-		_azimuth = _roll = _pitch = 0.0; //rotation params: Euler angles
-		_rotM = new double[9]; // use only one instance for rotation matrix. for filling, just reference it
-		_rotM[0] = 1.0; _rotM[3] = 0.0; _rotM[6] = 0.0;
-		_rotM[1] = 0.0; _rotM[4] = 1.0; _rotM[7] = 0.0;
-		_rotM[2] = 0.0; _rotM[5] = 0.0; _rotM[8] = 1.0;
+		//_principal_distance = 1.0;
+		//_pix_size = 0.00089;
 		
 		// thresholds / uncertainity values for point cloud projection
 		_min_dist_to_X0 = 1.0;
@@ -108,7 +102,7 @@ public:
 		if (_pts_synth_2D_double != nullptr) { delete _pts_synth_2D_double; }
 		if (_pts_synth_3D_double != nullptr) { delete _pts_synth_3D_double; }
 		if (_pts_color_RGB_int != nullptr) { delete _pts_color_RGB_int; }
-		if (_rotM != nullptr) { delete _rotM; }
+		//if (_rotM != nullptr) { delete _rotM; }
 		if (_frustum != nullptr) { delete _frustum; }	
 	}
 
@@ -129,6 +123,10 @@ public:
 		std::ifstream i(path_file_json);
 		json j;
 		i >> j;
+		cv::Point3d X0; // temporary variable to hold the projection center coordinates
+		double azimuth = 0.0, pitch = 0.0, roll = 0.0; // temporary variables to hold orientation angles
+		double ck_mm = 1.0, pixel_size_mm = 0.00089;   // Defaults wie bisher
+
 		_logfile_json << "Read JSON file..." << std::endl;
 
 		// Retrieve file name of the master (true) image
@@ -141,15 +139,6 @@ public:
 		}
 
 		// Retrieve file name of the image points to be referenced
-		/*if (j["file_name_image_points"] != nullptr) {
-			_file_name_image_points = j.at("file_name_image_points").get<std::string>();
-			_logfile_json << "Set 'file_name' of image points file: " << _file_name_image_points << std::endl;
-		}
-		else {
-			_logfile_json << "No value for 'file_name_image_points' in json." << std::endl;
-		}*/
-
-		// Retrieve file name of the image points to be referenced
 		if (j.contains("file_name_image_points") && j["file_name_image_points"].is_array()) {
 			_file_name_image_points = j["file_name_image_points"].get<std::vector<std::string>>();
 		} 
@@ -159,8 +148,11 @@ public:
 
 		// Read and set the focal length (in mm) if available
 		if (j["focal_length_mm"] != nullptr) {
-			_principal_distance = std::stod(j.at("focal_length_mm").get<std::string>());
-			_logfile_json << "Set 'focal_length_mm' ck: " << _principal_distance << " [mm]" << std::endl;
+			//_principal_distance = std::stod(j.at("focal_length_mm").get<std::string>());
+			//_logfile_json << "Set 'focal_length_mm' ck: " << _principal_distance << " [mm]" << std::endl;
+			ck_mm = std::stod(j.at("focal_length_mm").get<std::string>());
+			_logfile_json << "Set 'focal_length_mm' ck: " << ck_mm << " [mm]" << std::endl;
+
 		}
 		else {
 			_logfile_json << "No value for 'focal_length_mm' in json." << std::endl;
@@ -168,10 +160,10 @@ public:
 
 		// Set the initial projection center coordinates
 		if (j["X0_x"] != nullptr && j["X0_y"] != nullptr && j["X0_z"] != nullptr) {
-			_X0_x = std::stod(j.at("X0_x").get<std::string>());
-			_X0_y = std::stod(j.at("X0_y").get<std::string>());
-			_X0_z = std::stod(j.at("X0_z").get<std::string>());
-			_logfile_json << "Set initial projection center 'X0 (x,y,z)': " << _X0_x << " [m], " << _X0_y << " [m], " << _X0_z << " [m]" << std::endl;
+			X0.x = std::stod(j.at("X0_x").get<std::string>());
+			X0.y = std::stod(j.at("X0_y").get<std::string>());
+			X0.z = std::stod(j.at("X0_z").get<std::string>());
+			_logfile_json << "Set initial projection center 'X0 (x,y,z)': " << X0.x << " [m], " << X0.y << " [m], " << X0.z << " [m]" << std::endl;
 		}
 		else {
 			_logfile_json << "No value for 'X0 (x,y,z)' in json." << std::endl;
@@ -179,11 +171,11 @@ public:
 
 		// Set the orientation angles for azimuth, pitch, and roll if available
 		if (j["azimuth"] != nullptr && j["pitch"] != nullptr && j["roll"] != nullptr) {
-			_azimuth = std::stod(j.at("azimuth").get<std::string>());
-			_pitch = std::stod(j.at("pitch").get<std::string>());
-			_roll = std::stod(j.at("roll").get<std::string>());
-			_logfile_json << "Set initial rotation angles (Euler, in deg): 'azimuth': " << _azimuth
-				<< ", 'pitch': " << _pitch << ", 'roll': " << _roll << std::endl;
+			azimuth = std::stod(j.at("azimuth").get<std::string>());
+			pitch = std::stod(j.at("pitch").get<std::string>());
+			roll = std::stod(j.at("roll").get<std::string>());
+			_logfile_json << "Set initial rotation angles (Euler, in deg): 'azimuth': " << azimuth
+				<< ", 'pitch': " << pitch << ", 'roll': " << roll << std::endl;
 		}
 		else {
 			_logfile_json << "No value for 'azimuth', 'pitch', 'roll' in json." << std::endl;
@@ -191,11 +183,14 @@ public:
 
 		// Set the pixel size in millimeters
 		if (j["pixel_size_mm"] != nullptr) {
-			_pix_size = std::stod(j.at("pixel_size_mm").get<std::string>());
-			_logfile_json << "Set 'pixel_size_mm': " << _pix_size << " [mm]" << std::endl;
+			//_pix_size = std::stod(j.at("pixel_size_mm").get<std::string>());
+			//_logfile_json << "Set 'pixel_size_mm': " << _pix_size << " [mm]" << std::endl;
+			pixel_size_mm = std::stod(j.at("pixel_size_mm").get<std::string>());
+			_logfile_json << "Set 'pixel_size_mm': " << pixel_size_mm << " [mm]" << std::endl;
+
 		}
 		else {
-			_logfile_json << "No value for 'pixel_size_mm' in json, Set default: " << _pix_size << " [mm]" << std::endl;
+			_logfile_json << "No value for 'pixel_size_mm' in json, Set default: " << pixel_size_mm << " [mm]" << std::endl;
 		}
 
 		// Set the location accuracy
@@ -272,52 +267,37 @@ public:
 		}
 
 		// Adjust the view angles for frustum calculations
-		std::cout << "princp distance " << _principal_distance << " pix size " << _pix_size << " width " << true_image.size().width << " height " << true_image.size().height << std::endl;
-		_frustum->set_view_angles(_principal_distance, _pix_size, true_image.size().width, true_image.size().height);
+		//std::cout << "princp distance " << _principal_distance << " pix size " << _pix_size << " width " << true_image.size().width << " height " << true_image.size().height << std::endl;
+		//_frustum->set_view_angles(_principal_distance, _pix_size, true_image.size().width, true_image.size().height);
+		// neu
+		_intr_nominal = CameraIntrinsics::fromNominal(ck_mm, pixel_size_mm, true_image.size(), LensModel::Pinhole);
+		std::cout << "princp distance " << ck_mm << " pix size " << pixel_size_mm << " width " << true_image.size().width << " height " << true_image.size().height << std::endl;
+		_frustum->set_view_angles(_intr_nominal);
 
 		// Apply coordinate shifts for efficiency
-		_shift_x = _X0_x;
-		_shift_y = _X0_y;
-		_shift_z = _X0_z;
-		_X0_x -= _shift_x;
-		_X0_y -= _shift_y;
-		_X0_z -= _shift_z;
+		_shift_x = X0.x; 
+		_shift_y = X0.y; 
+		_shift_z = X0.z; 
+		X0.x -= _shift_x;
+		X0.y -= _shift_y;
+		X0.z -= _shift_z;
+
 		_logfile_json << "Applied shift to coordinates X0 for efficiency. shift_x: " << std::fixed << _shift_x << " [m], shift_y: " << _shift_y << " [m], shift_z: " << _shift_z << " [m]" << std::endl; //Use std::fixed floating-point notation for formatting
 		
-		_frustum->set_X0_Cam_World(_X0_x, _X0_y, _X0_z); //update frustum X0
-		_frustum->calculate_rotation_matrix_rzxy(_azimuth, _roll, _pitch); //update frustum rotM
-		
-		// Precompute trigonometric values for rotation matrix based on azimuth, roll, and pitch angles
-		double rad_azimuth = _azimuth * M_PI / 180.0;
-		double rad_roll = _roll * M_PI / 180.0;
-		double rad_pitch = _pitch * M_PI / 180.0;
-
-		double Cz = cos(rad_azimuth);
-		double Sz = sin(rad_azimuth);
-		double Cy = cos(rad_roll);
-		double Sy = sin(rad_roll);
-		double Cx = cos(rad_pitch);
-		double Sx = sin(rad_pitch);
-
-		// Construct the rotation matrix _rotM (Rxyz) with rotations in the order of Rz (azimuth), Ry (roll), then Rx (pitch).
-		// Rotational axes: x-axis (pitch), y-axis (roll), z-axis (azimuth).
-		_rotM[0] = Cy * Cz;						_rotM[3] = -Cy * Sz;					_rotM[6] = Sy;
-		_rotM[1] = Sx * Sy * Cz + Cx * Sz;		_rotM[4] = -Sx * Sy * Sz + Cx * Cz;	_rotM[7] = -Sx * Cy;
-		_rotM[2] = -Cx * Sy * Cz + Sx * Sz;		_rotM[5] = Cx * Sy * Sz + Sx * Cz;	_rotM[8] = Cx * Cy;
-
-		// Log the constructed rotation matrix for debugging
-		_logfile->append(TAG + "RotM:");
-		_logfile->append("\t\t" + std::to_string(_rotM[0]) + " " + std::to_string(_rotM[3]) + " " + std::to_string(_rotM[6]), 4);
-		_logfile->append("\t\t" + std::to_string(_rotM[1]) + " " + std::to_string(_rotM[4]) + " " + std::to_string(_rotM[7]), 4);
-		_logfile->append("\t\t" + std::to_string(_rotM[2]) + " " + std::to_string(_rotM[5]) + " " + std::to_string(_rotM[8]), 4);
-		_logfile->append("");
-
+	
 		// Set maximum depth of the point cloud for projection within the frustum
 		_frustum->set_frustum_depth(_max_dist_to_X0); 
 		
 		// Calculate the view frustum based on updated parameters
-		_frustum->calculate_view_frustum();
-		
+		//_frustum->calculate_view_frustum();
+		set_pose(CameraPose::fromEuler(EulerDeg{ pitch, roll, azimuth }, cv::Vec3d(0, 0, 0)));   // nach dem shift ist C = 0
+
+		const cv::Matx33d& R = _pose.R_wc;
+		_logfile->append(TAG + "RotM (R_wc):");
+		for (int r = 0; r < 3; ++r)
+			_logfile->append("\t\t" + std::to_string(R(r, 0)) + " " + std::to_string(R(r, 1)) + " " + std::to_string(R(r, 2)), 4);
+		_logfile->append("");
+
 		// Push log content to logfile
 		std::string line, lineErr;
 		_logfile->append(""); // Add an empty line before JSON content, if needed for separation
@@ -325,8 +305,6 @@ public:
 			_logfile->append("JSON:\t\t" + line);
 		}
 	}
-
-
 
 
 
@@ -490,32 +468,11 @@ public:
 	BoundingBox* get_frustum() { return _frustum; }
 
 	// camera orientation
-	double& get_pixel_size() { return _pix_size; }
-	double& get_principal_distance() { return _principal_distance; }
+	//double& get_pixel_size() { return _pix_size; }
+	//double& get_principal_distance() { return _principal_distance; }
+	const CameraIntrinsics& get_nominal_intrinsics() const { return _intr_nominal; }
 	double& get_min_dist_to_X0() { return _min_dist_to_X0; }
-	cv::Point3d get_X0() { return cv::Point3d(_X0_x, _X0_y, _X0_z); }
-
-	void set_X0_to_BBox(double x, double y, double z) {
-		_X0_x = x;
-		_X0_y = y;
-		_X0_z = z;
-		_frustum->set_X0_Cam_World(_X0_x, _X0_y, _X0_z);
-
-		// TEST
-		_frustum->calculate_rotation_matrix_rzxy(_azimuth, _roll, _pitch);
-
-	}
-
-	// get rotation matrix
-	double* get_rotM() { return _rotM; } 
-
-	// set rotation matrix [row-major]
-	void set_rotM(cv::Mat rotM) {
-		_rotM[0] = rotM.at<double>(0, 0); _rotM[3] = rotM.at<double>(0, 1); _rotM[6] = rotM.at<double>(0, 2);
-		_rotM[1] = rotM.at<double>(1, 0); _rotM[4] = rotM.at<double>(1, 1); _rotM[7] = rotM.at<double>(1, 2);
-		_rotM[2] = rotM.at<double>(2, 0); _rotM[5] = rotM.at<double>(2, 1); _rotM[8] = rotM.at<double>(2, 2);
-	}
-
+	
 	void set_filter_matches_ransac_fisheye(double val) {
 		if (val > 0.0) {
 			_filter_matches_ransac_fisheye = val;
@@ -539,6 +496,8 @@ public:
 	double get_filter_matches_ransac_pinhole() const { return _filter_matches_ransac_pinhole; }
 
 
+	const CameraPose& get_pose() const { return _pose; }
+	void set_pose(const CameraPose& p) { _pose = p; _frustum->update(_pose); }   // Frustum immer konsistent
 
 
 
@@ -568,12 +527,14 @@ private:
 	cv::Mat synth_image;
 
 	// parameters
-	double _pix_size, _loc_acc_X0_z, _loc_acc_X0_xy, _principal_distance; // for IOP
-	double _X0_x, _X0_y, _X0_z; // for EOP
+	CameraPose _pose;
+
+	//double _pix_size, _loc_acc_X0_z, _loc_acc_X0_xy, _principal_distance; // for IOP
+	//double _X0_x, _X0_y, _X0_z; // for EOP
+	double _loc_acc_X0_z, _loc_acc_X0_xy;
+	CameraIntrinsics _intr_nominal;        // Nominalwerte aus der JSON-Konfiguration
 	double _shift_x, _shift_y, _shift_z; // enable shift of georeferenced point clouds (utm values very large numbers) 
 	
-	double _azimuth, _roll, _pitch; 
-	double* _rotM;
 
 	double _min_dist_to_X0; // for projection; check if point to be projected is to close to projection centre. use 1 m distance by default 
 	double _max_dist_to_X0; // max depth of point cloud to be projected starting from projection cnetre. use 200 m distance by default

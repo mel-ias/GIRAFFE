@@ -15,7 +15,7 @@ ImCalculator::ImCalculator() {
 	_columns = 0;
 	_rows = 0;
 	logfile = nullptr;
-	_rotM = new double [9];
+	//_rotM = new double [9];
 	_image_plane = new float [4];
 	_dist_min = 0.0f;
 	_dist_max = 0.0f;
@@ -44,9 +44,14 @@ void ImCalculator::init(DataManager* _dataManager) {
 	next_dists.reserve(3);
 
 	// Retrieve and log camera settings
-	_ck = _data_manager->get_principal_distance();
+	//_ck = _data_manager->get_principal_distance();
+	//_imageSize = _data_manager->get_size_true_image();
+	//_pixSize = _data_manager->get_pixel_size();
+	const CameraIntrinsics& nominal = _data_manager->get_nominal_intrinsics();
+	_ck = static_cast<float>(nominal.ck_mm());
 	_imageSize = _data_manager->get_size_true_image();
-	_pixSize = _data_manager->get_pixel_size();
+	_pixSize = static_cast<float>(nominal.pixel_size_mm);
+	
 	logfile->append(TAG + "Camera parameters received (ck, imageSize, pixSize).");
 
 	// Reference and copy the real image
@@ -129,14 +134,18 @@ void ImCalculator::save_images() {
 // Project the given 3D point to the current image and update the mask and image data as necessary.
 void ImCalculator::projectPoint(LaserPoint* lp) {
 	// Compute the difference between the laser point's world coordinates and the camera's position in world space
-	double dx = lp->_xyz[0] - _frustum->get_X0_Cam_World()[0];
-	double dy = lp->_xyz[1] - _frustum->get_X0_Cam_World()[1];
-	double dz = lp->_xyz[2] - _frustum->get_X0_Cam_World()[2];
+	//double dx = lp->_xyz[0] - _frustum->get_X0_Cam_World()[0];
+	//double dy = lp->_xyz[1] - _frustum->get_X0_Cam_World()[1];
+	//double dz = lp->_xyz[2] - _frustum->get_X0_Cam_World()[2];
 
 	// Transform the coordinates to camera space using the rotation matrix
-	double x = _rotM[0] * dx + _rotM[3] * dy + _rotM[6] * dz;
-	double y = _rotM[1] * dx + _rotM[4] * dy + _rotM[7] * dz;
-	double z = _rotM[2] * dx + _rotM[5] * dy + _rotM[8] * dz;
+	//double x = _rotM[0] * dx + _rotM[3] * dy + _rotM[6] * dz;
+	//double y = _rotM[1] * dx + _rotM[4] * dy + _rotM[7] * dz;
+	//double z = _rotM[2] * dx + _rotM[5] * dy + _rotM[8] * dz;
+
+	// neu
+	const cv::Vec3d pc = _pose.toCamera(cv::Vec3d(lp->_xyz[0], lp->_xyz[1], lp->_xyz[2]));   // R_wc * (X - C)
+	const double x = pc[0], y = pc[1], z = pc[2];
 
 	// Check if the point is within the acceptable near/far bounds
 	if (z < _data_manager->get_min_dist_to_X0() || z > _frustum->get_dist()) return;
@@ -157,7 +166,8 @@ void ImCalculator::projectPoint(LaserPoint* lp) {
 	if (row < 0 || row >= _rows || column < 0 || column >= _columns) return;
 
 	// Compute the Euclidean distance from the camera to the point
-	float dist = static_cast<float>(sqrt(dx * dx + dy * dy + dz * dz));
+	//float dist = static_cast<float>(sqrt(dx * dx + dy * dy + dz * dz));
+	float dist = static_cast<float>(cv::norm(pc));
 
 	std::lock_guard<std::mutex> lock(_projection_mutex);  // <-- schützt variable
 
@@ -244,46 +254,72 @@ void ImCalculator::init_image(BoundingBox* b) {
 }
 
 
+//void ImCalculator::calc_image_plane(float* plane) {
+//
+//	// Coordinates in camera system (bb represents bounding box in camera space)
+//	float xk, yk, zk;
+//
+//	// Upper left corner (u0, v0)
+//	xk = _frustum->get_xMin();
+//	yk = -_frustum->get_zMax();  // Inverting Z for the camera space convention
+//	zk = _frustum->get_yMax();   // Inverted Y for the camera system
+//
+//	plane[0] = xk / zk * _ck;  // u0
+//	plane[2] = yk / zk * _ck;  // v0
+//
+//	// Lower right corner (u1, v1)
+//	xk = _frustum->get_xMax();
+//	yk = -_frustum->get_zMin();  // Inverting Z again
+//	plane[1] = xk / zk * _ck;  // u1
+//	plane[3] = yk / zk * _ck;  // v1
+//
+//	// Get the rotation matrix from dataManager
+//	_rotM = _data_manager->get_rotM();
+//
+//	// Logging information
+//	logfile->append(TAG + "TVec:");
+//	logfile->append("\t\t" + std::to_string(_frustum->get_X0_Cam_World()[0]) + " " +
+//		std::to_string(_frustum->get_X0_Cam_World()[1]) + " " +
+//		std::to_string(_frustum->get_X0_Cam_World()[2]));
+//
+//	logfile->append(TAG + "RotM:");
+//	logfile->append("\t\t" + std::to_string(_rotM[0]) + " " + std::to_string(_rotM[3]) + " " +
+//		std::to_string(_rotM[6]), 4);
+//	logfile->append("\t\t" + std::to_string(_rotM[1]) + " " + std::to_string(_rotM[4]) + " " +
+//		std::to_string(_rotM[7]), 4);
+//	logfile->append("\t\t" + std::to_string(_rotM[2]) + " " + std::to_string(_rotM[5]) + " " +
+//		std::to_string(_rotM[8]), 4);
+//	logfile->append("");
+//	logfile->append(TAG + "calculated plane: " + std::to_string(plane[0]) + "," + std::to_string(plane[1]) + "," +
+//		std::to_string(plane[2]) + "," + std::to_string(plane[3]), 4);
+//}
+
 void ImCalculator::calc_image_plane(float* plane) {
 
-	// Coordinates in camera system (bb represents bounding box in camera space)
-	float xk, yk, zk;
+	// Fernebene im Kamerasystem (inkl. Lageunsicherheit), Halbachsen und Tiefe aus dem Frustum
+	const float d = static_cast<float>(_frustum->get_dist());
+	const float w = static_cast<float>(_frustum->get_halfWidth());
+	const float h = static_cast<float>(_frustum->get_halfHeight());
 
-	// Upper left corner (u0, v0)
-	xk = _frustum->get_xMin();
-	yk = -_frustum->get_zMax();  // Inverting Z for the camera space convention
-	zk = _frustum->get_yMax();   // Inverted Y for the camera system
+	plane[0] = -w / d * _ck;   // u0
+	plane[1] = w / d * _ck;   // u1
+	plane[2] = -h / d * _ck;   // v0
+	plane[3] = h / d * _ck;   // v1
 
-	plane[0] = xk / zk * _ck;  // u0
-	plane[2] = yk / zk * _ck;  // v0
-
-	// Lower right corner (u1, v1)
-	xk = _frustum->get_xMax();
-	yk = -_frustum->get_zMin();  // Inverting Z again
-	plane[1] = xk / zk * _ck;  // u1
-	plane[3] = yk / zk * _ck;  // v1
-
-	// Get the rotation matrix from dataManager
-	_rotM = _data_manager->get_rotM();
+	// Pose aus dem DataManager übernehmen (wird in projectPoint() benutzt)
+	_pose = _data_manager->get_pose();
 
 	// Logging information
 	logfile->append(TAG + "TVec:");
-	logfile->append("\t\t" + std::to_string(_frustum->get_X0_Cam_World()[0]) + " " +
-		std::to_string(_frustum->get_X0_Cam_World()[1]) + " " +
-		std::to_string(_frustum->get_X0_Cam_World()[2]));
+	logfile->append("\t\t" + std::to_string(_pose.C[0]) + " " + std::to_string(_pose.C[1]) + " " + std::to_string(_pose.C[2]));
 
-	logfile->append(TAG + "RotM:");
-	logfile->append("\t\t" + std::to_string(_rotM[0]) + " " + std::to_string(_rotM[3]) + " " +
-		std::to_string(_rotM[6]), 4);
-	logfile->append("\t\t" + std::to_string(_rotM[1]) + " " + std::to_string(_rotM[4]) + " " +
-		std::to_string(_rotM[7]), 4);
-	logfile->append("\t\t" + std::to_string(_rotM[2]) + " " + std::to_string(_rotM[5]) + " " +
-		std::to_string(_rotM[8]), 4);
+	logfile->append(TAG + "RotM (R_wc):");
+	for (int r = 0; r < 3; ++r)
+		logfile->append("\t\t" + std::to_string(_pose.R_wc(r, 0)) + " " + std::to_string(_pose.R_wc(r, 1)) + " " + std::to_string(_pose.R_wc(r, 2)), 4);
 	logfile->append("");
 	logfile->append(TAG + "calculated plane: " + std::to_string(plane[0]) + "," + std::to_string(plane[1]) + "," +
 		std::to_string(plane[2]) + "," + std::to_string(plane[3]), 4);
 }
-
 
 void ImCalculator::init_images(int column, int row) {
 

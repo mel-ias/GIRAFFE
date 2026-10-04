@@ -19,6 +19,7 @@
 #include <sstream>
 
 #include "Utils.h"
+#include "CameraIntrinsics.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -26,6 +27,7 @@
 #include <unistd.h>
 #include <limits.h>
 #endif
+
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -49,7 +51,8 @@ float _max_pixel_distance_synth_3D_derivation = 2.5f; ///< allowed pixel neighbo
 int _final_iteration_number = 1;         ///< Tracks final iteration count.
 bool _calc_IO = false;                   ///< Flag for input/output calculation.
 bool _output_pointcloud = false;         ///< Flag to output the point cloud.
-bool _ultra_ww = false;              ///< Flag indicating if fisheye lens is used.
+//bool _ultra_ww = false;              ///< Flag indicating if fisheye lens is used.
+LensModel _lens_model = LensModel::Pinhole;   ///< Linsenmodell (aus init.json)
 double _balance_img_undistortion = 0.01;  ///< Balance parameter for undistortion.
 
 /**
@@ -191,9 +194,15 @@ static void read_init_file() {
 		}
 
 		// Set fisheye flag
+		//if (j.contains("ultra_wide_camera")) {
+		//	_ultra_ww = j.at("ultra_wide_camera").get<bool>();
+		//	log_printer->append(TAG + " read init.txt, using " + std::string(_ultra_ww ? "ultra_wide_camera camera model" : "central perspective camera model") + " for final epoch if refine_iop is true");
+		//}
+
+		// neu
 		if (j.contains("ultra_wide_camera")) {
-			_ultra_ww = j.at("ultra_wide_camera").get<bool>();
-			log_printer->append(TAG + " read init.txt, using " + std::string(_ultra_ww ? "ultra_wide_camera camera model" : "central perspective camera model") + " for final epoch if refine_iop is true");
+			_lens_model = j.at("ultra_wide_camera").get<bool>() ? LensModel::Fisheye : LensModel::Pinhole;
+			log_printer->append(TAG + " read init.txt, using " + std::string(_lens_model == LensModel::Fisheye ? "ultra_wide_camera camera model" : "central perspective camera model") + " for final epoch if refine_iop is true");
 		}
 
 		// Set output_pointcloud flag
@@ -208,6 +217,13 @@ static void read_init_file() {
 	}
 }
 
+static void log_pose(const std::string& label, const CameraPose& p) {
+	const EulerDeg e = p.euler();
+	log_printer->append(TAG + label + " - pitch/roll/azimuth [deg]: "
+		+ std::to_string(e.pitch) + " / " + std::to_string(e.roll) + " / " + std::to_string(e.azimuth)
+		+ " | C (lokal): "
+		+ std::to_string(p.C[0]) + " / " + std::to_string(p.C[1]) + " / " + std::to_string(p.C[2]));
+}
 
 		
 
@@ -298,21 +314,7 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	// Check if the specified working directory already exists; if so, add a counter suffix
-	/*
-	int dirCounter = 0;
-	while (fs::exists(path) && dirCounter < 10) {
-		dirCounter++;
-		path = path_dir_result / (working_directory_name + "(" + std::to_string(dirCounter) + ")");
-	}
-
-	// Create the final working directory if it does not exist
-	if (!fs::create_directories(path)) {
-		std::cerr << "Error: Could not create output directory!" << std::endl;
-		return 1;
-	}
-	*/
-
+	
 	// Atomically check AND create in a single step (prevents a race condition when
 	// processes with the same `working_directory_name` are started simultaneously).
 	// fs::create_directory() with error_code returns true exactly when THIS
@@ -345,8 +347,11 @@ int main(int argc, char** argv) {
 	// START PROCESSING
 	// ----------------
 
-	cv::Mat camera_matrix, dist_coeffs, tVecObj, rMatObj, stdDevCam_In, stdDevObj_Ext;
 	float repro_error;
+	CameraIntrinsics intr;
+	cv::Mat rvec, tvec, stdDevCam_In, stdDevObj_Ext;
+	CameraPose pose;
+
 	for (int iteration = 1; iteration <= _final_iteration_number; ++iteration) {
 
 		log_printer->append(TAG + "------------------ ITERATION " + std::to_string(iteration) + "/" + std::to_string(_final_iteration_number) + "---------------------");
@@ -367,7 +372,6 @@ int main(int argc, char** argv) {
 		log_printer->append(TAG + "set flags_matching variable. checked extr parameters ");
 
 
-
 		// a) generate virtual image (central perspective), store in dataManager 
 		pim = new PerspectiveImage(data_manager);
 		pim->generateImage();
@@ -378,34 +382,11 @@ int main(int argc, char** argv) {
 		data_manager->get_true_image().copyTo(true_img_4matching);
 		data_manager->get_synth_image().copyTo(synth_img_4matching);
 
-		// init IO
-		// prepare camera matrix + dist_coeffs using approximations from init file (use of pre-calib cams removed because of diverse camera models; instead use undistorted images)
-		double focal_length_px = data_manager->get_principal_distance() / data_manager->get_pixel_size();
-		cv::Point2d center = cv::Point2d(data_manager->get_true_image().cols / 2, data_manager->get_true_image().rows / 2); // calc image center for initial principle point				
-		camera_matrix = cv::Mat(3, 3, CV_64FC1);
-		camera_matrix = (cv::Mat_<double>(3, 3) << focal_length_px, 0, center.x, 0, focal_length_px, center.y, 0, 0, 1);
+		// c) get nominal intrinsics and pose from dataManager
+		intr = data_manager->get_nominal_intrinsics().withModel(_lens_model);
 
-		// dist_coeffs: fisheye model uses less coeffs than central perspective
-		dist_coeffs = (_ultra_ww) ? cv::Mat::zeros(4, 1, CV_64FC1) : cv::Mat::zeros(5, 1, CV_64FC1);
-		
-		// Convert camera pose in object coordinate system to object pose in camera coordinate system
-		tVecObj = cv::Mat(); // Translation vector
-		rMatObj = cv::Mat(3, 3, CV_64FC1); // Rotation matrix
-
-		// Set translation vector from projection center coordinates
-		tVecObj.push_back(data_manager->get_X0().x);
-		tVecObj.push_back(data_manager->get_X0().y);
-		tVecObj.push_back(data_manager->get_X0().z);
-
-		// Set rotation matrix from data_manager rotation matrix pointer
-		double* rotM_ptr = data_manager->get_rotM(); // Pointer to 9-element rotation matrix (row-major order)
-		rMatObj.at<double>(0, 0) = rotM_ptr[0]; rMatObj.at<double>(0, 1) = rotM_ptr[3]; rMatObj.at<double>(0, 2) = rotM_ptr[6];
-		rMatObj.at<double>(1, 0) = rotM_ptr[1]; rMatObj.at<double>(1, 1) = rotM_ptr[4]; rMatObj.at<double>(1, 2) = rotM_ptr[7];
-		rMatObj.at<double>(2, 0) = rotM_ptr[2]; rMatObj.at<double>(2, 1) = rotM_ptr[5]; rMatObj.at<double>(2, 2) = rotM_ptr[8];
-
-		// Convert to view mode required by solvePnPRansac
-		cv::transpose(rMatObj, rMatObj); // Transpose rotation matrix
-		tVecObj = -rMatObj * tVecObj; // Calculate new translation vector
+		// Pose -> rvec/tvec (R_wc und t = -R_wc*C), kein Transponieren mehr nötig
+		data_manager->get_pose().toOpenCV(rvec, tvec);
 
 		// Initialize matching process and start image-to-geometry intersection
 		matching = new Matching();
@@ -486,15 +467,7 @@ int main(int argc, char** argv) {
 					+ std::to_string(w.at<double>(2)));
 				// Verhaeltnis kleinster zu groesstem Singulaerwert nahe 0 => nahezu planar/degeneriert
 
-				cv::Mat rvec_before; cv::Rodrigues(rMatObj, rvec_before);
-				log_printer->append(TAG + "Pose VOR space_resection - rvec: "
-					+ std::to_string(rvec_before.at<double>(0)) + " / "
-					+ std::to_string(rvec_before.at<double>(1)) + " / "
-					+ std::to_string(rvec_before.at<double>(2))
-					+ " | tvec: "
-					+ std::to_string(tVecObj.at<double>(0)) + " / "
-					+ std::to_string(tVecObj.at<double>(1)) + " / "
-					+ std::to_string(tVecObj.at<double>(2)));
+				log_pose("Pose VOR space_resection", CameraPose::fromOpenCV(rvec, tvec));
 
 				// Perform spatial resection to determine camera and exterior orientation, check if values are valid
 				std::vector<int> ransac_inliers;  
@@ -502,25 +475,17 @@ int main(int argc, char** argv) {
 					matched_object_points,
 					matched_image_points_real,
 					data_manager->get_true_image(),
-					camera_matrix,
-					dist_coeffs,
-					rMatObj,
-					tVecObj,
+					intr.K,
+					intr.dist, 
+					rvec,
+					tvec,
 					stdDevCam_In,
 					stdDevObj_Ext,
 					flags_matching,
-					_ultra_ww,
+					intr.isFisheye(), //_ultra_ww,
 					ransac_inliers);
 
-				cv::Mat rvec_after; cv::Rodrigues(rMatObj, rvec_after);
-				log_printer->append(TAG + "Pose NACH space_resection - rvec: "
-					+ std::to_string(rvec_after.at<double>(0)) + " / "
-					+ std::to_string(rvec_after.at<double>(1)) + " / "
-					+ std::to_string(rvec_after.at<double>(2))
-					+ " | tvec: "
-					+ std::to_string(tVecObj.at<double>(0)) + " / "
-					+ std::to_string(tVecObj.at<double>(1)) + " / "
-					+ std::to_string(tVecObj.at<double>(2)));
+				log_pose("Pose NACH space_resection", CameraPose::fromOpenCV(rvec, tvec));
 
 				// Inlier-Maske für Visualisierung aufbauen
 				std::vector<bool> inlier_mask(matched_image_points_real.size(), false);
@@ -535,35 +500,18 @@ int main(int argc, char** argv) {
 					"matches_iteration_" + std::to_string(iteration),
 					inlier_mask);
 
-
-				// If Interior Orientation Parameters (IOP) are calculated, undistort the image to align synthetic and real images for better matching
+				// If the matching flags indicate that both extrinsic and intrinsic parameters are being calculated, undistort the true image and use it for the final iteration
 				if (flags_matching == Matching::CALC_EO_IO) { // Before last iteration, undistort and use the undistorted image in the final iteration
-					cv::Mat undist_true_image;
-					cv::Mat camera_matrix_new = camera_matrix.clone();
-					if (_ultra_ww) {
-						// For fisheye lens, estimate a new camera matrix and undistort using fisheye functions
-						cv::Mat E = cv::Mat::eye(3, 3, cv::DataType<double>::type);
-						cv::Mat map1;
-						cv::Mat map2;
-						cv::fisheye::estimateNewCameraMatrixForUndistortRectify(camera_matrix, dist_coeffs, data_manager->get_size_true_image(), E, camera_matrix_new, _balance_img_undistortion);
-						cv::fisheye::initUndistortRectifyMap(camera_matrix, dist_coeffs, E, camera_matrix_new, data_manager->get_size_true_image(), CV_16SC2, map1, map2);
-						cv::remap(data_manager->get_true_image(), undist_true_image, map1, map2, cv::INTER_LINEAR, CV_HAL_BORDER_CONSTANT);
-					}
-					else {
-						// For non-fisheye lens, use the optimal new camera matrix and standard undistort method
-						camera_matrix_new = cv::getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, data_manager->get_size_true_image(), _balance_img_undistortion);
-						cv::undistort(data_manager->get_true_image(), undist_true_image, camera_matrix, dist_coeffs);
-					}
+					const CameraIntrinsics intr_undist = intr.undistortedIntrinsics(_balance_img_undistortion);
+					cv::Mat undist_true_image = intr.undistortImage(data_manager->get_true_image(), intr_undist);
 
-					// Save the undistorted image and update data manager with new image and camera matrix
 					fs::path out_path_undist_img = data_manager->get_path_working_directory() / ("undist_test_" + std::to_string(iteration) + ".png");
-					cv::imwrite(out_path_undist_img.string(), undist_true_image); 
+					cv::imwrite(out_path_undist_img.string(), undist_true_image);
 
 					data_manager->set_true_image(undist_true_image);
-					camera_matrix = camera_matrix_new.clone();
-					dist_coeffs = cv::Mat::zeros(5, 1, CV_64FC1); // Reset distortion coefficients since image is now undistorted
-					_ultra_ww = false; // Fisheye corrections no longer needed
-					_calc_IO = false; // Avoid recalculating IO repeatedly
+					intr = intr_undist;                    // Pinhole, dist = 0, K des entzerrten Bildes
+					_lens_model = LensModel::Pinhole;      // für die nächste Iteration
+					_calc_IO = false;                      // Avoid recalculating IO repeatedly
 				}
 			}
 			else {
@@ -573,24 +521,8 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		// Convert estimated pose of object relative to camera to camera pose relative to object system
-		cv::Mat tVecCam, rMatCam;
-		
-		// If rotation is provided as a 3-vector (rVec), convert to 3x3 rotation matrix (rMat)
-		if (rMatObj.rows == 1 || rMatObj.cols == 1) {
-			//std::cout << "run Rodriquez" << std::endl;
-			cv::Mat rotM;
-			cv::Rodrigues(rMatObj, rotM);
-			rMatObj = rotM.clone();
-		}
-
-		// Set rotation and translation in data manager for further processing
-		data_manager->set_rotM(rMatObj);
-		data_manager->set_X0_to_BBox(tVecObj.at<double>(0), tVecObj.at<double>(1), tVecObj.at<double>(2));
-
-		// Calculate view frustum based on bounding box and updated camera pose
-		data_manager->get_frustum()->calculate_view_frustum();
-
+		pose = CameraPose::fromOpenCV(rvec, tvec);
+		data_manager->set_pose(pose);        // setzt die Pose und aktualisiert das Frustum
 		
 		// ------------------------------
 		// Output Extrinsics / intrinsics
@@ -602,62 +534,28 @@ int main(int argc, char** argv) {
 			std::string out_intr_px = "";
 			std::string out_intr_mm = "";
 			std::string out_dist = "";
-			
-			// new version: use Utils::rotMatToPitchRollAzimuth to convert rotation matrix to Euler angles (pitch, roll, azimuth) and rotMatToQuaternion to convert rotation matrix to quaternion
-			cv::Vec3d eul = Utils::rotMatToPitchRollAzimuth(rMatObj);   // statt Rodrigues
-			//cv::Vec4d q = Utils::rotMatToQuaternion(rMatObj);
 
-			// old version: use Rodrigues to convert rotation matrix to rotation vector
-			/*
-			cv::Mat rVecObj;
-			cv::Rodrigues(rMatObj, rVecObj);
-			
-			double* ptr_rVecObj = (double*)(rVecObj.data);
-			*/
-			double* ptr_tVecObj = (double*)(tVecObj.data);
-			
-			// get standard deviations for extrinsics
-			// https://forum.opencv.org/t/unit-of-rvecs-stddeviationsextrinsics/4266 --> rvec in radiants
-			if (!stdDevObj_Ext.empty()) {
-				cv::Mat stdDevObj_rvec = stdDevObj_Ext(cv::Rect(0, 0, 1, 3)); // r1 r2 r3 t1 t2 t3
-				cv::Mat stdDevObj_tvec = stdDevObj_Ext(cv::Rect(0, 3, 1, 3)); // r1 r2 r3 t1 t2 t3
-				double* ptr_stdDevObj_rvec = (double*)(stdDevObj_rvec.data);
-				double* ptr_stdDevObj_tvec = (double*)(stdDevObj_tvec.data);	
-				out_extr.append("rotV_r0;rotV_r1;rotV_r2;transV_X0;transV_Y0;transV_Z0;std_rotV_r0;std_rotV_r1;std_rotV_r2;std_transV_X0;std_transV_Y0;std_transV_Z0\n");
-				out_extr.append(
-					std::to_string(eul[0]) + ";" +
-					std::to_string(eul[1]) + ";" +
-					std::to_string(eul[2]) + ";" +
-					std::to_string(ptr_tVecObj[0] + data_manager->get_shift_x()) + ";" +
-					std::to_string(ptr_tVecObj[1] + data_manager->get_shift_y()) + ";" +
-					std::to_string(ptr_tVecObj[2] + data_manager->get_shift_z()) +  ";" +
-					std::to_string(ptr_stdDevObj_rvec[0]) + ";" +
-					std::to_string(ptr_stdDevObj_rvec[1]) + ";" +
-					std::to_string(ptr_stdDevObj_rvec[2]) + ";" +
-					std::to_string(ptr_stdDevObj_tvec[0]) + ";" +
-					std::to_string(ptr_stdDevObj_tvec[1]) + ";" +
-					std::to_string(ptr_stdDevObj_tvec[2]));
-			}
-			else {
-				out_extr.append("pitch_deg;roll_deg;azimuth_deg;transV_X0;transV_Y0;transV_Z0;\n");
-				out_extr.append(
-					std::to_string(eul[0]) + ";" +
-					std::to_string(eul[1]) + ";" +
-					std::to_string(eul[2]) + ";" +
-					std::to_string(ptr_tVecObj[0] + data_manager->get_shift_x()) + ";" +
-					std::to_string(ptr_tVecObj[1] + data_manager->get_shift_y()) + ";" +
-					std::to_string(ptr_tVecObj[2] + data_manager->get_shift_z()) );
-			}
+			const EulerDeg eul = pose.euler();
+			const cv::Vec3d C = pose.C + cv::Vec3d(data_manager->get_shift_x(), data_manager->get_shift_y(), data_manager->get_shift_z());
+
+			out_extr.append("pitch_deg;roll_deg;azimuth_deg;X0;Y0;Z0\n");
+			out_extr.append(
+				std::to_string(eul.pitch) + ";" +
+				std::to_string(eul.roll) + ";" +
+				std::to_string(eul.azimuth) + ";" +
+				std::to_string(C[0]) + ";" +
+				std::to_string(C[1]) + ";" +
+				std::to_string(C[2]));
 
 			log_printer->append("\n" + TAG + "------------- extrinsics [m] -------------");
 			log_printer->append("\n" + TAG + out_extr);
 
 
 			// get standard deviations for intrinsics
-			double* ptr_camera_matrix_data = (double*)(camera_matrix.data);
-			double* ptr_dist_coeffs_data = (double*)(dist_coeffs.data);
+			double* ptr_camera_matrix_data = (double*)(intr.K.data);
+			double* ptr_dist_coeffs_data = (double*)(intr.dist.data);
 			double* ptr_stdDevCam_In = (double*)(stdDevCam_In.data);
-			double pixSize = data_manager->get_pixel_size();
+			double pixSize = intr.pixel_size_mm; //data_manager->get_pixel_size();
 
 			if (ptr_stdDevCam_In != nullptr) {
 				out_intr_px.append("fx;fy;cx;cy;std_fx;std_fy;std_cx;std_cy\n");
@@ -746,7 +644,7 @@ int main(int argc, char** argv) {
 	}
 
 	// reference image points to estimate corresponding 3D coordinates
-	matching->image_points_3D_referencing(*data_manager->get_image_points_2D_ptr(), *data_manager->get_pts_synth_3D_double(), data_manager->get_true_image(), camera_matrix, dist_coeffs, rMatObj, tVecObj, data_manager->get_shift_x(), data_manager->get_shift_y(), data_manager->get_shift_z(), _output_pointcloud, data_manager->get_file_name_image_points());
+	matching->image_points_3D_referencing(*data_manager->get_image_points_2D_ptr(), *data_manager->get_pts_synth_3D_double(), data_manager->get_true_image(), intr.K, intr.dist, rvec, tvec, data_manager->get_shift_x(), data_manager->get_shift_y(), data_manager->get_shift_z(), _output_pointcloud, data_manager->get_file_name_image_points());
 
 	// print log file
 	log_printer->print_content_disk(path.string() + "\\logfile.txt");

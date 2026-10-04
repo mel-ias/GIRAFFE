@@ -251,7 +251,8 @@ private:
 	// the minima and maxima distance in current Images
 	float _dist_min, _dist_max;
 
-	double* _rotM;
+	//double* _rotM;
+	CameraPose _pose; // Kopie der Pose, in calc_image_plane() gesetzt
 	float* _image_plane;
 	BoundingBox* _frustum;
 	DataManager* _data_manager;

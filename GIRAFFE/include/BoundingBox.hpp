@@ -5,6 +5,10 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <algorithm>
+#include <cfloat>
+#include "CameraPose.hpp"
+#include "CameraIntrinsics.hpp"
 
 #include "LogFilePrinter.h"
 
@@ -29,51 +33,20 @@ public:
 	 * @brief Destructor for the ViewFrustum class.
 	 * Cleans up allocated memory for camera position and rotation matrix.
 	 */
-	~BoundingBox();
+	~BoundingBox() = default;
 
 	/**
-	 * @brief Set the camera's orientation based on azimuth, roll, and pitch angles.
+	 * @brief Updates the view frustum based on the provided camera pose.
 	 *
-	 * This function computes the rotation matrix (Rzxy) using the provided azimuth, roll,
-	 * and pitch angles. The rotation follows a ZXY rotation order:
-	 * 1. Azimuth (z-axis)
-	 * 2. Pitch (x-axis)
-	 * 3. Roll (y-axis)
-	 * http://www.songho.ca/opengl/gl_anglestoaxes.html
+	 * This function calculates the half-width and half-height of the far plane in camera coordinates,
+	 * including offsets for uncertainty (bounding box). It also computes the axis-aligned bounding box
+	 * in world coordinates based on the camera pose and updates the internal state of the view frustum.
+	 * This requires that the view angles, frustum depth, and offsets have already been set using the appropriate setter functions.
 	 *
-	 * The rotation matrix is column-major, and the function updates the class member Rz.
-	 *
-	 * @param _azimuth The azimuth angle (in degrees).
-	 * @param _roll The roll angle (in degrees).
-	 * @param _pitch The pitch angle (in degrees).
+	 * @param pose The CameraPose object representing the camera's position and orientation in world coordinates.
 	 */
-	void calculate_rotation_matrix_rzxy(double azimuth, double roll, double pitch);
+	void update(const CameraPose& pose);
 
-
-	/**
-	 * @brief Recalculate the view frustum based on the current camera parameters.
-	 *
-	 * This function recalculates the view frustum dimensions using the camera's position,
-	 * azimuth, distance, and other geometric properties. It updates the view frustum's
-	 * world and local coordinates, as well as the min/max values in the x, y, and z directions.
-	 *
-	 * The view frustum is computed in the local camera coordinate system and then transformed
-	 * to the global world space using the rotation matrix Rz and translation by X0_Cam_World.
-	 */
-	void calculate_view_frustum();
-
-	/**
-	 * @brief Define the camera's world position for view frustum calculation.
-	 *
-	 * This function sets the camera position in the world coordinates.
-	 * The view frustum is then translated by the provided position.
-	 *
-	 * @param x0 X coordinate of the camera in world coordinates.
-	 * @param y0 Y coordinate of the camera in world coordinates.
-	 * @param z0 Z coordinate of the camera in world coordinates.
-	 */
-	void set_X0_Cam_World(double X0_x, double X0_y, double Z0_z);
-	
 	/**
 	 * @brief Set the depth of the view frustum.
 	 *
@@ -115,29 +88,12 @@ public:
 	/**
 	 * @brief Calculate the camera's view angle from the principal distance and pixel size as well as the image dimensions.
 	 */
-	void set_view_angles(double ck, double pixSize, int columns, int rows);
+	//void set_view_angles(double ck, double pixSize, int columns, int rows);
+	void set_view_angles(const CameraIntrinsics& intr);
 
-	/**
-	 * @brief Set the 3x3 rotation matrix in ZXY order.
-	 *
-	 * This function sets the rotation matrix `Rzxy`, which defines the transformation for the bounding box.
-	 * The rotation matrix is applied using the ZXY order of rotations: first around the Z-axis (azimuth),
-	 * followed by the X-axis (pitch), and finally the Y-axis (roll).
-	 *
-	 * The matrix is expected to be in column-major order, and the transformation is used to rotate
-	 * the bounding box from the world coordinates to the local camera coordinates.
-	 *
-	 * @param _Rz A pointer to a 3x3 rotation matrix in column-major order, representing ZXY rotations.
-	 */
-	void set_Rzxy(double* Rz) { _Rzxy = Rz; }
-
-
-	double get_xMin()const { return _xMin; }
-	double get_xMax()const { return _xMax; }
-	double get_yMin()const { return _yMin; }
-	double get_yMax()const { return _yMax; }
-	double get_zMax()const { return _zMax; }
-	double get_zMin()const { return _zMin; }
+	// Getter functions for the half-width and half-height of the far plane in camera coordinates, including offsets for uncertainty (bounding box), replace xMax / -xMin and zMax / -zMin
+	double get_halfWidth()  const { return _halfW; }   // Fernebene, Kamerasystem, inkl. Offset (ersetzt xMax / -xMin)
+	double get_halfHeight() const { return _halfH; }   // Fernebene, Kamerasystem, inkl. Offset (ersetzt zMax / -zMin)
 
 	double get_xmin_World()const { return _xMin_world; }
 	double get_ymin_World()const { return _yMin_world; }
@@ -149,8 +105,6 @@ public:
 	double get_dist() const { return _d; }
 	double get_Correction_backward()const { return _bb_offset_X0_xy / _tH; }
 	
-	double* get_Rzxy() const { return _Rzxy; }
-	double* get_X0_Cam_World()const { return _X0_cam_world; }
 
 private:
 
@@ -158,25 +112,18 @@ private:
 	LogFile* _logFilePrinter;
 	const std::string TAG = "View Frustum:\t";
 
-	// Rotation matrix in ZXY order (column-major)
-	double* _Rzxy;
-	
-	// Translation vector (camera origin in world coordinates)
-	double* _X0_cam_world;
-
 	// Frustum extents in world coordinates
 	double _xMin_world, _xMax_world;
 	double _yMin_world, _yMax_world;
 	double _zMin_world, _zMax_world;
 
 	// Frustum parameters
-	double _bb_offset_X0_xy;      // Radius (half-width) in local camera system
-	double _bb_offset_X0_z;     // Half-height in local camera system
-	double _d;      // Distance from the camera
-	double _tV, _tH; // Tangent of vertical and horizontal field of view angles to calculate frustum from bounding box
-	double _zMin, _zMax; // Min and max z values in local camera system
-	double _xMin, _xMax; // Min and max x values in local camera system
-	double _yMin, _yMax; // Min and max y values in local camera system
+	double _bb_offset_X0_xy;// Radius (half-width) in local camera system
+	double _bb_offset_X0_z; // Half-height in local camera system
+	double _d;				// Distance from the camera
+	double _tV, _tH;		// Tangent of vertical and horizontal field of view angles to calculate frustum from bounding box
+	double _halfW, _halfH;  // half -width and half-height of the far plane in camera coordinates, including offsets for uncertainty (bounding box)
+							//Halbachsen der Fernebene inkl. Lageunsicherheit (Kamerasystem)
 };
 
 #endif /* BOUNDINGBOX_H */
