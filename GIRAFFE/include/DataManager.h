@@ -61,7 +61,7 @@ public:
 
 		// --- from main ---
 		_logfile = logFile;
-		_path_file_point_cloud = "noPointCloud.bin"; // causes a "not a pw" error
+		_path_file_point_cloud = "noPointCloud.bin"; // causes a "unsupported format" error
 		_path_working_directory = "noDir";
 		_path_file_output_lightglue_matches = "noDir";
 		_path_python_script_lightglue = "noFile";
@@ -228,6 +228,7 @@ public:
 		// Load the true image from the specified file path
 		_path_file_trueImage = fs::path(path_file_json).parent_path() / _file_name_true_image;
 		true_image = cv::imread(_path_file_trueImage.string());
+		_path_file_working_image = _path_file_trueImage;
 		_logfile_json << "Loaded true image from path: " << _path_file_trueImage << ". Image size: " << true_image.size() << std::endl;
 
 		// Lade Bildpunkte zur Skalierung aus mehreren Dateien
@@ -323,8 +324,8 @@ public:
 			_logfile->append("Cannot run LightGlue image matching: synthetic image missing.");
 			return false;
 		}
-		if (!fs::exists(_path_file_trueImage)) {
-			_logfile->append("Cannot run LightGlue image matching: true image file not found at " + _path_file_trueImage.string());
+		if (!fs::exists(_path_file_working_image)) {
+			_logfile->append("Cannot run LightGlue image matching: true image file not found at " + _path_file_working_image.string());
 			return false;
 		}
 		_logfile->append("Running LightGlue image matching.");
@@ -343,12 +344,12 @@ public:
 		}
 
 		fs::path path_file_imagelist_to_match = path_directory_myData / "image_file_list.txt";
-		fs::path path_file_trueImage_to_match = path_directory_myData / ("true_image" + _path_file_trueImage.extension().string());
+		fs::path path_file_trueImage_to_match = path_directory_myData / ("true_image" + _path_file_working_image.extension().string());
 		fs::path path_file_synthImage_to_match = path_directory_myData / "synth_image.jpg";
 		_path_file_output_lightglue_matches = path_directory_myData / "kpts.txt"; // fixer Name, wie vom Python-Skript erwartet
 
 		// True-Image: byte-identische Kopie statt Neukodierung über cv::Mat
-		fs::copy_file(_path_file_trueImage, path_file_trueImage_to_match, fs::copy_options::overwrite_existing, ec);
+		fs::copy_file(_path_file_working_image, path_file_trueImage_to_match, fs::copy_options::overwrite_existing, ec);
 		if (ec) {
 			_logfile->append("Failed to copy true image: " + ec.message());
 			return false;
@@ -449,7 +450,20 @@ public:
 	cv::Size get_size_true_image() { return true_image.size(); } // get image size of true image
 
 	void set_synth_image(cv::Mat& synth_img) { synth_img.copyTo(synth_image); } //set synth image
-	void set_true_image(cv::Mat& true_img) { true_img.copyTo(true_image); } //set true image 
+	//void set_true_image(cv::Mat& true_img) { true_img.copyTo(true_image); } //set true image 
+	// Setzt das Arbeitsbild (z. B. entzerrt): schreibt es verlustfrei in das Arbeitsverzeichnis und merkt sich
+	// den Pfad, damit LightGlue weiterhin eine byte-identische Dateikopie bekommt.
+	bool set_working_image(const cv::Mat& img, const std::string& file_name) {
+		const fs::path p = _path_working_directory / file_name;
+		if (!cv::imwrite(p.string(), img)) {
+			_logfile->append("Failed to write working image: " + p.string());
+			return false;
+		}
+		img.copyTo(true_image);
+		_path_file_working_image = p;
+		return true;
+	}
+	
 	void set_coordinate_image(int column, int row) { _coord_img = new CoordinateImage(column, row); }	// set coordinate image of projected point cloud
 	
 	// point cloud management
@@ -514,6 +528,7 @@ private:
 	fs::path _path_file_output_lightglue_matches;
 	fs::path _path_python_script_lightglue;
 	fs::path _path_file_trueImage;
+	fs::path _path_file_working_image;   // Datei, die an LightGlue kopiert wird (Original oder entzerrte Kopie)
 
 	std::string _file_name_true_image;
 	std::vector<std::string> _file_name_image_points;

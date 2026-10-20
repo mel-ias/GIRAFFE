@@ -2,6 +2,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/calib3d.hpp>
+#include <vector>
 
 enum class LensModel { Pinhole, Fisheye };
 
@@ -64,6 +65,23 @@ struct CameraIntrinsics {
         else {
             cv::undistort(img, out, K, dist, target.K);   // Fix: neue Kameramatrix wird jetzt übergeben
         }
+        return out;
+    }
+
+	// Klont die Intrinsics (K und dist werden kopiert, nicht nur referenziert)
+    CameraIntrinsics clone() const {
+        CameraIntrinsics c = *this;
+        c.K = K.clone();
+        c.dist = dist.clone();
+        return c;
+    }
+
+    // Punkte aus dem Bild dieser Intrinsics in die Geometrie von 'target' (= undistortedIntrinsics) abbilden
+    std::vector<cv::Point2d> undistortPoints(const std::vector<cv::Point2d>& pts, const CameraIntrinsics& target) const {
+        std::vector<cv::Point2d> out;
+        if (pts.empty()) return out;
+        if (isFisheye()) cv::fisheye::undistortPoints(pts, out, K, dist, cv::noArray(), target.K);
+        else             cv::undistortPoints(pts, out, K, dist, cv::noArray(), target.K);
         return out;
     }
 };

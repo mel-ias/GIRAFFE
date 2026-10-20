@@ -681,7 +681,7 @@ void Matching::write_visualization_matches(
 			// Grün = Inlier, Rot (gedimmt) = Outlier
 			bool is_inlier = in_inlier_mask[i];
 			color = is_inlier ? cv::Scalar(0, 220, 0) : cv::Scalar(0, 0, 140);
-			thickness = is_inlier ? 2 : 1;
+			thickness = is_inlier ? 3 : 2;
 		}
 		else {
 			// Keine Maske übergeben: pro Linie eine eigene, deterministische Farbe

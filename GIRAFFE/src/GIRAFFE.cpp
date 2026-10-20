@@ -254,7 +254,13 @@ int main(int argc, char** argv) {
 				std::cerr << "Error: Point cloud file does not exist: " << path_file_pointcloudPW << std::endl;
 				return -1;
 			}
-			log_printer->append(TAG + "Set path to point cloud (PW-file): " + path_file_pointcloudPW.string());
+
+			if (!is_supported_point_cloud(path_file_pointcloudPW.string())) {
+				std::cerr << "Error: unsupported point cloud format: " << path_file_pointcloudPW << " (supported: .pw, .ply, .las, .laz)" << std::endl;
+				return -1;
+			}
+			log_printer->append(TAG + "Set path to point cloud: " + path_file_pointcloudPW.string());
+
 			data_manager->set_path_file_pointcloud(path_file_pointcloudPW);  // Set path for input point cloud
 			break;
 		}
@@ -348,9 +354,11 @@ int main(int argc, char** argv) {
 	// ----------------
 
 	float repro_error;
-	CameraIntrinsics intr;
-	cv::Mat rvec, tvec, stdDevCam_In, stdDevObj_Ext;
 	CameraPose pose;
+	CameraIntrinsics intr = data_manager->get_nominal_intrinsics().withModel(_lens_model);   // lebt über alle Iterationen
+	CameraIntrinsics intr_orig;           // verfeinerte IO des Originalbildes (nach der Entzerrung)
+	bool image_undistorted = false;
+	cv::Mat rvec, tvec, stdDevCam_In, stdDevObj_Ext;
 
 	for (int iteration = 1; iteration <= _final_iteration_number; ++iteration) {
 
@@ -383,7 +391,7 @@ int main(int argc, char** argv) {
 		data_manager->get_synth_image().copyTo(synth_img_4matching);
 
 		// c) get nominal intrinsics and pose from dataManager
-		intr = data_manager->get_nominal_intrinsics().withModel(_lens_model);
+		//intr = data_manager->get_nominal_intrinsics().withModel(_lens_model);
 
 		// Pose -> rvec/tvec (R_wc und t = -R_wc*C), kein Transponieren mehr nötig
 		data_manager->get_pose().toOpenCV(rvec, tvec);
@@ -469,6 +477,9 @@ int main(int argc, char** argv) {
 
 				log_pose("Pose VOR space_resection", CameraPose::fromOpenCV(rvec, tvec));
 
+				// Store original intrinsic and distortion parameters before resection
+				const cv::Mat K_before = intr.K.clone(), dist_before = intr.dist.clone();
+
 				// Perform spatial resection to determine camera and exterior orientation, check if values are valid
 				std::vector<int> ransac_inliers;  
 				repro_error = matching->space_resection(
@@ -501,17 +512,21 @@ int main(int argc, char** argv) {
 					inlier_mask);
 
 				// If the matching flags indicate that both extrinsic and intrinsic parameters are being calculated, undistort the true image and use it for the final iteration
-				if (flags_matching == Matching::CALC_EO_IO) { // Before last iteration, undistort and use the undistorted image in the final iteration
-					const CameraIntrinsics intr_undist = intr.undistortedIntrinsics(_balance_img_undistortion);
-					cv::Mat undist_true_image = intr.undistortImage(data_manager->get_true_image(), intr_undist);
-
-					fs::path out_path_undist_img = data_manager->get_path_working_directory() / ("undist_test_" + std::to_string(iteration) + ".png");
-					cv::imwrite(out_path_undist_img.string(), undist_true_image);
-
-					data_manager->set_true_image(undist_true_image);
-					intr = intr_undist;                    // Pinhole, dist = 0, K des entzerrten Bildes
-					_lens_model = LensModel::Pinhole;      // für die nächste Iteration
-					_calc_IO = false;                      // Avoid recalculating IO repeatedly
+				if (flags_matching == Matching::CALC_EO_IO) {
+					const bool io_updated = cv::norm(intr.K, K_before, cv::NORM_INF) > 0.0
+						|| cv::norm(intr.dist, dist_before, cv::NORM_INF) > 0.0;
+					if (!io_updated) {
+						// z. B. zu wenige oder schlecht verteilte Punkte: nichts entzerren, nächste Iteration versucht es erneut
+						log_printer->append(TAG + "IO was not updated by space_resection, image is not undistorted.");
+					}
+					else {
+						intr_orig = intr.clone();                                           // verfeinerte IO des Originalbildes
+						intr = intr_orig.undistortedIntrinsics(_balance_img_undistortion);  // IO des entzerrten Bildes (Pinhole, dist = 0)
+						const cv::Mat undist = intr_orig.undistortImage(data_manager->get_true_image(), intr);   // true_image ist hier noch das Original
+						data_manager->set_working_image(undist, "true_image_undistorted.png");
+						image_undistorted = true;
+						_calc_IO = false;                                                   // nur einmal entzerren
+					}
 				}
 			}
 			else {
@@ -643,8 +658,17 @@ int main(int argc, char** argv) {
 		}
 	}
 
+
+	// Bildpunkte wurden im Originalbild gemessen: ins entzerrte Arbeitsbild übertragen, falls es eines gibt
+	std::vector<std::vector<cv::Point2d>> image_points = *data_manager->get_image_points_2D_ptr();
+	if (image_undistorted) {
+		for (auto& pts : image_points) pts = intr_orig.undistortPoints(pts, intr);
+	}
+
+	matching->image_points_3D_referencing(image_points, *data_manager->get_pts_synth_3D_double(), data_manager->get_true_image(), intr.K, intr.dist, rvec, tvec, data_manager->get_shift_x(), data_manager->get_shift_y(), data_manager->get_shift_z(), _output_pointcloud, data_manager->get_file_name_image_points());
+
 	// reference image points to estimate corresponding 3D coordinates
-	matching->image_points_3D_referencing(*data_manager->get_image_points_2D_ptr(), *data_manager->get_pts_synth_3D_double(), data_manager->get_true_image(), intr.K, intr.dist, rvec, tvec, data_manager->get_shift_x(), data_manager->get_shift_y(), data_manager->get_shift_z(), _output_pointcloud, data_manager->get_file_name_image_points());
+	//matching->image_points_3D_referencing(*data_manager->get_image_points_2D_ptr(), *data_manager->get_pts_synth_3D_double(), data_manager->get_true_image(), intr.K, intr.dist, rvec, tvec, data_manager->get_shift_x(), data_manager->get_shift_y(), data_manager->get_shift_z(), _output_pointcloud, data_manager->get_file_name_image_points());
 
 	// print log file
 	log_printer->print_content_disk(path.string() + "\\logfile.txt");
