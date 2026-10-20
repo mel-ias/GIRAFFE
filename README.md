@@ -145,6 +145,7 @@ The following parameters are used in the JSON file:
 - **`loc_accuracy`**: The location accuracy in meters. Represents the uncertainty of the camera position (e.g., `0.5`) in the unit of the reference system; check the docs and Elias et al., 2019 for details on this parameter
 - **`focal_length_mm`**: The focal length of the camera lens in millimeters (e.g., `5.4`)
 - **`pixel_size_mm`**: The size of a single pixel of the camera sensor in millimeters (e.g., `0.003125`)
+- **`view_angle_x`, `view_angle_y`**: The horizontal (`view_angle_x`) and vertical (`view_angle_y`) field of view of the camera in degrees (e.g., `90`, `90` for maximum field of view - recommended)
 - **`file_name_image_points`**: A list of filenames containing the raw 2D image points to be referenced corresponding to the image coordinate system of true_image (e.g., `["time_lapse_sequence_01.txt", ..., "time_lapse_sequence_19.txt"]`). Note: the structure needs to be x,y,z (xy = image coordinates, z = 0)
 - **`max_dist_to_X0`**: The maximum distance (in meters) from the camera origin (`X0`) to consider points in the view frustum (e.g., `3000`)
 - **`min_dist_to_X0`**: The minimum distance (in meters) from the camera origin (`X0`) to consider points in the view frustum (e.g., `1.0`)
@@ -169,22 +170,20 @@ Contributions are welcome! Please fork the repository and submit a pull request 
 
 
 ### Citation
-If you use the GIRAFFE tool in your work, please cite one of the underlying research papers, depending on your topic.  
+If you use GIRAFFE in your work, please cite the underlying research papers as follows:  
 
 #### BibTeX Entries  
 
 ```
-@Article{HendrickxElias2025,
+@Article{HendrickxElias2024,
 AUTHOR = {Hendrickx, H. and Elias, M. and Blanch, X. and Delaloye, R. and Eltner, A.},
-TITLE = {AI-based tracking of fast-moving alpine landforms using high-frequency
-monoscopic time-lapse imagery},
-JOURNAL = {Earth Surface Dynamics},
-VOLUME = {13},
-YEAR = {2025},
-NUMBER = {4},
-PAGES = {705--721},
-URL = {https://esurf.copernicus.org/articles/13/705/2025/},
-DOI = {10.5194/esurf-13-705-2025}
+TITLE = {AI-Based Tracking of Fast-Moving Alpine Landforms Using High Frequency Monoscopic Time-Lapse Imagery},
+JOURNAL = {EGUsphere},
+VOLUME = {2024},
+YEAR = {2024},
+PAGES = {1--20},
+URL = {https://egusphere.copernicus.org/preprints/2024/egusphere-2024-2570/},
+DOI = {10.5194/egusphere-2024-2570}
 }
 
 
@@ -200,6 +199,7 @@ url = {https://www.sciencedirect.com/science/article/pii/S2667393223000121},
 author = {Melanie Elias and Alexandra Weitkamp and Anette Eltner},
 keywords = {Thermal infrared (TIR) camera, Hand-held LiDAR, Urban mapping, Deep learning, Scene rendering},
 }
+
 
 @article{Elias2019,
 author = {Elias, Melanie and Kehl, Christian and Schneider, Danilo},

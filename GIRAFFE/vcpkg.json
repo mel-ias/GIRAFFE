@@ -1,0 +1,9 @@
+{
+  "name": "giraffe",
+  "version-string": "1.0.0",
+  "builtin-baseline": "20ceb8adbf0504d4b0d5e4058a32f9d4fc896391",
+  "dependencies": [
+    "laszip"
+  ]
+
+}

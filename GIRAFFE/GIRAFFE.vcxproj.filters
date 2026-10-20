@@ -60,6 +60,15 @@
     <ClInclude Include="include\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\CameraIntrinsics.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CameraPose.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PointSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BoundingBox.cpp">
@@ -89,5 +98,11 @@
     <ClCompile Include="src\GIRAFFE.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\PointSource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="vcpkg.json" />
   </ItemGroup>
 </Project>
